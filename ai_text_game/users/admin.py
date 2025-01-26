@@ -42,15 +42,13 @@ class UserAdmin(auth_admin.UserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                    "role",
                 ),
             },
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["username", "name", "role", "is_superuser"]
+    list_display = ["username", "name", "is_superuser"]
     search_fields = ["name"]
-    list_filter = ["role"]
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Disable the default add user button"""
@@ -105,7 +103,6 @@ class UserAdmin(auth_admin.UserAdmin):
                             user = User.objects.create(
                                 email=row_dict["email"],
                                 username=row_dict.get("username") or row_dict["email"],
-                                role=row_dict.get("role") or "student",
                                 name=row_dict.get("name") or "",
                             )
                             user.set_password(row_dict["password"])

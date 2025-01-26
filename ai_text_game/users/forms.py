@@ -51,7 +51,6 @@ class AdminUserRegistrationForm(forms.ModelForm):
 
     email = forms.EmailField(required=True)
     password = forms.CharField(widget=forms.PasswordInput)
-    role = forms.ChoiceField(choices=User.ROLE_CHOICES, initial="student")
     username = forms.CharField(
         required=False,
         help_text="If not provided, email will be used",
@@ -59,7 +58,7 @@ class AdminUserRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["email", "username", "password", "role", "name"]
+        fields = ["email", "username", "password", "name"]
 
     def clean_email(self):
         email = self.cleaned_data["email"]

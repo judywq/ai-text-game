@@ -1,5 +1,4 @@
 from dj_rest_auth.models import TokenModel
-from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
@@ -38,11 +37,9 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
             extra_fields.append("first_name")
         if hasattr(UserModel, "last_name"):
             extra_fields.append("last_name")
-        if hasattr(UserModel, "role"):
-            extra_fields.append("role")
         model = UserModel
         fields = ("pk", *extra_fields)
-        read_only_fields = ("email", "role")
+        read_only_fields = ("email",)
 
 
 class TokenSerializer(serializers.ModelSerializer):
@@ -51,4 +48,3 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = TokenModel
         fields = ["key", "created", "user"]
-
