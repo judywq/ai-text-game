@@ -17,7 +17,6 @@ from .forms import AdminUserRegistrationForm
 from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
 from .forms import UserBatchUploadForm
-from .models import Course
 from .models import User
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
@@ -33,25 +32,25 @@ class UserAdmin(auth_admin.UserAdmin):
     add_form = UserAdminCreationForm
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        (_("Personal info"), {"fields": ("name", "email", "course")}),
+        (_("Personal info"), {"fields": ("name", "email")}),
         (
             _("Permissions"),
             {
                 "fields": (
-                    "role",
                     "is_active",
                     "is_staff",
                     "is_superuser",
                     "groups",
                     "user_permissions",
+                    "role",
                 ),
             },
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["username", "name", "role", "course", "is_superuser"]
-    search_fields = ["name", "course__course_name"]
-    list_filter = ["role", "course"]
+    list_display = ["username", "name", "role", "is_superuser"]
+    search_fields = ["name"]
+    list_filter = ["role"]
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Disable the default add user button"""
@@ -102,10 +101,7 @@ class UserAdmin(auth_admin.UserAdmin):
                 for idx, row in df_data.iterrows():
                     try:
                         with transaction.atomic():
-                            # Convert row to dictionary and handle missing columns
                             row_dict = row.to_dict()
-
-                            # Create user with basic required fields
                             user = User.objects.create(
                                 email=row_dict["email"],
                                 username=row_dict.get("username") or row_dict["email"],
@@ -113,17 +109,6 @@ class UserAdmin(auth_admin.UserAdmin):
                                 name=row_dict.get("name") or "",
                             )
                             user.set_password(row_dict["password"])
-
-                            # Handle course assignment if present
-                            if row_dict.get("course_id"):
-                                try:
-                                    course = Course.objects.get(
-                                        course_id=row_dict["course_id"],
-                                    )
-                                    user.course = course
-                                except Course.DoesNotExist:
-                                    pass  # Course validation is done in form clean
-
                             user.save()
 
                             # Create verified email address
@@ -161,9 +146,3 @@ class UserAdmin(auth_admin.UserAdmin):
         extra_context["show_register_button"] = True
         extra_context["show_batch_upload_button"] = True
         return super().changelist_view(request, extra_context=extra_context)
-
-
-@admin.register(Course)
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ["course_id", "course_name"]
-    search_fields = ["course_id", "course_name"]

@@ -5,8 +5,6 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from ai_text_game.users.models import Course
-
 UserModel = get_user_model()
 
 
@@ -54,18 +52,3 @@ class TokenSerializer(serializers.ModelSerializer):
         model = TokenModel
         fields = ["key", "created", "user"]
 
-
-class CustomRegisterSerializer(RegisterSerializer):
-    course_id = serializers.IntegerField(required=False, allow_null=True)
-
-    def custom_signup(self, request, user):
-        course_id = self.validated_data.get("course_id")
-        if course_id:
-            try:
-                course = Course.objects.get(course_id=course_id)
-                user.course = course
-                user.save()
-            except Course.DoesNotExist as e:
-                raise serializers.ValidationError(
-                    {"course_id": "Please enter a valid course id"},
-                ) from e

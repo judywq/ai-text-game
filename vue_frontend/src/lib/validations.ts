@@ -22,17 +22,6 @@ export const signupFormSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  course_id: z.union([
-    z.string().transform((val) => {
-      // Convert empty string to undefined
-      if (val === '') return undefined;
-      // Convert string to number
-      const num = parseInt(val, 10);
-      // Return undefined if NaN, otherwise return the number
-      return isNaN(num) ? undefined : num;
-    }),
-    z.number(),
-  ]).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

@@ -26,19 +26,18 @@ const router = useRouter()
 const generalError = ref<string | null>(null)
 
 const form = useForm({
-  validationSchema: toTypedSchema(signupFormSchema),
-  initialValues: {
+  schema: signupFormSchema,
+  defaultValues: {
     email: '',
     password: '',
     confirmPassword: '',
-    course_id: undefined as number | undefined,
   },
 })
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     generalError.value = null
-    await authStore.signup(values.email, values.password, values.course_id, router)
+    await authStore.signup(values.email, values.password, router)
   } catch (err: any) {
     if (err.fieldErrors) {
       form.setErrors(err.fieldErrors)
@@ -105,26 +104,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                 v-bind="componentField"
                 type="password"
                 placeholder="Confirm your password"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <FormField
-          v-slot="{ componentField }"
-          name="course_id"
-        >
-          <FormItem>
-            <FormLabel>Course ID (Optional)</FormLabel>
-            <!-- https://stackoverflow.com/a/75872055/1938012 -->
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="number"
-                class="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                placeholder="Enter your Course ID if instructed by your teacher"
                 :disabled="loading"
               />
             </FormControl>

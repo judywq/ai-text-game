@@ -9,7 +9,6 @@ from django.contrib.auth import forms as admin_forms
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 
-from .models import Course
 from .models import User
 
 
@@ -57,15 +56,10 @@ class AdminUserRegistrationForm(forms.ModelForm):
         required=False,
         help_text="If not provided, email will be used",
     )
-    course = forms.ModelChoiceField(
-        queryset=Course.objects.all(),
-        required=False,
-        help_text="Optional: select a course for this user",
-    )
 
     class Meta:
         model = User
-        fields = ["email", "username", "password", "role", "name", "course"]
+        fields = ["email", "username", "password", "role", "name"]
 
     def clean_email(self):
         email = self.cleaned_data["email"]
@@ -125,21 +119,6 @@ class UserBatchUploadForm(forms.Form):
             for col in required_columns:
                 if col not in df_data.columns:
                     msg = f"Missing required column: {col}"
-                    raise forms.ValidationError(msg)
-
-            # Validate course_id if present
-            if "course_id" in df_data.columns:
-                course_ids = df_data["course_id"].dropna().unique()
-                existing_courses = set(
-                    Course.objects.filter(
-                        course_id__in=course_ids,
-                    ).values_list("course_id", flat=True),
-                )
-                invalid_courses = [
-                    str(cid) for cid in course_ids if cid not in existing_courses
-                ]
-                if invalid_courses:
-                    msg = f"Invalid course IDs: {', '.join(invalid_courses)}"
                     raise forms.ValidationError(msg)
 
             # Reset file pointer for later use

@@ -342,7 +342,6 @@ SOCIALACCOUNT_FORMS = {"signup": "ai_text_game.users.forms.UserSocialSignupForm"
 # https://stackoverflow.com/a/78795012/1938012
 REST_AUTH = {
     "LOGIN_SERIALIZER": "ai_text_game.users.api.serializers.CustomLoginSerializer",
-    "REGISTER_SERIALIZER": "ai_text_game.users.api.serializers.CustomRegisterSerializer",
     "TOKEN_SERIALIZER": "ai_text_game.users.api.serializers.TokenSerializer",
     "USER_DETAILS_SERIALIZER": "ai_text_game.users.api.serializers.CustomUserDetailsSerializer",
     # Fix dj-rest-auth weird issue https://github.com/iMerica/dj-rest-auth/issues/494#issuecomment-2058652960

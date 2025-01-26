@@ -19,12 +19,11 @@ export class AuthService {
     await api.post('/dj-rest-auth/logout/')
   }
 
-  public static async signup(email: string, password: string, course_id?: number): Promise<void> {
+  public static async signup(email: string, password: string): Promise<void> {
     await api.post('/dj-rest-auth/registration/', {
       email,
       password1: password,
       password2: password,
-      course_id: course_id,
     })
   }
 

@@ -22,22 +22,19 @@ class QuotaConfigAdmin(admin.ModelAdmin):
 class APIRequestAdmin(admin.ModelAdmin):
     list_display = [
         "user",
-        "get_course",
         "status",
         "get_model_name",
         "essay",
         "score",
         "created_at",
     ]
-    list_filter = ["status", "user", "model", "user__course"]
-    search_fields = ["essay", "result", "user__email", "user__course__course_name"]
-    actions = ["export_as_csv"]
+    list_filter = ["status", "user", "model"]
+    search_fields = ["essay", "result"]
 
-    @admin.display(description="Course", ordering="user__course")
-    def get_course(self, obj):
-        return obj.user.course if obj.user.course else "-"
-
-    @admin.display(description="Model", ordering="model__display_name")
+    @admin.display(
+        description="Model",
+        ordering="model__display_name",
+    )
     def get_model_name(self, obj):
         return obj.model.display_name
 
@@ -48,8 +45,6 @@ class APIRequestAdmin(admin.ModelAdmin):
         field_names = [
             "created_at",
             "user__email",
-            "user__course__course_id",
-            "user__course__course_name",
             "model__name",
             "essay",
             "score",
@@ -64,8 +59,6 @@ class APIRequestAdmin(admin.ModelAdmin):
         headers = [
             "Timestamp",
             "User Email",
-            "Course ID",
-            "Course Name",
             "LLM Model",
             "Essay",
             "Score",
