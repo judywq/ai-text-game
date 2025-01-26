@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+
+# Wait for database to be ready
+until python manage.py migrate --no-input; do
+    echo "Migration failed. Waiting for database..."
+    sleep 2
+done
+
+# If $DJANGO_SUPERUSER_USERNAME is provided, create a superuser
+if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_EMAIL:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
+    # Create superuser from environment variables
+    echo "Creating superuser..."
+    python manage.py shell << EOF
+from django.contrib.auth import get_user_model
+User = get_user_model()
+try:
+    if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists():
+        User.objects.create_superuser(
+            username='$DJANGO_SUPERUSER_USERNAME',
+            email='$DJANGO_SUPERUSER_EMAIL',
+            password='$DJANGO_SUPERUSER_PASSWORD'
+        )
+        print('Superuser created successfully')
+    else:
+        print('Superuser already exists')
+except Exception as e:
+    print('Error creating superuser:', str(e))
+EOF
+fi
+
+if [ "${DJANGO_DEBUG_MODE:-0}" = "1" ]; then
+    echo "Starting Django in debug mode - waiting for debugger to attach..."
+    exec python -m debugpy --wait-for-client --listen 0.0.0.0:5678 manage.py runserver_plus 0.0.0.0:8000
+else
+    echo "Starting Django in normal mode..."
+    exec python manage.py runserver_plus 0.0.0.0:8000
+fi

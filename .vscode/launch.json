@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          "name": "Python: Remote Attach (Django + Allauth)",
+          "type": "python",
+          "request": "attach",
+          "connect": {
+              "host": "localhost",
+              "port": 5678
+          },
+          "pathMappings": [
+              {
+                  "localRoot": "${workspaceFolder}",
+                  "remoteRoot": "/app"
+              },
+              {
+                  "localRoot": "${workspaceFolder}/.venv/Lib/site-packages",
+                  "remoteRoot": "/usr/local/lib/python3.12/site-packages"
+              }
+          ],
+          "django": true,
+          "justMyCode": false,
+          "showReturnValue": true,
+          "redirectOutput": true,
+          "subProcess": true,
+          "debugStdLib": true
+      }
+  ]
+}

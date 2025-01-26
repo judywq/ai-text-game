@@ -1,0 +1,4 @@
+include:
+  - path:
+    - ./docker-compose.production.yml
+    - ./docker-compose.staging.override.yml

@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+
+{% load i18n static admin_urls %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .register-form {
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .register-form .form-row {
+      margin-bottom: 10px;
+    }
+
+    .register-form label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .register-form input {
+      width: 100%;
+      padding: 5px;
+    }
+  </style>
+{% endblock extrahead %}
+{% block content %}
+  <div class="register-form">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="submit-row">
+        <input type="submit" value="Register User" class="default" />
+      </div>
+    </form>
+  </div>
+{% endblock content %}

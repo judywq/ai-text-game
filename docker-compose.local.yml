@@ -1,0 +1,96 @@
+volumes:
+  ai_text_game_local_postgres_data: {}
+  ai_text_game_local_postgres_data_backups: {}
+  ai_text_game_local_redis_data: {}
+
+services:
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: ai_text_game_local_django
+    container_name: ai_text_game_local_django
+    depends_on:
+      - postgres
+      - redis
+      - mailpit
+    volumes:
+      - .:/app:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.secrets
+    ports:
+      - '8000:8000'
+    command: /start
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: ai_text_game_production_postgres
+    container_name: ai_text_game_local_postgres
+    volumes:
+      - ai_text_game_local_postgres_data:/var/lib/postgresql/data
+      - ai_text_game_local_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.secrets
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    container_name: ai_text_game_local_mailpit
+    ports:
+      - "8025:8025"
+
+  redis:
+    image: docker.io/redis:6
+    container_name: ai_text_game_local_redis
+
+    volumes:
+      - ai_text_game_local_redis_data:/data
+
+
+  celeryworker:
+    <<: *django
+    image: ai_text_game_local_celeryworker
+    container_name: ai_text_game_local_celeryworker
+    depends_on:
+      - redis
+      - postgres
+      - mailpit
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: ai_text_game_local_celerybeat
+    container_name: ai_text_game_local_celerybeat
+    depends_on:
+      - redis
+      - postgres
+      - mailpit
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: ai_text_game_local_flower
+    container_name: ai_text_game_local_flower
+    ports:
+      - '5555:5555'
+    command: /start-flower
+
+  vite:
+    build:
+      context: .
+      dockerfile: ./compose/local/vite/Dockerfile
+    image: ai_text_game_local_vite
+    container_name: ai_text_game_local_vite
+    depends_on:
+      - django
+    volumes:
+      - .:/app:z
+      - /app/vue_frontend/node_modules
+    command: vite dev --host
+    ports:
+      - '5173:5173'

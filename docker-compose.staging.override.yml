@@ -1,0 +1,47 @@
+services:
+  django:
+    build:
+      args:
+      - IS_STAGING=true
+    env_file:
+      - ./.envs/.staging/.django
+      - ./.envs/.staging/.secrets
+
+  celeryworker:
+    build:
+      args:
+      - IS_STAGING=true
+    env_file:
+      - ./.envs/.staging/.django
+      - ./.envs/.staging/.secrets
+
+  celerybeat:
+    build:
+      args:
+      - IS_STAGING=true
+    env_file:
+      - ./.envs/.staging/.django
+      - ./.envs/.staging/.secrets
+
+  flower:
+    build:
+      args:
+      - IS_STAGING=true
+    env_file:
+      - ./.envs/.staging/.django
+      - ./.envs/.staging/.secrets
+
+  postgres:
+    env_file:
+      - ./.envs/.staging/.django
+      - ./.envs/.staging/.secrets
+
+  traefik:
+    build:
+      args:
+      - IS_STAGING=true
+
+  nginx:
+    build:
+      args:
+      - IS_STAGING=true

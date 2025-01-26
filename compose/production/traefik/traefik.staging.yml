@@ -1,0 +1,66 @@
+log:
+  level: DEBUG
+
+entryPoints:
+  web:
+    # http
+    address: ':80'
+
+  web-secure:
+    # https
+    address: ':443'
+
+  flower:
+    address: ':5555'
+
+http:
+  routers:
+    # Django API and Admin routes
+    django-router:
+      rule: 'Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/admin`) || PathPrefix(`/send-email`))'
+      entryPoints:
+        - web
+      middlewares:
+        - csrf
+      service: django
+
+    # Vue frontend, static and media - catch all other routes
+    nginx-router:
+      rule: 'Host(`localhost`)'
+      entryPoints:
+        - web
+      service: nginx
+      priority: 1  # Lower priority means this route is checked last
+
+    flower-secure-router:
+      rule: 'Host(`localhost`)'
+      entryPoints:
+        - flower
+      service: flower
+
+  middlewares:
+    csrf:
+      headers:
+        hostsProxyHeaders: ['X-CSRFToken']
+
+  services:
+    django:
+      loadBalancer:
+        servers:
+          - url: http://django:5000
+
+    flower:
+      loadBalancer:
+        servers:
+          - url: http://flower:5555
+
+    nginx:
+      loadBalancer:
+        servers:
+          - url: http://nginx:80
+
+providers:
+  # https://doc.traefik.io/traefik/master/providers/file/
+  file:
+    filename: /etc/traefik/traefik.yml
+    watch: true

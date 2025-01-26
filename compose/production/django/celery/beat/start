@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Run migrations
+until python manage.py migrate --no-input; do
+    echo "Migration failed. Waiting for database..."
+    sleep 2
+done
+
+exec celery -A config.celery_app beat -l INFO

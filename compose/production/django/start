@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Create staticfiles directory if it doesn't exist and ensure proper permissions
+mkdir -p /app/staticfiles
+python /app/manage.py collectstatic --noinput
+
+# Wait for database to be ready (if you're using a database)
+until python manage.py migrate --no-input; do
+    echo "Migration failed. Waiting for database..."
+    sleep 2
+done
+
+# If $DJANGO_SUPERUSER_USERNAME is provided, create a superuser
+if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_EMAIL:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
+    # Create superuser from environment variables
+    echo "Creating superuser..."
+    python manage.py shell << EOF
+from django.contrib.auth import get_user_model
+User = get_user_model()
+try:
+    if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists():
+        User.objects.create_superuser(
+            username='$DJANGO_SUPERUSER_USERNAME',
+            email='$DJANGO_SUPERUSER_EMAIL',
+            password='$DJANGO_SUPERUSER_PASSWORD'
+        )
+        print('Superuser created successfully')
+    else:
+        print('Superuser already exists')
+except Exception as e:
+    print('Error creating superuser:', str(e))
+EOF
+fi
+
+exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app

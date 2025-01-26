@@ -1,0 +1,11 @@
+services:
+  django:
+    ports:
+      - "5678:5678"  # Add debug port
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - DJANGO_DEBUG_MODE=1
+    # Add these for debugging
+    stdin_open: true
+    tty: true

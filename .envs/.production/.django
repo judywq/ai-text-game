@@ -1,0 +1,35 @@
+# General
+# ------------------------------------------------------------------------------
+# DJANGO_READ_DOT_ENV_FILE=True
+
+DJANGO_DEBUG=False
+
+DJANGO_SETTINGS_MODULE=config.settings.production
+DJANGO_ADMIN_URL=admin/
+DJANGO_ALLOWED_HOSTS=app.gec.awade.waseda.ac.jp,localhost
+
+# Security
+# ------------------------------------------------------------------------------
+# TIP: better off using DNS, however, redirect is OK too
+DJANGO_SECURE_SSL_REDIRECT=False
+
+# django-allauth
+# ------------------------------------------------------------------------------
+DJANGO_ACCOUNT_ALLOW_REGISTRATION=True
+
+# Gunicorn
+# ------------------------------------------------------------------------------
+WEB_CONCURRENCY=4
+
+# Redis
+# ------------------------------------------------------------------------------
+REDIS_URL=redis://redis:6379/0
+
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=ai_text_game
+
+# Vue
+VITE_API_BASE_URL=http://app.gec.awade.waseda.ac.jp/api

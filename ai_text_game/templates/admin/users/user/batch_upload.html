@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+
+{% load i18n static admin_urls %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .upload-form {
+      max-width: 800px;
+      margin: 20px auto;
+    }
+
+    .upload-form .help-text {
+      margin: 20px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+    }
+
+    .required {
+      color: #dc3545;
+    }
+  </style>
+{% endblock extrahead %}
+{% block content %}
+  <div class="upload-form">
+    <div class="help-text">
+      <h3>Instructions:</h3>
+      <p>Upload an Excel file (.xlsx) with the following columns:</p>
+      <ul>
+        <li>
+          <strong>email</strong> (<span class="required">required</span>): User's email address
+        </li>
+        <li>
+          <strong>password</strong> (<span class="required">required</span>): User's password
+        </li>
+        <li>
+          <strong>username</strong> (optional): If not provided, email will be used
+        </li>
+        <li>
+          <strong>role</strong> (optional): 'student' or 'admin' (defaults to 'student')
+        </li>
+        <li>
+          <strong>name</strong> (optional): User's full name
+        </li>
+        <li>
+          <strong>course_id</strong> (optional): Course ID (must exist in the system)
+        </li>
+      </ul>
+    </div>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="submit-row">
+        <input type="submit" value="Upload Users" class="default" />
+      </div>
+    </form>
+  </div>
+{% endblock content %}
