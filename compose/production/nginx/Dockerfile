@@ -1,4 +1,4 @@
-FROM node:18-bullseye-slim as vite-builder
+FROM node:23-bullseye-slim as vite-builder
 ARG IS_STAGING="false"
 ARG APP_HOME=/app
 
