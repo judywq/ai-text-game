@@ -1,6 +1,9 @@
 from rest_framework import serializers
 
 from .models import APIRequest
+from .models import GameInteraction
+from .models import GameScenario
+from .models import GameStory
 from .models import LLMModel
 
 
@@ -61,4 +64,66 @@ class APIRequestSerializer(serializers.ModelSerializer):
         return APIRequest.objects.create(
             **validated_data,
             model=model,
+        )
+
+
+class GameScenarioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameScenario
+        fields = [
+            "id",
+            "title",
+            "description",
+            "created_at",
+        ]
+
+
+class GameInteractionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameInteraction
+        fields = [
+            "id",
+            "user_input",
+            "system_response",
+            "created_at",
+        ]
+
+
+class GameStorySerializer(serializers.ModelSerializer):
+    scenario = GameScenarioSerializer(read_only=True)
+    scenario_id = serializers.IntegerField(write_only=True)
+    model_name = serializers.CharField(write_only=True)
+    interactions = GameInteractionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = GameStory
+        fields = [
+            "id",
+            "title",
+            "scenario",
+            "scenario_id",
+            "model_name",
+            "status",
+            "created_at",
+            "updated_at",
+            "interactions",
+        ]
+        read_only_fields = ["title", "status", "created_at", "updated_at"]
+
+    def create(self, validated_data):
+        scenario_id = validated_data.pop("scenario_id")
+        model_name = validated_data.pop("model_name")
+
+        try:
+            scenario = GameScenario.objects.get(id=scenario_id, is_active=True)
+            model = LLMModel.objects.get(name=model_name, is_active=True)
+        except (GameScenario.DoesNotExist, LLMModel.DoesNotExist) as e:
+            raise serializers.ValidationError(str(e)) from e
+
+        # Copy the title from scenario
+        return GameStory.objects.create(
+            scenario=scenario,
+            model=model,
+            title=scenario.title,  # Use scenario title as story title
+            **validated_data,
         )

@@ -28,8 +28,8 @@ const menuItems = [
     name: 'dashboard',
   },
   {
-    label: 'About',
-    route: 'about',
+    label: 'Game',
+    name: 'game-scenarios',
   },
 ]
 const isSheetOpen = ref(false)

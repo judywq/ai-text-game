@@ -6,6 +6,9 @@ from django.utils import timezone
 from openpyxl import Workbook
 
 from .models import APIRequest
+from .models import GameInteraction
+from .models import GameScenario
+from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
 from .models import OpenAIKey
@@ -148,3 +151,42 @@ class OpenAIKeyAdmin(admin.ModelAdmin):
     def masked_key(self, obj):
         """Show only the last 4 characters of the key."""
         return f"...{obj.key[-4:]}" if obj.key else ""
+
+
+@admin.register(GameScenario)
+class GameScenarioAdmin(admin.ModelAdmin):
+    list_display = [
+        "title",
+        "order",
+        "is_active",
+        "created_at",
+        "updated_at",
+    ]
+    list_filter = ["is_active"]
+    search_fields = ["title", "description"]
+    ordering = ["order"]
+
+
+@admin.register(GameStory)
+class GameStoryAdmin(admin.ModelAdmin):
+    list_display = [
+        "title",
+        "user",
+        "scenario",
+        "status",
+        "created_at",
+        "updated_at",
+    ]
+    list_filter = ["status", "scenario", "user"]
+    search_fields = ["title", "user__username"]
+
+
+@admin.register(GameInteraction)
+class GameInteractionAdmin(admin.ModelAdmin):
+    list_display = [
+        "story",
+        "created_at",
+        "user_input",
+    ]
+    list_filter = ["story__scenario", "story__user"]
+    search_fields = ["user_input", "system_response"]

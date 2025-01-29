@@ -37,6 +37,23 @@ const routes = [
         },
       },
       {
+        path: '/game',
+        name: 'game-scenarios',
+        component: () => import('@/views/GameScenarioView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/game/:id',
+        name: 'game-play',
+        component: () => import('@/views/GamePlayView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/:pathMatch(.*)*',
+        name: 'not-found',
+        component: () => import('@/views/NotFoundView.vue'),
+      },
+      {
         path: 'terms',
         name: 'terms',
         component: () => import('@/views/TermsView.vue'),
@@ -88,11 +105,6 @@ const routes = [
         component: () => import('@/views/PasswordResetSentView.vue'),
       },
     ],
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'not-found',
-    component: () => import('@/views/NotFoundView.vue'),
   },
 ]
 

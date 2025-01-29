@@ -9,6 +9,7 @@ from django.conf import settings
 from pydantic import BaseModel
 
 from .models import APIRequest
+from .models import GameInteraction
 from .models import OpenAIKey
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,70 @@ def process_openai_request(
         api_request.status = "FAILED"
         api_request.error = str(e)
         api_request.save()
+        return False
+    else:
+        return True
+
+
+@dataclass
+class GameInteractionParams:
+    interaction_id: int
+    model_name: str
+    system_prompt: str
+    context: list[dict]
+    temperature: float = 0.7
+
+
+@shared_task(bind=True)
+def process_game_interaction(
+    self,
+    interaction_params_dict: dict,
+    delay_seconds=0,
+):
+    if delay_seconds > 0:
+        msg = f"Delaying game interaction by {delay_seconds} seconds"
+        logger.info(msg)
+        time.sleep(delay_seconds)
+
+    interaction_id = interaction_params_dict["interaction_id"]
+
+    try:
+        try:
+            interaction = GameInteraction.objects.select_related("story").get(
+                id=interaction_id,
+            )
+        except GameInteraction.DoesNotExist as e:
+            try:
+                self.retry(countdown=2**self.request.retries)
+            except MaxRetriesExceededError:
+                msg = f"GameInteraction with id {interaction_id} not found"
+                logger.exception(msg)
+                raise ValueError(msg) from e
+
+        params = GameInteractionParams(**interaction_params_dict)
+
+        if settings.FAKE_LLM_REQUEST:
+            interaction.system_response = "This is a test response."
+            interaction.status = "completed"
+            interaction.save()
+            return True
+
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model=params.model_name,
+            messages=params.context,
+            temperature=params.temperature,
+        )
+
+        system_response = response.choices[0].message.content
+        interaction.system_response = system_response
+        interaction.status = "completed"
+        interaction.save()
+
+    except (openai.OpenAIError, ValueError) as e:
+        interaction.status = "failed"
+        interaction.error = str(e)
+        interaction.save()
         return False
     else:
         return True

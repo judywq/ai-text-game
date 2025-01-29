@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
+from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -228,3 +229,100 @@ class OpenAIKey(models.Model):
     def get_available_key(cls):
         """Get the first available active key."""
         return cls.objects.filter(is_active=True).order_by("order").first()
+
+
+class GameScenario(models.Model):
+    title = models.CharField(
+        max_length=200,
+        help_text="Title of the scenario",
+    )
+    description = models.TextField(
+        help_text="Brief description of the scenario shown to users",
+    )
+    system_prompt = models.TextField(
+        help_text="System prompt that sets up the game context and rules",
+        validators=[MinLengthValidator(10)],
+    )
+    initial_prompt = models.TextField(
+        help_text="Initial prompt to start the story",
+        validators=[MinLengthValidator(10)],
+    )
+    order = models.IntegerField(
+        default=10,
+        help_text="Order in which scenarios are displayed (lower numbers first)",
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Only active scenarios will be shown to users",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return f"{self.title} ({'Active' if self.is_active else 'Inactive'})"
+
+
+class GameStory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    scenario = models.ForeignKey(
+        GameScenario,
+        on_delete=models.PROTECT,
+        related_name="stories",
+    )
+    model = models.ForeignKey(
+        LLMModel,
+        on_delete=models.PROTECT,
+        related_name="game_stories",
+    )
+    title = models.CharField(
+        max_length=200,
+        help_text="Title of the story (generated or user-provided)",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("IN_PROGRESS", "In Progress"),
+            ("COMPLETED", "Completed"),
+            ("ABANDONED", "Abandoned"),
+        ],
+        default="IN_PROGRESS",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name_plural = "Game stories"
+
+    def __str__(self):
+        return f"{self.title} ({self.user.username})"
+
+
+class GameInteraction(models.Model):
+    story = models.ForeignKey(
+        GameStory,
+        on_delete=models.CASCADE,
+        related_name="interactions",
+    )
+    user_input = models.TextField()
+    system_response = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("pending", "Pending"),
+            ("completed", "Completed"),
+            ("failed", "Failed"),
+        ],
+        default="pending",
+    )
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"Interaction in {self.story.title} at {self.created_at}"
