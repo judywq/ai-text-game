@@ -19,6 +19,7 @@ const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 const pollInterval = ref<number | null>(null)
+const currentWatcher = ref<(() => void) | null>(null)
 
 const { streamingContent, startStream, stopStream } = useGameStream()
 
@@ -78,6 +79,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopStream()
+  if (currentWatcher.value) {
+    currentWatcher.value()
+  }
   if (pollInterval.value) {
     clearInterval(pollInterval.value)
   }
@@ -93,6 +97,12 @@ function scrollToBottom() {
 
 async function sendMessage() {
   if (!userInput.value.trim() || !story.value) return
+
+  // Clean up previous watcher if it exists
+  if (currentWatcher.value) {
+    currentWatcher.value()
+    currentWatcher.value = null
+  }
 
   const input = userInput.value
   userInput.value = ''
@@ -117,20 +127,30 @@ async function sendMessage() {
 
     // Start streaming
     const streamPromise = startStream(story.value.id, input)
+    const streamingInteractionId = pendingInteraction.id
 
-    // Update the interaction as content streams in
-    const index = story.value.interactions.length - 1
-    watch(streamingContent, (newContent) => {
-      if (story.value && index >= 0) {
-        story.value.interactions[index].system_output = newContent
-        scrollToBottom()
+    // Create new watcher and store its cleanup function
+    currentWatcher.value = watch(streamingContent, (newContent) => {
+      if (story.value) {
+        const streamingInteraction = story.value.interactions.find(
+          i => i.id === streamingInteractionId
+        )
+        if (streamingInteraction) {
+          streamingInteraction.system_output = newContent
+          scrollToBottom()
+        }
       }
     })
 
     // Wait for completion
     const completedInteraction = await streamPromise
-    if (story.value && index >= 0) {
-      story.value.interactions[index] = completedInteraction
+    if (story.value) {
+      const index = story.value.interactions.findIndex(
+        i => i.id === streamingInteractionId
+      )
+      if (index >= 0) {
+        story.value.interactions[index] = completedInteraction
+      }
     }
 
   } catch (error) {
@@ -146,6 +166,11 @@ async function sendMessage() {
     }
     userInput.value = input
   } finally {
+    // Clean up the watcher
+    if (currentWatcher.value) {
+      currentWatcher.value()
+      currentWatcher.value = null
+    }
     isLoading.value = false
     stopStream()
   }
