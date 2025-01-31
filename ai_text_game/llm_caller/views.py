@@ -27,7 +27,6 @@ from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
 from .tasks import LLMRequestParams
-from .tasks import process_game_interaction
 from .tasks import process_openai_request
 from .utils import get_openai_client
 
@@ -184,24 +183,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
             system_input=active_config.system_prompt,
             status="pending",
         )
-
-        # Get all messages for context
-        context = []
-        for prev_interaction in story.interactions.all():
-            context.extend(prev_interaction.format_messages())
-
-        # Start streaming in background
-        transaction.on_commit(
-            lambda: process_game_interaction.delay(
-                {
-                    "interaction_id": interaction.id,
-                    "model_name": story.model.name,
-                    "context": context,
-                    "temperature": active_config.temperature,
-                },
-                delay_seconds=getattr(settings, "TASK_DELAY", 0),
-            ),
-        )
+        interaction.save()
 
         return story
 
@@ -235,6 +217,39 @@ class GameStoryViewSet(viewsets.ModelViewSet):
             system_input=system_input,
             status="pending",
         )
+
+        # Get all messages for context
+        context = []
+        for prev_interaction in story.interactions.all():
+            context.extend(prev_interaction.format_messages())
+
+        response = StreamingHttpResponse(
+            streaming_content=stream_response(story.model.name, context, interaction),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+        response["Connection"] = "keep-alive"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    @action(detail=True, methods=["post", "get"])
+    @transaction.atomic
+    def start(self, request, pk=None):
+        story = self.get_object()
+
+        # Get the existing system interaction
+        try:
+            interaction = story.interactions.get(role="system")
+        except GameInteraction.DoesNotExist:
+            return Response(
+                {"error": "System interaction not found"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if interaction.status != "pending":
+            return Response(
+                {"error": "System interaction already completed"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Get all messages for context
         context = []

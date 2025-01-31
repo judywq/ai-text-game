@@ -7,14 +7,14 @@ export function useGameStream() {
   const streamingContent = ref('')
   let eventSource: EventSource | null = null
 
-  const startStream = (storyId: number, userInput: string): Promise<GameInteraction> => {
+  const startStream = (storyId: number, userInput: string, isSystem: boolean = false): Promise<GameInteraction> => {
     streamingContent.value = ''
 
     return new Promise((resolve, reject) => {
       const interaction: GameInteraction = {
         id: Date.now(),
         story: storyId,
-        role: 'user',
+        role: isSystem ? 'system' : 'user',
         system_input: userInput,
         system_output: '',
         status: 'streaming',
@@ -22,10 +22,11 @@ export function useGameStream() {
         updated_at: new Date().toISOString()
       }
 
-      eventSource = new EventSource(
-        `${API_BASE_URL}/game-stories/${storyId}/interact/?system_input=${encodeURIComponent(userInput)}`,
-        { withCredentials: true }
-      )
+      const endpoint = isSystem
+        ? `${API_BASE_URL}/game-stories/${storyId}/start/`
+        : `${API_BASE_URL}/game-stories/${storyId}/interact/?system_input=${encodeURIComponent(userInput)}`
+
+      eventSource = new EventSource(endpoint, { withCredentials: true })
 
       eventSource.onmessage = (event) => {
         if (event.data === '[DONE]') {

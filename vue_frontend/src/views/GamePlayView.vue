@@ -59,6 +59,12 @@ onMounted(async () => {
 
   try {
     story.value = await GameService.getStory(storyId)
+
+    // Check if there are no interactions and trigger system message
+    if (story.value.interactions.length === 1 && story.value.interactions[0].role === 'system' && story.value.interactions[0].status === 'pending') {
+      await startSystemMessage(storyId)
+    }
+
     scrollToBottom()
 
     // Start polling if there are pending interactions
@@ -177,6 +183,80 @@ async function sendMessage() {
   }
 }
 
+// Add new function to handle system message
+async function startSystemMessage(storyId: number) {
+  try {
+    // Get the existing system interaction
+    const systemInteraction = story.value?.interactions[0]
+    if (!systemInteraction) {
+      throw new Error('No system interaction found')
+    }
+
+    // Create a streaming interaction based on the existing one
+    const pendingInteraction: GameInteraction = {
+      id: systemInteraction.id,
+      story: storyId,
+      role: 'system',
+      system_input: '',
+      system_output: '',
+      status: 'streaming',
+      created_at: systemInteraction.created_at,
+      updated_at: systemInteraction.updated_at
+    }
+
+    // Replace the existing interaction with the streaming one
+    if (story.value) {
+      const index = story.value.interactions.findIndex(i => i.id === systemInteraction.id)
+      if (index >= 0) {
+        story.value.interactions[index] = pendingInteraction
+      }
+    }
+    scrollToBottom()
+
+    // Start streaming
+    const streamPromise = startStream(storyId, '', true)
+    const streamingInteractionId = pendingInteraction.id
+
+    // Create new watcher for streaming content
+    currentWatcher.value = watch(streamingContent, (newContent) => {
+      if (story.value) {
+        const streamingInteraction = story.value.interactions.find(
+          i => i.id === streamingInteractionId
+        )
+        if (streamingInteraction) {
+          streamingInteraction.system_output = newContent
+          scrollToBottom()
+        }
+      }
+    })
+
+    // Wait for completion
+    const completedInteraction = await streamPromise
+    if (story.value) {
+      const index = story.value.interactions.findIndex(
+        i => i.id === streamingInteractionId
+      )
+      if (index >= 0) {
+        story.value.interactions[index] = completedInteraction
+      }
+    }
+
+  } catch (error) {
+    console.error('Failed to start system message:', error)
+    toast({
+      title: 'Error',
+      description: 'Failed to start game',
+      variant: 'destructive',
+    })
+  } finally {
+    if (currentWatcher.value) {
+      currentWatcher.value()
+      currentWatcher.value = null
+    }
+    stopStream()
+  }
+}
+
 function formatMessage(interaction: GameInteraction) {
   // Return the lines joined with <br> tags for line breaks
   return interaction.system_output.split('\n').join('<br>')
@@ -200,7 +280,7 @@ function formatMessage(interaction: GameInteraction) {
           <div v-if="story" class="space-y-2">
             <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
               <!-- User Message -->
-              <div class="flex justify-end">
+              <div v-if="interaction.system_input" class="flex justify-end">
                 <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
                   {{ interaction.system_input }}
                 </div>

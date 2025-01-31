@@ -32,4 +32,9 @@ export class GameService {
     const response = await api.get<GameStory>(`/game-stories/${storyId}/`);
     return response.data;
   }
+
+  public static async startSystemMessage(storyId: number): Promise<GameStory> {
+    const response = await api.post<GameStory>(`/game-stories/${storyId}/start/`);
+    return response.data;
+  }
 }

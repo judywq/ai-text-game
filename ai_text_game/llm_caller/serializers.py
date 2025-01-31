@@ -1,4 +1,3 @@
-from django.conf import settings
 from rest_framework import serializers
 
 from .models import APIRequest
@@ -84,20 +83,23 @@ class GameInteractionSerializer(serializers.ModelSerializer):
         model = GameInteraction
         fields = [
             "id",
+            "role",
             "system_input",
             "system_output",
+            "status",
             "created_at",
         ]
 
     def to_representation(self, instance):
-        # Only return non-system messages to frontend
-        # if instance.role == "system":
-        #     return None # noqa: ERA001
-        return super().to_representation(instance)
+        data = super().to_representation(instance)
+        # For system messages, only return the system output as assistant message
+        if instance.role == "system":
+            data["system_input"] = None
+        return data
 
 
 class GameStorySerializer(serializers.ModelSerializer):
-    interactions = serializers.SerializerMethodField()
+    interactions = GameInteractionSerializer(many=True)
     model_name = serializers.CharField(write_only=True)
 
     class Meta:
@@ -114,11 +116,6 @@ class GameStorySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["title", "status", "created_at", "updated_at"]
 
-    def get_interactions(self, obj):
-        # Filter out system messages
-        interactions = obj.interactions.exclude(role="system")
-        return GameInteractionSerializer(interactions, many=True).data
-
     def create(self, validated_data):
         model_name = validated_data.pop("model_name")
 
@@ -128,19 +125,8 @@ class GameStorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(e)) from e
 
         # Create the story
-        story = GameStory.objects.create(
+        return GameStory.objects.create(
             model=model,
             title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
-
-        # Create initial system message
-        GameInteraction.objects.create(
-            story=story,
-            role="system",
-            system_input=settings.DEFAULT_SYSTEM_PROMPT,
-            system_output="",
-            status="pending",
-        )
-
-        return story
