@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
+import { Separator } from '@/components/ui/separator'
 
 const route = useRoute()
 const router = useRouter()
@@ -192,10 +193,12 @@ function formatMessage(interaction: GameInteraction) {
           <!-- <p class="text-muted-foreground">{{ story.scenario.description }}</p> -->
         </div>
 
+        <Separator />
+
         <!-- Chat Messages -->
-        <ScrollArea ref="scrollRef" class="flex-1 pr-4 h-full">
-          <div v-if="story" class="space-y-6">
-            <div v-for="interaction in story.interactions" :key="interaction.id">
+        <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4">
+          <div v-if="story" class="space-y-2">
+            <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
               <!-- User Message -->
               <div class="flex justify-end">
                 <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
