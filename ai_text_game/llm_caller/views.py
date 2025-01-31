@@ -118,12 +118,16 @@ def stream_response(model_name, context, interaction):
     try:
         # Add fake response handling
         if settings.FAKE_LLM_REQUEST:
+            import re
+
             # Send fake content in chunks to simulate streaming
-            fake_response = "This is a test response."
+            fake_response = "This is a test response. " * 10
+
+            result = re.split(r"(?<= )", fake_response)
             accumulated_response = ""
-            for char in fake_response:
-                yield f"data: {json.dumps({'content': char})}\n\n"
-                accumulated_response += char
+            for word in result:
+                yield f"data: {json.dumps({'content': word})}\n\n"
+                accumulated_response += word
                 time.sleep(0.05)  # Add small delay to simulate real streaming
 
             interaction.system_output = accumulated_response
