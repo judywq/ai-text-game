@@ -185,7 +185,7 @@ function formatMessage(interaction: GameInteraction) {
 <template>
   <div class="container mx-auto py-8 max-w-4xl">
     <Card class="h-[800px] flex flex-col">
-      <CardContent class="flex-1 p-6 flex flex-col">
+      <CardContent class="flex-1 p-6 flex flex-col overflow-hidden">
         <!-- Story Header -->
         <div v-if="story" class="mb-6">
           <h2 class="text-2xl font-bold">{{ story.title }}</h2>
@@ -193,7 +193,7 @@ function formatMessage(interaction: GameInteraction) {
         </div>
 
         <!-- Chat Messages -->
-        <ScrollArea ref="scrollRef" class="flex-1 pr-4">
+        <ScrollArea ref="scrollRef" class="flex-1 pr-4 h-full">
           <div v-if="story" class="space-y-6">
             <div v-for="interaction in story.interactions" :key="interaction.id">
               <!-- User Message -->
