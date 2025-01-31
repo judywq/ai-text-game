@@ -2,26 +2,46 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
-import type { GameScenario } from '@/types/game'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup } from '@/components/ui/select'
-import { useToast } from '@/components/ui/toast/use-toast'
 import { LLMModelService } from '@/services/llmModelService'
 import type { LLMModel } from '@/types/llm'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Combobox } from '@/components/ui/combobox'
+import { useToast } from '@/components/ui/toast/use-toast'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const router = useRouter()
 const { toast } = useToast()
-const scenarios = ref<GameScenario[]>([])
 const selectedModel = ref('')
+const selectedGenre = ref('')
 const isLoading = ref(false)
 const modelOptions = ref<LLMModel[]>([])
+
+// Predefined genres
+const genres = [
+  'Fantasy',
+  'Science Fiction',
+  'Mystery',
+  'Horror',
+  'Romance',
+  'Adventure',
+  'Historical Fiction',
+  'Western',
+  'Thriller',
+  'Comedy'
+]
 
 const updateModelQuotas = async () => {
   try {
     const models = await LLMModelService.getActiveModels()
     modelOptions.value = models
-    // If current selected model is no longer available, select default or first
     if (!models.find(model => model.name === selectedModel.value)) {
       const defaultModel = models.find(model => model.is_default)
       selectedModel.value = defaultModel?.name || models[0]?.name || ''
@@ -38,10 +58,7 @@ const updateModelQuotas = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([
-      GameService.getScenarios().then(data => scenarios.value = data),
-      updateModelQuotas()
-    ])
+    await updateModelQuotas()
   } catch (error) {
     toast({
       title: 'Error',
@@ -51,11 +68,11 @@ onMounted(async () => {
   }
 })
 
-async function startGame(scenario: GameScenario) {
-  if (!selectedModel.value) {
+async function startGame() {
+  if (!selectedModel.value || !selectedGenre.value) {
     toast({
       title: 'Error',
-      description: 'Please select a model first',
+      description: 'Please select both a model and genre',
       variant: 'destructive',
     })
     return
@@ -63,7 +80,7 @@ async function startGame(scenario: GameScenario) {
 
   isLoading.value = true
   try {
-    const story = await GameService.createStory(scenario.id, selectedModel.value)
+    const story = await GameService.createStory(selectedGenre.value, selectedModel.value)
     router.push(`/game/${story.id}`)
   } catch (error) {
     toast({
@@ -79,57 +96,64 @@ async function startGame(scenario: GameScenario) {
 
 <template>
   <div class="container mx-auto py-8">
-    <h1 class="text-3xl font-bold mb-6">Choose Your Adventure</h1>
 
-    <div class="mb-6">
-      <Select v-model="selectedModel">
-        <SelectTrigger class="w-[280px]">
-          <SelectValue placeholder="Select a model" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectGroup>
-            <SelectItem
-              v-for="model in modelOptions"
-              :key="model.name"
-              :value="model.name"
-            >
-              {{ model.display_name }}
-              <span
-                v-if="model.daily_limit"
-                :class="{
-                  'text-red-500': model.used_quota >= model.daily_limit,
-                  'text-muted-foreground': model.used_quota < model.daily_limit
-                }"
-                class="ml-2"
-              >
-                ({{ model.used_quota }}/{{ model.daily_limit }})
-              </span>
-            </SelectItem>
-          </SelectGroup>
-        </SelectContent>
-      </Select>
-    </div>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <Card
-        v-for="scenario in scenarios"
-        :key="scenario.id"
-        class="hover:shadow-lg transition-shadow"
-      >
-        <CardHeader>
-          <CardTitle>{{ scenario.title }}</CardTitle>
-          <CardDescription>{{ scenario.description }}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            class="w-full"
-            :disabled="isLoading || !selectedModel"
-            @click="startGame(scenario)"
-          >
-            Start Adventure
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <Card class="max-w-md mx-auto">
+    <CardHeader>
+      <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
+      <CardDescription>Select a model and genre to start your adventure</CardDescription>
+    </CardHeader>
+      <CardContent class="space-y-4 pt-6">
+        <!-- Model Selection -->
+
+          <label class="text-sm font-medium mb-2 block">Select Model</label>
+          <Select v-model="selectedModel">
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="Select a model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem
+                  v-for="model in modelOptions"
+                  :key="model.name"
+                  :value="model.name"
+                >
+                  {{ model.display_name }}
+                  <span
+                    v-if="model.daily_limit"
+                    :class="{
+                      'text-red-500': model.used_quota >= model.daily_limit,
+                      'text-muted-foreground': model.used_quota < model.daily_limit
+                    }"
+                    class="ml-2"
+                  >
+                    ({{ model.used_quota }}/{{ model.daily_limit }})
+                  </span>
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+
+        <!-- Genre Selection -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium">Select or Enter Genre</label>
+          <Combobox
+            v-model="selectedGenre"
+            :options="genres"
+            placeholder="Select or type a genre"
+            :allow-custom="true"
+          />
+        </div>
+
+        <!-- Start Button -->
+        <Button
+          class="w-full"
+          :disabled="isLoading || !selectedModel || !selectedGenre"
+          @click="startGame"
+        >
+          Start Adventure
+        </Button>
+      </CardContent>
+    </Card>
   </div>
 </template>

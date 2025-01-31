@@ -1,7 +1,11 @@
+import json
+import time
 from dataclasses import asdict
 
+import openai
 from django.conf import settings
 from django.db import transaction
+from django.http import StreamingHttpResponse
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -16,15 +20,16 @@ from .models import GameScenario
 from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
+from .models import OpenAIKey
+from .negotiation import IgnoreClientContentNegotiation
 from .serializers import APIRequestSerializer
-from .serializers import GameInteractionSerializer
 from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
-from .tasks import GameInteractionParams
 from .tasks import LLMRequestParams
 from .tasks import process_game_interaction
 from .tasks import process_openai_request
+from .utils import get_openai_client
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -109,66 +114,134 @@ class GameScenarioViewSet(viewsets.ReadOnlyModelViewSet):
         return GameScenario.objects.filter(is_active=True)
 
 
+def stream_response(model_name, context, interaction):
+    try:
+        # Add fake response handling
+        if settings.FAKE_LLM_REQUEST:
+            # Send fake content in chunks to simulate streaming
+            fake_response = "This is a test response."
+            accumulated_response = ""
+            for char in fake_response:
+                yield f"data: {json.dumps({'content': char})}\n\n"
+                accumulated_response += char
+                time.sleep(0.05)  # Add small delay to simulate real streaming
+
+            interaction.system_output = accumulated_response
+            interaction.status = "completed"
+            interaction.save()
+            yield "data: [DONE]\n\n"
+            return
+
+        # Existing code...
+        key = OpenAIKey.get_available_key()
+        client = get_openai_client(key)
+        accumulated_response = ""
+        for chunk in client.chat.completions.create(
+            model=model_name,
+            messages=context,
+            stream=True,
+        ):
+            if chunk and chunk.choices[0].delta.content:
+                content = chunk.choices[0].delta.content
+                accumulated_response += content
+                # Send the chunk to the client
+                yield f"data: {json.dumps({'content': content})}\n\n"
+
+        # Update interaction status when done
+        interaction.system_output = accumulated_response
+        interaction.status = "completed"
+        interaction.save()
+        yield "data: [DONE]\n\n"
+    except (openai.OpenAIError, ValueError) as e:
+        interaction.status = "failed"
+        interaction.error = str(e)
+        interaction.save()
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+
 class GameStoryViewSet(viewsets.ModelViewSet):
     serializer_class = GameStorySerializer
     permission_classes = [IsAuthenticated]
+    # https://stackoverflow.com/a/78210808/1938012
+    content_negotiation_class = IgnoreClientContentNegotiation
 
     def get_queryset(self):
         return GameStory.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        # Create the story with system and initial user messages
+        story = serializer.save(user=self.request.user)
+        active_config = LLMConfig.get_active_config()
 
-    @action(detail=True, methods=["post"])
-    @transaction.atomic
-    def interact(self, request, pk=None):
-        story = self.get_object()
-        user_input = request.data.get("user_input")
-
-        if not user_input:
-            return Response(
-                {"error": "user_input is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Create the interaction first
+        # Create initial system message
         interaction = GameInteraction.objects.create(
             story=story,
-            user_input=user_input,
+            role="system",
+            system_input=active_config.system_prompt,
             status="pending",
         )
 
-        # Construct the context for the LLM
-        context = [
-            {"role": "system", "content": story.scenario.system_prompt},
-        ]
+        # Get all messages for context
+        context = []
+        for prev_interaction in story.interactions.all():
+            context.extend(prev_interaction.format_messages())
 
-        # Add previous interactions for context
-        for prev_interaction in story.interactions.filter(status="completed"):
-            context.extend(
-                [
-                    {"role": "user", "content": prev_interaction.user_input},
-                    {"role": "assistant", "content": prev_interaction.system_response},
-                ],
-            )
-
-        # Add the new user input
-        context.append({"role": "user", "content": user_input})
-
-        # Prepare parameters for the task
-        interaction_params = GameInteractionParams(
-            interaction_id=interaction.id,
-            model_name=story.model.name,
-            system_prompt=story.scenario.system_prompt,
-            context=context,
-        )
-
-        # Schedule the task to run after transaction commit
+        # Start streaming in background
         transaction.on_commit(
             lambda: process_game_interaction.delay(
-                asdict(interaction_params),
+                {
+                    "interaction_id": interaction.id,
+                    "model_name": story.model.name,
+                    "context": context,
+                    "temperature": active_config.temperature,
+                },
                 delay_seconds=getattr(settings, "TASK_DELAY", 0),
             ),
         )
 
-        return Response(GameInteractionSerializer(interaction).data)
+        return story
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        story = self.perform_create(serializer)
+        return Response(self.get_serializer(story).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post", "get"])
+    @transaction.atomic
+    def interact(self, request, pk=None):
+        story = self.get_object()
+
+        # Handle GET request for SSE
+        if request.method == "GET":
+            system_input = request.GET.get("system_input")
+        else:
+            system_input = request.data.get("system_input")
+
+        if not system_input:
+            return Response(
+                {"error": "system_input is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Create the interaction
+        interaction = GameInteraction.objects.create(
+            story=story,
+            role="user",
+            system_input=system_input,
+            status="pending",
+        )
+
+        # Get all messages for context
+        context = []
+        for prev_interaction in story.interactions.all():
+            context.extend(prev_interaction.format_messages())
+
+        response = StreamingHttpResponse(
+            streaming_content=stream_response(story.model.name, context, interaction),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+        response["Connection"] = "keep-alive"
+        response["X-Accel-Buffering"] = "no"
+        return response

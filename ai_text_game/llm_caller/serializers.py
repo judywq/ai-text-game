@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import APIRequest
@@ -73,7 +74,7 @@ class GameScenarioSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
-            "description",
+            "genre",
             "created_at",
         ]
 
@@ -83,25 +84,28 @@ class GameInteractionSerializer(serializers.ModelSerializer):
         model = GameInteraction
         fields = [
             "id",
-            "user_input",
-            "system_response",
+            "system_input",
+            "system_output",
             "created_at",
         ]
 
+    def to_representation(self, instance):
+        # Only return non-system messages to frontend
+        # if instance.role == "system":
+        #     return None # noqa: ERA001
+        return super().to_representation(instance)
+
 
 class GameStorySerializer(serializers.ModelSerializer):
-    scenario = GameScenarioSerializer(read_only=True)
-    scenario_id = serializers.IntegerField(write_only=True)
+    interactions = serializers.SerializerMethodField()
     model_name = serializers.CharField(write_only=True)
-    interactions = GameInteractionSerializer(many=True, read_only=True)
 
     class Meta:
         model = GameStory
         fields = [
             "id",
             "title",
-            "scenario",
-            "scenario_id",
+            "genre",
             "model_name",
             "status",
             "created_at",
@@ -110,20 +114,33 @@ class GameStorySerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["title", "status", "created_at", "updated_at"]
 
+    def get_interactions(self, obj):
+        # Filter out system messages
+        interactions = obj.interactions.exclude(role="system")
+        return GameInteractionSerializer(interactions, many=True).data
+
     def create(self, validated_data):
-        scenario_id = validated_data.pop("scenario_id")
         model_name = validated_data.pop("model_name")
 
         try:
-            scenario = GameScenario.objects.get(id=scenario_id, is_active=True)
             model = LLMModel.objects.get(name=model_name, is_active=True)
-        except (GameScenario.DoesNotExist, LLMModel.DoesNotExist) as e:
+        except LLMModel.DoesNotExist as e:
             raise serializers.ValidationError(str(e)) from e
 
-        # Copy the title from scenario
-        return GameStory.objects.create(
-            scenario=scenario,
+        # Create the story
+        story = GameStory.objects.create(
             model=model,
-            title=scenario.title,  # Use scenario title as story title
+            title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
+
+        # Create initial system message
+        GameInteraction.objects.create(
+            story=story,
+            role="system",
+            system_input=settings.DEFAULT_SYSTEM_PROMPT,
+            system_output="",
+            status="pending",
+        )
+
+        return story

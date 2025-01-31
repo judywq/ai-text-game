@@ -11,19 +11,9 @@ from pydantic import BaseModel
 from .models import APIRequest
 from .models import GameInteraction
 from .models import OpenAIKey
+from .utils import get_openai_client
 
 logger = logging.getLogger(__name__)
-
-
-def get_openai_client():
-    key = OpenAIKey.get_available_key()
-    if not key:
-        msg = (
-            "No active OpenAI API key found."
-            " Please add an API key in the admin interface."
-        )
-        raise ValueError(msg)
-    return openai.OpenAI(api_key=key.key)
 
 
 class EssayScore(BaseModel):
@@ -78,7 +68,8 @@ def process_openai_request(
             essay=api_request.essay,
         )
 
-        client = get_openai_client()
+        key = OpenAIKey.get_available_key()
+        client = get_openai_client(key)
         response = client.chat.completions.create(
             model=request_params.model_name,
             messages=[
@@ -131,9 +122,9 @@ def process_game_interaction(
         logger.info(msg)
         time.sleep(delay_seconds)
 
-    interaction_id = interaction_params_dict["interaction_id"]
-
     try:
+        params = GameInteractionParams(**interaction_params_dict)
+        interaction_id = params.interaction_id
         try:
             interaction = GameInteraction.objects.select_related("story").get(
                 id=interaction_id,
@@ -146,23 +137,22 @@ def process_game_interaction(
                 logger.exception(msg)
                 raise ValueError(msg) from e
 
-        params = GameInteractionParams(**interaction_params_dict)
-
         if settings.FAKE_LLM_REQUEST:
-            interaction.system_response = "This is a test response."
+            interaction.system_output = "This is a test response."
             interaction.status = "completed"
             interaction.save()
             return True
 
-        client = get_openai_client()
+        key = OpenAIKey.get_available_key()
+        client = get_openai_client(key)
         response = client.chat.completions.create(
             model=params.model_name,
             messages=params.context,
             temperature=params.temperature,
         )
 
-        system_response = response.choices[0].message.content
-        interaction.system_response = system_response
+        system_output = response.choices[0].message.content
+        interaction.system_output = system_output
         interaction.status = "completed"
         interaction.save()
 

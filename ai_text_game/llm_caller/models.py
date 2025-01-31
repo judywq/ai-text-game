@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
-from django.core.validators import MinLengthValidator
 from django.core.validators import MinValueValidator
 from django.db import models
 
@@ -236,16 +235,9 @@ class GameScenario(models.Model):
         max_length=200,
         help_text="Title of the scenario",
     )
-    description = models.TextField(
-        help_text="Brief description of the scenario shown to users",
-    )
-    system_prompt = models.TextField(
-        help_text="System prompt that sets up the game context and rules",
-        validators=[MinLengthValidator(10)],
-    )
-    initial_prompt = models.TextField(
-        help_text="Initial prompt to start the story",
-        validators=[MinLengthValidator(10)],
+    genre = models.CharField(
+        max_length=100,
+        help_text="Genre of the scenario (e.g., Fantasy, Sci-Fi)",
     )
     order = models.IntegerField(
         default=10,
@@ -267,10 +259,9 @@ class GameScenario(models.Model):
 
 class GameStory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    scenario = models.ForeignKey(
-        GameScenario,
-        on_delete=models.PROTECT,
-        related_name="stories",
+    genre = models.CharField(
+        max_length=100,
+        help_text="Genre of the story (e.g., Fantasy, Sci-Fi)",
     )
     model = models.ForeignKey(
         LLMModel,
@@ -307,8 +298,17 @@ class GameInteraction(models.Model):
         on_delete=models.CASCADE,
         related_name="interactions",
     )
-    user_input = models.TextField()
-    system_response = models.TextField(blank=True)
+    role = models.CharField(
+        max_length=10,
+        choices=[
+            ("system", "System"),
+            ("user", "User"),
+            ("assistant", "Assistant"),
+        ],
+        default="user",
+    )
+    system_input = models.TextField()
+    system_output = models.TextField(blank=True)
     status = models.CharField(
         max_length=20,
         choices=[
@@ -326,3 +326,16 @@ class GameInteraction(models.Model):
 
     def __str__(self):
         return f"Interaction in {self.story.title} at {self.created_at}"
+
+    def format_messages(self):
+        """Format the message for the LLM API."""
+        return [
+            {
+                "role": self.role,
+                "content": self.system_input,
+            },
+            {
+                "role": "assistant",
+                "content": self.system_output,
+            },
+        ]

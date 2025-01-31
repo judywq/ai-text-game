@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+import openai
 from django.utils import timezone
 
 
@@ -15,3 +16,13 @@ def get_today_date_range():
     today_end = today_start + timedelta(days=1)
 
     return today_start, today_end
+
+
+def get_openai_client(key):
+    if not key:
+        msg = (
+            "No active OpenAI API key found."
+            " Please add an API key in the admin interface."
+        )
+        raise ValueError(msg)
+    return openai.OpenAI(api_key=key.key)

@@ -172,12 +172,12 @@ class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "title",
         "user",
-        "scenario",
+        "genre",
         "status",
         "created_at",
         "updated_at",
     ]
-    list_filter = ["status", "scenario", "user"]
+    list_filter = ["status", "genre", "user"]
     search_fields = ["title", "user__username"]
 
 
@@ -185,8 +185,11 @@ class GameStoryAdmin(admin.ModelAdmin):
 class GameInteractionAdmin(admin.ModelAdmin):
     list_display = [
         "story",
+        "role",
         "created_at",
-        "user_input",
+        "system_input",
+        "system_output",
+        "status",
     ]
-    list_filter = ["story__scenario", "story__user"]
-    search_fields = ["user_input", "system_response"]
+    list_filter = ["story__genre", "story__user"]
+    search_fields = ["system_input", "system_output"]

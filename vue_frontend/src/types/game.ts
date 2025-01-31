@@ -7,9 +7,13 @@ export interface GameScenario {
 
 export interface GameInteraction {
   id: number
-  user_input: string
-  system_response: string
+  story: number
+  role: string
+  system_input: string
+  system_output: string
+  status: 'pending' | 'completed' | 'failed' | 'streaming'
   created_at: string
+  updated_at: string
 }
 
 export interface GameStory {
