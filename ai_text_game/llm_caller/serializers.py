@@ -99,7 +99,7 @@ class GameInteractionSerializer(serializers.ModelSerializer):
 
 
 class GameStorySerializer(serializers.ModelSerializer):
-    interactions = GameInteractionSerializer(many=True)
+    interactions = GameInteractionSerializer(many=True, read_only=True)
     model_name = serializers.CharField(write_only=True)
 
     class Meta:
