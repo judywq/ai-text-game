@@ -327,6 +327,11 @@ class GameInteraction(models.Model):
     def __str__(self):
         return f"Interaction in {self.story.title} at {self.created_at}"
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update the parent story's updated_at timestamp
+        self.story.save(update_fields=["updated_at"])
+
     def format_messages(self):
         """Format the message for the LLM API."""
         return [
