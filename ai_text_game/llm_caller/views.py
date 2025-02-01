@@ -21,6 +21,7 @@ from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
 from .models import OpenAIKey
+from .models import TextExplanation
 from .negotiation import IgnoreClientContentNegotiation
 from .serializers import APIRequestSerializer
 from .serializers import GameScenarioSerializer
@@ -264,3 +265,58 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         response["Connection"] = "keep-alive"
         response["X-Accel-Buffering"] = "no"
         return response
+
+    # NEW: Nested explanations endpoint for a specific game story
+    @action(detail=True, methods=["get", "post"])
+    def explanations(self, request, pk=None):
+        from django.conf import settings
+
+        from .serializers import TextExplanationSerializer
+
+        story = self.get_object()
+        if request.method == "GET":
+            # Return lookup history for this story
+            lookups = story.explanations.all().order_by("-created_at")
+            serializer = TextExplanationSerializer(lookups, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        # POST: create a new explanation lookup
+        selected_text = request.data.get("selected_text")
+        context_text = request.data.get("context_text")
+        if not all([selected_text, context_text]):
+            return Response(
+                {"error": "Missing required fields."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        prompt = settings.EXPLANATION_PROMPT.format(
+            context_text=context_text,
+            selected_text=selected_text,
+        )
+
+        if settings.FAKE_LLM_REQUEST:
+            explanation = "This is a fake explanation based on the provided context."
+            time.sleep(0.1)
+        else:
+            try:
+                client = get_openai_client(OpenAIKey.get_available_key())
+                response = client.chat.completions.create(
+                    model=settings.EXPLANATION_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=settings.EXPLANATION_TEMPERATURE,
+                )
+                explanation = response.choices[0].message.content.strip()
+            except (openai.OpenAIError, ValueError) as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        lookup = TextExplanation.objects.create(
+            user=request.user,
+            story=story,
+            selected_text=selected_text,
+            context_text=context_text,
+            explanation=explanation,
+        )
+        serializer = TextExplanationSerializer(lookup)
+        return Response(serializer.data, status=status.HTTP_200_OK)

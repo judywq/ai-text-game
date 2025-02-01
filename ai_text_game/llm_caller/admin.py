@@ -13,6 +13,7 @@ from .models import LLMConfig
 from .models import LLMModel
 from .models import OpenAIKey
 from .models import QuotaConfig
+from .models import TextExplanation
 
 
 @admin.register(QuotaConfig)
@@ -193,3 +194,17 @@ class GameInteractionAdmin(admin.ModelAdmin):
     ]
     list_filter = ["story__genre", "story__user"]
     search_fields = ["system_input", "system_output"]
+
+
+@admin.register(TextExplanation)
+class TextExplanationAdmin(admin.ModelAdmin):
+    list_display = [
+        "user",
+        "story",
+        "selected_text",
+        "context_text",
+        "explanation",
+        "created_at",
+    ]
+    list_filter = ["user", "story"]
+    search_fields = ["selected_text", "explanation"]

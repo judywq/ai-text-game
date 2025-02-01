@@ -5,6 +5,7 @@ from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMModel
+from .models import TextExplanation
 
 
 class LLMModelSerializer(serializers.ModelSerializer):
@@ -130,3 +131,9 @@ class GameStorySerializer(serializers.ModelSerializer):
             title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
+
+
+class TextExplanationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TextExplanation
+        fields = "__all__"

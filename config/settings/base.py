@@ -384,6 +384,8 @@ VUE_FRONTEND_USE_TYPESCRIPT = False
 # Your stuff...
 # ------------------------------------------------------------------------------
 FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
+# FAKE_LLM_REQUEST = False
+# FAKE_LLM_REQUEST = True
 
 # https://platform.openai.com/docs/guides/structured-outputs#supported-models
 OPENAI_JSON_SCHEMA_MODELS = [
@@ -395,6 +397,14 @@ OPENAI_JSON_SCHEMA_MODELS = [
     "gpt-4o-2024-08-06",
     "gpt-4o-2024-11-20",
 ]
+
+# Explanation related settings
+EXPLANATION_MODEL = "gpt-4o-mini"
+EXPLANATION_TEMPERATURE = 0.1
+EXPLANATION_PROMPT = """Explain the following text in context.
+Text: {selected_text}
+Context: {context_text}
+"""
 
 
 DEFAULT_SYSTEM_PROMPT = """You are AI Text Game Master. You are responsible for creating a story for the user.

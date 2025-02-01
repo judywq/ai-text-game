@@ -343,3 +343,24 @@ class GameInteraction(models.Model):
                 "content": self.system_output,
             },
         ]
+
+
+# New model for text explanation lookups
+class TextExplanation(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="explanations",
+    )
+    story = models.ForeignKey(
+        "GameStory",
+        on_delete=models.CASCADE,
+        related_name="explanations",
+    )
+    selected_text = models.TextField()
+    context_text = models.TextField()
+    explanation = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Explanation for {self.selected_text[:30]} by {self.user}"

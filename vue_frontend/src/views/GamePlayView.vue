@@ -2,14 +2,16 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
-import { useGameStream } from '@/composables/useGameStream'
+import { ExplanationService } from '@/services/explanationService'
 import type { GameStory, GameInteraction } from '@/types/game'
+import type { TextExplanation } from '@/types/explanation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Separator } from '@/components/ui/separator'
+import { useGameStream } from '@/composables/useGameStream'
 
 const route = useRoute()
 const router = useRouter()
@@ -24,6 +26,99 @@ const currentWatcher = ref<(() => void) | null>(null)
 
 const { streamingContent, startStream, stopStream } = useGameStream()
 
+const rawSelection = ref('')
+const contextSelection = ref('')
+const popupPosition = ref({ x: 0, y: 0 })
+const showLookupButton = ref(false)
+const explanationModalVisible = ref(false)
+const currentExplanation = ref<TextExplanation | null>(null)
+const lookupHistory = ref<TextExplanation[]>([])
+
+// New helper function using the Range object for an accurate context extraction.
+function extractSentenceFromRange(range: Range): string {
+  // Get the text node in which the selection exists.
+  const textNode = range.startContainer;
+  if (!textNode || textNode.nodeType !== Node.TEXT_NODE) {
+    // If it's not a text node, return the raw selection.
+    return range.toString().trim();
+  }
+  const textContent = textNode.textContent || "";
+  let start = range.startOffset;
+  // Move backwards until a sentence delimiter is found or the beginning is reached.
+  while (start > 0 && !".!?".includes(textContent[start - 1])) {
+    start--;
+  }
+  let end = range.endOffset;
+  // Move forward until a sentence delimiter is found or the end is reached.
+  while (end < textContent.length && !".!?".includes(textContent[end])) {
+    end++;
+  }
+  return textContent.slice(start, end).trim();
+}
+
+function handleTextSelection(e: MouseEvent) {
+  const sel = window.getSelection();
+  if (!sel || sel.toString().trim().length === 0) {
+    showLookupButton.value = false;
+    return;
+  }
+
+  // If selection spans different nodes, refuse the request
+  if (sel.anchorNode !== sel.focusNode) {
+    toast({
+      title: 'Error',
+      description: 'Please select text within a single message!',
+      variant: 'destructive',
+    });
+    sel.removeAllRanges();
+    showLookupButton.value = false;
+    return;
+  }
+
+  const range = sel.getRangeAt(0);
+  rawSelection.value = sel.toString().trim();
+  contextSelection.value = extractSentenceFromRange(range);
+  // console.debug({ "Raw selection": rawSelection.value, "Context": contextSelection.value });
+
+  // Position the popup at the cursor's position
+  popupPosition.value = { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY };
+  showLookupButton.value = true;
+}
+
+function clearTextSelection() {
+  rawSelection.value = ''
+  contextSelection.value = ''
+  showLookupButton.value = false
+}
+
+async function lookupExplanationSubmit() {
+  if (!story.value) return
+  try {
+    const result = await ExplanationService.lookupExplanation(story.value.id, rawSelection.value, contextSelection.value)
+    currentExplanation.value = result
+    explanationModalVisible.value = true
+    fetchLookupHistory()
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: 'Failed to lookup explanation',
+      variant: 'destructive',
+    })
+  } finally {
+    clearTextSelection()
+  }
+}
+
+async function fetchLookupHistory() {
+  if (!story.value) return;
+  try {
+    const history = await ExplanationService.getLookupHistory(story.value.id)
+    lookupHistory.value = history
+  } catch (error) {
+    console.error("Failed to fetch lookup history", error)
+  }
+}
+
 async function pollForUpdates() {
   if (!story.value?.id) return
 
@@ -31,7 +126,6 @@ async function pollForUpdates() {
     const updatedStory = await GameService.pollStoryUpdates(story.value.id)
     story.value = updatedStory
 
-    // Check if we should stop polling
     const pendingInteractions = updatedStory.interactions.some(
       interaction => interaction.status === 'pending'
     )
@@ -60,20 +154,19 @@ onMounted(async () => {
   try {
     story.value = await GameService.getStory(storyId)
 
-    // Check if there are no interactions and trigger system message
     if (story.value.interactions.length === 1 && story.value.interactions[0].role === 'system' && story.value.interactions[0].status === 'pending') {
       await startSystemMessage(storyId)
     }
 
     scrollToBottom()
 
-    // Start polling if there are pending interactions
     const hasPendingInteractions = story.value.interactions.some(
       interaction => interaction.status === 'pending'
     )
     if (hasPendingInteractions) {
-      pollInterval.value = setInterval(pollForUpdates, 2000) // Poll every 2 seconds
+      pollInterval.value = setInterval(pollForUpdates, 2000)
     }
+    fetchLookupHistory()
   } catch (error) {
     toast({
       title: 'Error',
@@ -105,7 +198,6 @@ function scrollToBottom() {
 async function sendMessage() {
   if (!userInput.value.trim() || !story.value) return
 
-  // Clean up previous watcher if it exists
   if (currentWatcher.value) {
     currentWatcher.value()
     currentWatcher.value = null
@@ -116,7 +208,6 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
-    // Create a streaming interaction immediately
     const pendingInteraction: GameInteraction = {
       id: Date.now(),
       story: story.value.id,
@@ -128,15 +219,12 @@ async function sendMessage() {
       updated_at: new Date().toISOString()
     }
 
-    // Add it to the story immediately
     story.value.interactions.push(pendingInteraction)
     scrollToBottom()
 
-    // Start streaming
     const streamPromise = startStream(story.value.id, input)
     const streamingInteractionId = pendingInteraction.id
 
-    // Create new watcher and store its cleanup function
     currentWatcher.value = watch(streamingContent, (newContent) => {
       if (story.value) {
         const streamingInteraction = story.value.interactions.find(
@@ -149,7 +237,6 @@ async function sendMessage() {
       }
     })
 
-    // Wait for completion
     const completedInteraction = await streamPromise
     if (story.value) {
       const index = story.value.interactions.findIndex(
@@ -173,7 +260,6 @@ async function sendMessage() {
     }
     userInput.value = input
   } finally {
-    // Clean up the watcher
     if (currentWatcher.value) {
       currentWatcher.value()
       currentWatcher.value = null
@@ -183,16 +269,12 @@ async function sendMessage() {
   }
 }
 
-// Add new function to handle system message
 async function startSystemMessage(storyId: number) {
   try {
-    // Get the existing system interaction
     const systemInteraction = story.value?.interactions[0]
     if (!systemInteraction) {
       throw new Error('No system interaction found')
     }
-
-    // Create a streaming interaction based on the existing one
     const pendingInteraction: GameInteraction = {
       id: systemInteraction.id,
       story: storyId,
@@ -203,8 +285,6 @@ async function startSystemMessage(storyId: number) {
       created_at: systemInteraction.created_at,
       updated_at: systemInteraction.updated_at
     }
-
-    // Replace the existing interaction with the streaming one
     if (story.value) {
       const index = story.value.interactions.findIndex(i => i.id === systemInteraction.id)
       if (index >= 0) {
@@ -212,12 +292,9 @@ async function startSystemMessage(storyId: number) {
       }
     }
     scrollToBottom()
-
-    // Start streaming
     const streamPromise = startStream(storyId, '', true)
     const streamingInteractionId = pendingInteraction.id
 
-    // Create new watcher for streaming content
     currentWatcher.value = watch(streamingContent, (newContent) => {
       if (story.value) {
         const streamingInteraction = story.value.interactions.find(
@@ -230,7 +307,6 @@ async function startSystemMessage(storyId: number) {
       }
     })
 
-    // Wait for completion
     const completedInteraction = await streamPromise
     if (story.value) {
       const index = story.value.interactions.findIndex(
@@ -258,7 +334,6 @@ async function startSystemMessage(storyId: number) {
 }
 
 function formatMessage(interaction: GameInteraction) {
-  // Return the lines joined with <br> tags for line breaks
   return interaction.system_output.split('\n').join('<br>')
 }
 </script>
@@ -267,26 +342,21 @@ function formatMessage(interaction: GameInteraction) {
   <div class="container mx-auto py-8 max-w-4xl">
     <Card class="h-[800px] flex flex-col">
       <CardContent class="flex-1 p-6 flex flex-col overflow-hidden">
-        <!-- Story Header -->
         <div v-if="story" class="mb-6">
           <h2 class="text-2xl font-bold">{{ story.title }}</h2>
-          <!-- <p class="text-muted-foreground">{{ story.scenario.description }}</p> -->
         </div>
 
         <Separator />
 
-        <!-- Chat Messages -->
-        <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4">
+        <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4" @mouseup="handleTextSelection">
           <div v-if="story" class="space-y-2">
             <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
-              <!-- User Message -->
               <div v-if="interaction.system_input" class="flex justify-end">
                 <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
                   {{ interaction.system_input }}
                 </div>
               </div>
 
-              <!-- System Response -->
               <div class="flex">
                 <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
                   <div v-if="interaction.status === 'streaming'">
@@ -295,14 +365,37 @@ function formatMessage(interaction: GameInteraction) {
                   <div v-else-if="interaction.status === 'failed'" class="text-destructive">
                     Failed to generate response. Please try again.
                   </div>
-                  <div v-else v-html="formatMessage(interaction)" />
+                  <div v-else v-html="formatMessage(interaction)"></div>
                 </div>
               </div>
             </div>
           </div>
         </ScrollArea>
 
-        <!-- Input Area -->
+        <div v-if="showLookupButton" :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
+          <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
+            <span>?</span>
+          </Button>
+        </div>
+
+        <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div class="bg-white p-4 rounded shadow-lg max-w-md">
+            <h3 class="font-bold mb-2">Explanation</h3>
+            <p class="mb-4">{{ currentExplanation?.explanation }}</p>
+            <Button @click="explanationModalVisible = false">Close</Button>
+          </div>
+        </div>
+
+        <div class="absolute top-0 right-0 h-full w-64 bg-gray-100 p-4 overflow-y-auto">
+          <h4 class="font-bold mb-2">Lookup History</h4>
+          <ul>
+            <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer" @click="currentExplanation = item; explanationModalVisible = true">
+              <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
+              <div class="text-xs text-gray-500">{{ new Date(item.created_at).toLocaleString() }}</div>
+            </li>
+          </ul>
+        </div>
+
         <div class="mt-4 space-y-4">
           <Textarea
             v-model="userInput"
@@ -311,17 +404,10 @@ function formatMessage(interaction: GameInteraction) {
             @keydown.enter.exact.prevent="sendMessage"
           />
           <div class="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              :disabled="isLoading"
-              @click="router.push('/game')"
-            >
+            <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
               Exit Game
             </Button>
-            <Button
-              :disabled="isLoading || !userInput.trim()"
-              @click="sendMessage"
-            >
+            <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
               Send
             </Button>
           </div>
