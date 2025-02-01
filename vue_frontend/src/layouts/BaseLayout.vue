@@ -22,7 +22,7 @@ onMounted(() => {
     <NavBar />
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
+    <main class="flex-grow">
       <router-view v-slot="{ Component }">
         <transition
           name="fade"
@@ -35,7 +35,7 @@ onMounted(() => {
     </main>
 
     <!-- Footer -->
-    <Footer />
+    <!-- <Footer /> -->
   </div>
 </template>
 

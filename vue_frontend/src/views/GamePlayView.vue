@@ -342,72 +342,73 @@ function formatMessage(interaction: GameInteraction) {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 max-w-6xl">
-    <!-- Flex container: Card and Lookup History side by side -->
-    <div class="flex flex-col md:flex-row md:space-x-4 justify-center">
-      <div class="flex-1">
-        <!-- Game Area Card that adjusts width -->
-        <Card class="h-[800px] flex flex-col">
-          <CardContent class="flex-1 p-6 flex flex-col overflow-hidden">
-            <div v-if="story" class="mb-6">
-              <h2 class="text-2xl font-bold">{{ story.title }}</h2>
-            </div>
+  <div class="container mx-auto max-w-6xl md:pt-6" style="height: calc(100vh - 64px)">
+    <!-- Flex container: Game area and Lookup History side by side -->
+    <div class="flex flex-col md:flex-row md:space-x-4 h-full">
+      <div class="flex-1 flex flex-col border border-transparent">
+        <!-- Game Area: scrollable messages -->
+        <div class="flex-1 relative overflow-auto" ref="scrollRef" @mouseup="handleTextSelection">
+          <div v-if="story" class="mb-6">
+            <h2 class="text-2xl font-bold">{{ story.title }}</h2>
+          </div>
 
-            <Separator />
+          <Separator />
 
-            <!-- Game Area -->
-            <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4" @mouseup="handleTextSelection">
-              <div v-if="story" class="space-y-2">
-                <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
-                  <div v-if="interaction.system_input" class="flex justify-end">
-                    <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
-                      {{ interaction.system_input }}
-                    </div>
-                  </div>
-
-                  <div class="flex">
-                    <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                      <div v-if="interaction.status === 'streaming'">
-                        {{ interaction.system_output }}<span class="animate-pulse">▋</span>
-                      </div>
-                      <div v-else-if="interaction.status === 'failed'" class="text-destructive">
-                        Failed to generate response. Please try again.
-                      </div>
-                      <div v-else v-html="formatMessage(interaction)"></div>
-                    </div>
-                  </div>
+          <div v-if="story" class="space-y-2 pt-4 pr-4">
+            <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
+              <div v-if="interaction.system_input" class="flex justify-end">
+                <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
+                  {{ interaction.system_input }}
                 </div>
               </div>
-            </ScrollArea>
 
-            <!-- Lookup button remains within game area for text selection -->
-            <div v-if="showLookupButton"
-              :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
-              <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
-                <span>?</span>
-              </Button>
-            </div>
-
-            <!-- Message input and buttons section -->
-            <div class="mt-4 space-y-4">
-              <Textarea v-model="userInput" placeholder="What would you like to do?" :disabled="isLoading"
-                @keydown.enter.exact.prevent="sendMessage" />
-              <div class="flex justify-end space-x-2">
-                <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
-                  Exit Game
-                </Button>
-                <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
-                  Send
-                </Button>
+              <div class="flex">
+                <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                  <div v-if="interaction.status === 'streaming'">
+                    {{ interaction.system_output }}<span class="animate-pulse">▋</span>
+                  </div>
+                  <div v-else-if="interaction.status === 'failed'" class="text-destructive">
+                    Failed to generate response. Please try again.
+                  </div>
+                  <div v-else v-html="formatMessage(interaction)"></div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <!-- Lookup button remains within game area for text selection -->
+          <div v-if="showLookupButton"
+            :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
+            <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
+              <span>?</span>
+            </Button>
+          </div>
+        </div>
+
+        <!-- Message input and buttons fixed at bottom of game area -->
+        <div class="py-4 border-t">
+          <Textarea v-model="userInput" placeholder="What would you like to do?" :disabled="isLoading"
+            @keydown.enter.exact.prevent="sendMessage" />
+          <div class="flex justify-end space-x-2 mt-2">
+
+            <!-- Mobile: Lookup History -->
+            <Button class="md:hidden" variant="outline"
+              @click="showHistoryPanel = true">
+              History
+            </Button>
+            <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
+              Exit Game
+            </Button>
+            <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
+              Send
+            </Button>
+          </div>
+        </div>
       </div>
 
       <!-- Desktop: Lookup History panel -->
       <div class="hidden md:block w-[240px]">
-        <div class="bg-white rounded-lg shadow h-[800px] overflow-auto">
+        <div class="bg-white rounded-lg shadow h-full overflow-auto">
           <div class="p-4">
             <h4 class="font-bold text-lg mb-2">Lookup History</h4>
             <Separator />
@@ -424,11 +425,6 @@ function formatMessage(interaction: GameInteraction) {
       </div>
     </div>
 
-    <!-- Mobile: Lookup History floating button -->
-    <Button class="md:hidden fixed bottom-4 right-4 rounded-full shadow-lg" variant="outline"
-      @click="showHistoryPanel = true">
-      History
-    </Button>
 
     <!-- Mobile: Modal for Lookup History -->
     <div v-if="showHistoryPanel"
