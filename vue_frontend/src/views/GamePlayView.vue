@@ -81,10 +81,23 @@ function handleTextSelection(e: MouseEvent) {
   const range = sel.getRangeAt(0);
   rawSelection.value = sel.toString().trim();
   contextSelection.value = extractSentenceFromRange(range);
-  // console.debug({ "Raw selection": rawSelection.value, "Context": contextSelection.value });
 
-  // Position the popup at the cursor's position
-  popupPosition.value = { x: e.clientX + window.scrollX, y: e.clientY + window.scrollY };
+  // Calculate popup position relative to the scroll container including its scroll offsets.
+  const containerRect = scrollRef.value?.getBoundingClientRect();
+  if (containerRect && scrollRef.value) {
+    const scrollLeft = scrollRef.value.scrollLeft;
+    const scrollTop = scrollRef.value.scrollTop;
+    popupPosition.value = {
+      x: e.clientX - containerRect.left + scrollLeft,
+      y: e.clientY - containerRect.top + scrollTop,
+    }
+  } else {
+    popupPosition.value = {
+      x: e.clientX,
+      y: e.clientY,
+    }
+  }
+
   showLookupButton.value = true;
 }
 
