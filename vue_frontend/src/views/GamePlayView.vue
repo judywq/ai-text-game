@@ -359,14 +359,14 @@ function formatMessage(interaction: GameInteraction) {
     <!-- Flex container: Game area and Lookup History side by side -->
     <div class="flex flex-col md:flex-row md:space-x-4 h-full">
       <div class="flex-1 flex flex-col border border-transparent">
-        <!-- Game Area: scrollable messages -->
-        <div class="flex-1 relative overflow-auto" ref="scrollRef" @mouseup="handleTextSelection">
-          <div v-if="story" class="mb-6">
+        <div class="py-4 border-b">
+          <div v-if="story">
             <h2 class="text-2xl font-bold">{{ story.title }}</h2>
           </div>
+        </div>
 
-          <Separator />
-
+        <!-- Interaction Area (ScrollArea) -->
+        <div class="flex-1 relative overflow-auto" ref="scrollRef" @mouseup="handleTextSelection">
           <div v-if="story" class="space-y-2 pt-4 pr-4">
             <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
               <div v-if="interaction.system_input" class="flex justify-end">
@@ -389,7 +389,7 @@ function formatMessage(interaction: GameInteraction) {
             </div>
           </div>
 
-          <!-- Lookup button remains within game area for text selection -->
+          <!-- Lookup button remains within interaction area for text selection -->
           <div v-if="showLookupButton"
             :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
             <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
@@ -403,7 +403,6 @@ function formatMessage(interaction: GameInteraction) {
           <Textarea v-model="userInput" placeholder="What would you like to do?" :disabled="isLoading"
             @keydown.enter.exact.prevent="sendMessage" />
           <div class="flex justify-end space-x-2 mt-2">
-
             <!-- Mobile: Lookup History -->
             <Button class="md:hidden" variant="outline"
               @click="showHistoryPanel = true">
@@ -437,7 +436,6 @@ function formatMessage(interaction: GameInteraction) {
         </div>
       </div>
     </div>
-
 
     <!-- Mobile: Modal for Lookup History -->
     <div v-if="showHistoryPanel"
