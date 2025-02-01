@@ -73,9 +73,10 @@ class GameScenarioSerializer(serializers.ModelSerializer):
         model = GameScenario
         fields = [
             "id",
-            "title",
-            "genre",
-            "created_at",
+            "category",
+            "name",
+            "example",
+            "order",
         ]
 
 

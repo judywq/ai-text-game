@@ -231,13 +231,22 @@ class OpenAIKey(models.Model):
 
 
 class GameScenario(models.Model):
-    title = models.CharField(
-        max_length=200,
-        help_text="Title of the scenario",
-    )
-    genre = models.CharField(
+    category = models.CharField(
         max_length=100,
-        help_text="Genre of the scenario (e.g., Fantasy, Sci-Fi)",
+        choices=[
+            ("genre", "Genre"),
+            ("sub-genre", "Sub-Genre"),
+        ],
+        help_text="Category of the scenario",
+        default="genre",
+    )
+    name = models.CharField(
+        max_length=100,
+        help_text="Name of the scenario (e.g., Fantasy, Sci-Fi)",
+    )
+    example = models.TextField(
+        help_text="Example movies/books/etc. of this genre/sub-genre",
+        blank=True,
     )
     order = models.IntegerField(
         default=10,
@@ -254,7 +263,7 @@ class GameScenario(models.Model):
         ordering = ["order"]
 
     def __str__(self):
-        return f"{self.title} ({'Active' if self.is_active else 'Inactive'})"
+        return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
 
 
 class GameStory(models.Model):

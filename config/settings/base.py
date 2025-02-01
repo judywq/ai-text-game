@@ -415,3 +415,156 @@ Then you will ask the user to select a character from the list of 3 characters.
 """
 
 DEFAULT_USER_PROMPT_TEMPLATE = "Please evalute the following essay:\n\n{essay}"
+
+PRE_GAME_GENRE = [
+    {
+        "category": "Genre",
+        "name": "Fantasy",
+        "example": "The Lord of the Rings, Game of Thrones",
+    },
+    {
+        "category": "Genre",
+        "name": "Science Fiction",
+        "example": "Star Wars, Star Trek",
+    },
+    {
+        "category": "Genre",
+        "name": "Historical Fiction",
+        "example": "Gladiator, The Last Samurai",
+    },
+    {
+        "category": "Genre",
+        "name": "Mystery",
+        "example": "Sherlock Holmes, Knives Out",
+    },
+    {
+        "category": "Genre",
+        "name": "Romance",
+        "example": "Pride and Prejudice, The Notebook",
+    },
+    {
+        "category": "Genre",
+        "name": "Superhero",
+        "example": "Marvel Cinematic Universe, DC Extended Universe",
+    },
+    {
+        "category": "Genre",
+        "name": "Legal Drama",
+        "example": "Suits, The Practice",
+    },
+    {
+        "category": "Genre",
+        "name": "Medical Drama",
+        "example": "House M.D., Grey's Anatomy",
+    },
+    {
+        "category": "Genre",
+        "name": "Political Thriller",
+        "example": "House of Cards, The Manchurian Candidate",
+    },
+    {
+        "category": "Genre",
+        "name": "Slice of Life",
+        "example": "My Dinner with Andre, Melrose Place",
+    },
+    {
+        "category": "Genre",
+        "name": "Epic Historical Drama",
+        "example": "Braveheart, Lawrence of Arabia",
+    },
+    {
+        "category": "Genre",
+        "name": "Western",
+        "example": "The Good, the Bad, and the Ugly, Deadwood",
+    },
+    {
+        "category": "Genre",
+        "name": "Espionage/Spy Thriller",
+        "example": "James Bond, Tinker Tailor Soldier Spy",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Cyberpunk",
+        "example": "Blade Runner, Neuromancer",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Steampunk",
+        "example": "The League of Extraordinary Gentlemen, Wild Wild West",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Post-Apocalyptic",
+        "example": "Mad Max, The Road",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Gothic Horror",
+        "example": "Dracula, Crimson Peak",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Film Noir",
+        "example": "The Maltese Falcon, Sin City",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Space Opera",
+        "example": "Dune, The Expanse",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Time Travel",
+        "example": "Back to the Future, 12 Monkeys",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Anthology Horror",
+        "example": "The Twilight Zone, Black Mirror",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Psychological Thriller",
+        "example": "Fight Club, Black Swan",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Corporate Satire",
+        "example": "Office Space, The Office",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Dark Comedy",
+        "example": "Fargo, The Death of Stalin",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "1980s Soap Opera",
+        "example": "Dallas, Dynasty",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Teen Drama",
+        "example": "Beverly Hills, 90210, Gossip Girl",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Lovecraftian Horror",
+        "example": "The Call of Cthulhu, The Thing",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Kaiju/Monster Movie",
+        "example": "Godzilla, Pacific Rim",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Alien Invasion",
+        "example": "War of the Worlds, Independence Day",
+    },
+    {
+        "category": "Sub-Genre",
+        "name": "Dystopian Fiction",
+        "example": "The Handmaid's Tale, 1984, The Hunger Games",
+    },
+]

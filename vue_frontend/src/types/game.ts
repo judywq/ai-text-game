@@ -1,7 +1,9 @@
 export interface GameScenario {
   id: number
-  title: string
-  description: string
+  category: 'genre' | 'sub-genre'
+  name: string
+  example: string
+  order: number
   created_at: string
 }
 

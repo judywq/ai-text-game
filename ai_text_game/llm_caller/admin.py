@@ -157,14 +157,16 @@ class OpenAIKeyAdmin(admin.ModelAdmin):
 @admin.register(GameScenario)
 class GameScenarioAdmin(admin.ModelAdmin):
     list_display = [
-        "title",
+        "category",
+        "name",
+        "example",
         "order",
         "is_active",
         "created_at",
         "updated_at",
     ]
     list_filter = ["is_active"]
-    search_fields = ["title", "description"]
+    search_fields = ["name", "example"]
     ordering = ["order"]
 
 

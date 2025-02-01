@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { LLMModelService } from '@/services/llmModelService'
 import type { LLMModel } from '@/types/llm'
+import type { GameScenario } from '@/types/game'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
@@ -23,20 +24,40 @@ const selectedModel = ref('')
 const selectedGenre = ref('')
 const isLoading = ref(false)
 const modelOptions = ref<LLMModel[]>([])
+const scenarios = ref<GameScenario[]>([])
 
-// Predefined genres
-const genres = [
-  'Fantasy',
-  'Science Fiction',
-  'Mystery',
-  'Horror',
-  'Romance',
-  'Adventure',
-  'Historical Fiction',
-  'Western',
-  'Thriller',
-  'Comedy'
-]
+// Computed properties for genres and sub-genres
+const genres = computed(() =>
+  scenarios.value
+    .filter(s => s.category === 'genre')
+    .map(s => ({
+      value: s.name,
+      label: s.name,
+      example: s.example
+    }))
+)
+
+const subGenres = computed(() =>
+  scenarios.value
+    .filter(s => s.category === 'sub-genre')
+    .map(s => ({
+      value: s.name,
+      label: s.name,
+      example: s.example
+    }))
+)
+
+// Combine all options for the combobox
+const genreOptions = computed(() => [
+  {
+    label: 'Main Genres',
+    options: genres.value
+  },
+  {
+    label: 'Sub-Genres',
+    options: subGenres.value
+  }
+])
 
 const updateModelQuotas = async () => {
   try {
@@ -56,9 +77,22 @@ const updateModelQuotas = async () => {
   }
 }
 
+const loadScenarios = async () => {
+  try {
+    scenarios.value = await GameService.getScenarios()
+  } catch (error) {
+    console.error('Error loading scenarios:', error)
+    toast({
+      title: 'Error',
+      description: 'Failed to load scenarios',
+      variant: 'destructive',
+    })
+  }
+}
+
 onMounted(async () => {
   try {
-    await updateModelQuotas()
+    await Promise.all([updateModelQuotas(), loadScenarios()])
   } catch (error) {
     toast({
       title: 'Error',
@@ -96,16 +130,14 @@ async function startGame() {
 
 <template>
   <div class="container mx-auto py-8">
-
-
     <Card class="max-w-md mx-auto">
-    <CardHeader>
-      <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
-      <CardDescription>Select a model and genre to start your adventure</CardDescription>
-    </CardHeader>
+      <CardHeader>
+        <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
+        <CardDescription>Select a model and genre to start your adventure</CardDescription>
+      </CardHeader>
       <CardContent class="space-y-4 pt-6">
         <!-- Model Selection -->
-
+        <div class="space-y-2">
           <label class="text-sm font-medium mb-2 block">Select Model</label>
           <Select v-model="selectedModel">
             <SelectTrigger class="w-full">
@@ -133,16 +165,24 @@ async function startGame() {
               </SelectGroup>
             </SelectContent>
           </Select>
+        </div>
 
         <!-- Genre Selection -->
         <div class="space-y-2">
-          <label class="text-sm font-medium">Select or Enter Genre</label>
+          <label class="text-sm font-medium">Select Genre</label>
           <Combobox
             v-model="selectedGenre"
-            :options="genres"
-            placeholder="Select or type a genre"
-            :allow-custom="true"
-          />
+            :options="genreOptions"
+            placeholder="Select a genre"
+            :allow-custom="false"
+          >
+            <template #option="{ option }">
+              <div>
+                <div>{{ option.label }}</div>
+                <div class="text-sm text-muted-foreground">{{ option.example }}</div>
+              </div>
+            </template>
+          </Combobox>
         </div>
 
         <!-- Start Button -->
@@ -151,7 +191,7 @@ async function startGame() {
           :disabled="isLoading || !selectedModel || !selectedGenre"
           @click="startGame"
         >
-          Start Adventure
+          {{ isLoading ? 'Starting...' : 'Start Adventure' }}
         </Button>
       </CardContent>
     </Card>
