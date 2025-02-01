@@ -34,6 +34,9 @@ const explanationModalVisible = ref(false)
 const currentExplanation = ref<TextExplanation | null>(null)
 const lookupHistory = ref<TextExplanation[]>([])
 
+// Add reactive variable for mobile lookup history panel
+const showHistoryPanel = ref(false)
+
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
   // Get the text node in which the selection exists.
@@ -339,80 +342,120 @@ function formatMessage(interaction: GameInteraction) {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 max-w-4xl">
-    <Card class="h-[800px] flex flex-col">
-      <CardContent class="flex-1 p-6 flex flex-col overflow-hidden">
-        <div v-if="story" class="mb-6">
-          <h2 class="text-2xl font-bold">{{ story.title }}</h2>
-        </div>
+  <div class="container mx-auto py-8 max-w-6xl">
+    <!-- Flex container: Card and Lookup History side by side -->
+    <div class="flex flex-col md:flex-row md:space-x-4 justify-center">
+      <div class="flex-1">
+        <!-- Game Area Card that adjusts width -->
+        <Card class="h-[800px] flex flex-col">
+          <CardContent class="flex-1 p-6 flex flex-col overflow-hidden">
+            <div v-if="story" class="mb-6">
+              <h2 class="text-2xl font-bold">{{ story.title }}</h2>
+            </div>
 
-        <Separator />
+            <Separator />
 
-        <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4" @mouseup="handleTextSelection">
-          <div v-if="story" class="space-y-2">
-            <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
-              <div v-if="interaction.system_input" class="flex justify-end">
-                <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
-                  {{ interaction.system_input }}
+            <!-- Game Area -->
+            <ScrollArea ref="scrollRef" class="flex-1 h-full pr-4 pt-4" @mouseup="handleTextSelection">
+              <div v-if="story" class="space-y-2">
+                <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
+                  <div v-if="interaction.system_input" class="flex justify-end">
+                    <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
+                      {{ interaction.system_input }}
+                    </div>
+                  </div>
+
+                  <div class="flex">
+                    <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
+                      <div v-if="interaction.status === 'streaming'">
+                        {{ interaction.system_output }}<span class="animate-pulse">▋</span>
+                      </div>
+                      <div v-else-if="interaction.status === 'failed'" class="text-destructive">
+                        Failed to generate response. Please try again.
+                      </div>
+                      <div v-else v-html="formatMessage(interaction)"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </ScrollArea>
 
-              <div class="flex">
-                <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                  <div v-if="interaction.status === 'streaming'">
-                    {{ interaction.system_output }}<span class="animate-pulse">▋</span>
-                  </div>
-                  <div v-else-if="interaction.status === 'failed'" class="text-destructive">
-                    Failed to generate response. Please try again.
-                  </div>
-                  <div v-else v-html="formatMessage(interaction)"></div>
-                </div>
+            <!-- Lookup button remains within game area for text selection -->
+            <div v-if="showLookupButton"
+              :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
+              <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
+                <span>?</span>
+              </Button>
+            </div>
+
+            <!-- Message input and buttons section -->
+            <div class="mt-4 space-y-4">
+              <Textarea v-model="userInput" placeholder="What would you like to do?" :disabled="isLoading"
+                @keydown.enter.exact.prevent="sendMessage" />
+              <div class="flex justify-end space-x-2">
+                <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
+                  Exit Game
+                </Button>
+                <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
+                  Send
+                </Button>
               </div>
             </div>
-          </div>
-        </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div v-if="showLookupButton" :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
-          <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
-            <span>?</span>
-          </Button>
-        </div>
-
-        <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div class="bg-white p-4 rounded shadow-lg max-w-md">
-            <h3 class="font-bold mb-2">Explanation</h3>
-            <p class="mb-4">{{ currentExplanation?.explanation }}</p>
-            <Button @click="explanationModalVisible = false">Close</Button>
-          </div>
-        </div>
-
-        <div class="absolute top-0 right-0 h-full w-64 bg-gray-100 p-4 overflow-y-auto">
-          <h4 class="font-bold mb-2">Lookup History</h4>
-          <ul>
-            <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer" @click="currentExplanation = item; explanationModalVisible = true">
-              <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
-              <div class="text-xs text-gray-500">{{ new Date(item.created_at).toLocaleString() }}</div>
-            </li>
-          </ul>
-        </div>
-
-        <div class="mt-4 space-y-4">
-          <Textarea
-            v-model="userInput"
-            placeholder="What would you like to do?"
-            :disabled="isLoading"
-            @keydown.enter.exact.prevent="sendMessage"
-          />
-          <div class="flex justify-end space-x-2">
-            <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
-              Exit Game
-            </Button>
-            <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
-              Send
-            </Button>
+      <!-- Desktop: Lookup History panel -->
+      <div class="hidden md:block w-[240px]">
+        <div class="bg-white rounded-lg shadow h-[800px] overflow-auto">
+          <div class="p-4">
+            <h4 class="font-bold text-lg mb-2">Lookup History</h4>
+            <Separator />
+            <ul>
+              <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+                @click="currentExplanation = item; explanationModalVisible = true">
+                <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
+              </li>
+              <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">Select text in the story to lookup
+              </li>
+            </ul>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
+
+    <!-- Mobile: Lookup History floating button -->
+    <Button class="md:hidden fixed bottom-4 right-4 rounded-full shadow-lg" variant="outline"
+      @click="showHistoryPanel = true">
+      History
+    </Button>
+
+    <!-- Mobile: Modal for Lookup History -->
+    <div v-if="showHistoryPanel"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 md:hidden">
+      <div class="bg-white p-4 rounded shadow-lg w-11/12 max-h-[80vh] overflow-auto">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-bold text-lg">Lookup History</h4>
+          <Button variant="outline" size="sm" @click="showHistoryPanel = false">Close</Button>
+        </div>
+        <Separator />
+        <ul>
+          <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+            @click="currentExplanation = item; explanationModalVisible = true; showHistoryPanel = false">
+            <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
+          </li>
+          <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">Select text in the story to lookup</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Explanation modal remains unchanged -->
+    <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white p-4 rounded shadow-lg max-w-md">
+        <h3 class="font-bold mb-2">Explanation</h3>
+        <p class="mb-4">{{ currentExplanation?.explanation }}</p>
+        <Button @click="explanationModalVisible = false">Close</Button>
+      </div>
+    </div>
   </div>
 </template>
