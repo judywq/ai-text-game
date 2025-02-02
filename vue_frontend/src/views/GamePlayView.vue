@@ -22,7 +22,7 @@ const story = ref<GameStory | null>(null)
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
-const pollInterval = ref<number | null>(null)
+const pollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const currentWatcher = ref<(() => void) | null>(null)
 
 const { streamingContent, startStream, stopStream } = useGameStream()
@@ -39,7 +39,7 @@ const lookupHistory = ref<TextExplanation[]>([])
 const showHistoryPanel = ref(false)
 
 // Add new polling interval for explanations
-const explanationPollInterval = ref<number | null>(null)
+const explanationPollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
