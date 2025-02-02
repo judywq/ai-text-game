@@ -70,7 +70,7 @@ watch(open, (newValue) => {
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-full p-0">
+    <PopoverContent class="w-[var(--radix-popover-trigger-width)] p-0">
       <Command v-model:value="searchTerm">
         <CommandInput :placeholder="placeholder" />
         <CommandEmpty>No option found.</CommandEmpty>
