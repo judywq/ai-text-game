@@ -406,19 +406,23 @@ function stopExplanationPolling() {
 </script>
 
 <template>
-  <div class="container mx-auto max-w-6xl md:pt-6" style="height: calc(100vh - 64px)">
+  <div class="container mx-auto max-w-6xl md:pt-6 h-[calc(100vh-64px)] flex flex-col">
     <!-- Flex container: Game area and Lookup History side by side -->
-    <div class="flex flex-col md:flex-row md:space-x-4 h-full">
-      <div class="flex-1 flex flex-col border border-transparent">
-        <div class="py-4 border-b">
+    <div class="flex flex-col md:flex-row md:space-x-4 flex-1 overflow-hidden">
+      <div class="flex-1 flex flex-col h-full border border-transparent overflow-hidden">
+        <div class="py-4 border-b flex-shrink-0">
           <div v-if="story">
             <h2 class="text-2xl font-bold">{{ story.title }}</h2>
           </div>
         </div>
 
-        <!-- Interaction Area (ScrollArea) -->
-        <div class="flex-1 relative overflow-auto" ref="scrollRef" @mouseup="handleTextSelection">
-          <div v-if="story" class="space-y-2 pt-4 pr-4">
+        <!-- Update the Interaction Area for better mobile handling -->
+        <div
+          class="flex-1 relative overflow-y-auto"
+          ref="scrollRef"
+          @mouseup="handleTextSelection"
+        >
+          <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
             <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
               <div v-if="interaction.system_input" class="flex justify-end">
                 <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
@@ -449,20 +453,33 @@ function stopExplanationPolling() {
           </div>
         </div>
 
-        <!-- Message input and buttons fixed at bottom of game area -->
-        <div class="py-4 border-t">
-          <Textarea v-model="userInput" placeholder="What would you like to do?"
-            @keydown.enter.exact.prevent="sendMessage" />
+        <!-- Update the input area to stay fixed at bottom -->
+        <div class="py-4 border-t bg-background flex-shrink-0">
+          <Textarea
+            v-model="userInput"
+            placeholder="What would you like to do?"
+            @keydown.enter.exact.prevent="sendMessage"
+            class="min-h-[80px]"
+          />
           <div class="flex justify-end space-x-2 mt-2">
-            <!-- Mobile: Lookup History -->
-            <Button class="md:hidden" variant="outline"
-              @click="showHistoryPanel = true">
+            <Button
+              class="md:hidden"
+              variant="outline"
+              @click="showHistoryPanel = true"
+            >
               History
             </Button>
-            <Button variant="outline" :disabled="isLoading" @click="router.push('/game')">
+            <Button
+              variant="outline"
+              :disabled="isLoading"
+              @click="router.push('/game')"
+            >
               Exit Game
             </Button>
-            <Button :disabled="isLoading || !userInput.trim()" @click="sendMessage">
+            <Button
+              :disabled="isLoading || !userInput.trim()"
+              @click="sendMessage"
+            >
               Send
             </Button>
           </div>
@@ -538,3 +555,12 @@ function stopExplanationPolling() {
     </Dialog>
   </div>
 </template>
+
+<style scoped>
+/* Add these styles to ensure proper mobile layout */
+@media (max-width: 768px) {
+  :deep(.prose) {
+    max-width: 100%;
+  }
+}
+</style>
