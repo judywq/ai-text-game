@@ -339,15 +339,28 @@ class GameSceneGeneratorView(APIView):
                 "scenes": [
                     {
                         "level": "A1",
-                        "scene": "Test Scene 1",
-                        "text": "Simple test scene",
+                        "text": "A test scene in A1",
                     },
                     {
                         "level": "A2",
-                        "scene": "Test Scene 2",
-                        "text": "Another test scene",
+                        "text": "A test scene in A2",
                     },
-                    # ... add more test scenes
+                    {
+                        "level": "B1",
+                        "text": "A test scene in B1",
+                    },
+                    {
+                        "level": "B2",
+                        "text": "A test scene in B2",
+                    },
+                    {
+                        "level": "C1",
+                        "text": "A test scene in C1",
+                    },
+                    {
+                        "level": "C2",
+                        "text": "A test scene in C2",
+                    },
                 ],
             }
         else:

@@ -25,7 +25,7 @@ const selectedGenre = ref('')
 const isLoading = ref(false)
 const modelOptions = ref<LLMModel[]>([])
 const scenarios = ref<GameScenario[]>([])
-const scenes = ref<Array<{ level: string; scene: string; text: string }>>([])
+const scenes = ref<Array<{ level: string; text: string }>>([])
 const isGeneratingScenes = ref(false)
 
 // Computed properties for genres and sub-genres
@@ -60,6 +60,11 @@ const genreOptions = computed(() => [
     options: subGenres.value
   }
 ])
+
+const getEmptyStars = computed(() => (index: number) => {
+  const maxStars = 6
+  return Math.max(0, Math.min(maxStars - index, maxStars))
+})
 
 const updateModelQuotas = async () => {
   try {
@@ -223,21 +228,26 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
     <!-- Generated Scenes -->
     <div v-if="scenes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
       <Card
-        v-for="scene in scenes"
-        :key="scene.level"
+        v-for="(scene, index) in scenes"
+        :key="index"
         class="cursor-pointer hover:shadow-lg transition-shadow"
         @click="startGame(scene.text, scene.level)"
       >
         <CardHeader>
-          <CardTitle>{{ scene.scene }}</CardTitle>
-          <CardDescription>CEFR Level: {{ scene.level }}</CardDescription>
+          <CardTitle> Level {{ index + 1 }}</CardTitle>
+          <CardDescription>
+            <span class="flex">
+              <span v-for="i in Math.min(index + 1, 5)" :key="i" class="text-yellow-400">★</span>
+              <span v-for="i in getEmptyStars(index + 1)" :key="`empty-${i}`" class="text-gray-300">★</span>
+            </span>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <p class="text-sm">{{ scene.text }}</p>
         </CardContent>
         <CardFooter>
           <Button class="w-full" variant="outline">
-            Start with this scene
+            Start with this difficulty
           </Button>
         </CardFooter>
       </Card>

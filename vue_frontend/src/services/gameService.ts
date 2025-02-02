@@ -49,7 +49,6 @@ export class GameService {
     const response = await api.post<{
       scenes: Array<{
         level: string;
-        scene: string;
         text: string;
       }>;
     }>('/generate-scenes/', { genre }, {
