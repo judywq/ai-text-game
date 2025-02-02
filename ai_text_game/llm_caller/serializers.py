@@ -102,10 +102,14 @@ class GameInteractionSerializer(serializers.ModelSerializer):
 
 
 class GameStorySerializer(serializers.ModelSerializer):
-    interactions = GameInteractionSerializer(many=True, read_only=True)
+    interactions = serializers.SerializerMethodField()
     model_name = serializers.CharField(write_only=True)
     scene_text = serializers.CharField(write_only=True, required=False)
     cefr_level = serializers.CharField(write_only=True, required=False)
+
+    def get_interactions(self, obj):
+        interactions = obj.interactions.order_by("created_at")
+        return GameInteractionSerializer(interactions, many=True).data
 
     class Meta:
         model = GameStory
