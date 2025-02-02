@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/toast/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { useGameStream } from '@/composables/useGameStream'
 import { marked } from 'marked'
+import { CircleHelp } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -434,7 +435,7 @@ function stopExplanationPolling() {
           <div v-if="showLookupButton"
             :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
             <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
-              <span>?</span>
+              <CircleHelp class="w-4 h-4" />
             </Button>
           </div>
         </div>
