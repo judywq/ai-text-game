@@ -7,10 +7,10 @@ import { onMounted } from 'vue';
 const authStore = useAuthStore();
 const router = useRouter();
 
-// Redirect authenticated users away from auth pages
+// Redirect authenticated users to game-scenarios instead of dashboard
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    router.push({ name: 'dashboard' });
+    router.push({ name: 'game-scenarios' });
   }
 });
 </script>

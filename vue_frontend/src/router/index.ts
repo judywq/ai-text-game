@@ -13,25 +13,9 @@ const routes = [
         component: HomeView,
       },
       {
-        path: 'dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/DashboardView.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
         path: 'change-password',
         name: 'change-password',
         component: () => import('@/views/ChangePasswordView.vue'),
-        meta: {
-          requiresAuth: true,
-        },
-      },
-      {
-        path: '/history',
-        name: 'history',
-        component: () => import('@/views/HistoryView.vue'),
         meta: {
           requiresAuth: true,
         },
@@ -109,7 +93,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 })
 
@@ -134,9 +118,9 @@ router.beforeEach(async (to, from) => {
 
   // If the route requires guest access and user is authenticated
   if (requiresGuest && authStore.isAuthenticated) {
-    // Redirect to dashboard or home
+    // Redirect to game-scenarios
     return {
-      name: 'dashboard',
+      name: 'game-scenarios',
     }
   }
 })

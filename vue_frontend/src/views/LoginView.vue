@@ -44,7 +44,7 @@ const onSubmit = form.handleSubmit(async (values) => {
     if (authStore.isAuthenticated) {
       const redirectPath = typeof route.query.redirect === 'string'
         ? route.query.redirect
-        : { name: 'dashboard' };
+        : { name: 'game-scenarios' };
       router.push(redirectPath);
     }
   } catch (err: any) {

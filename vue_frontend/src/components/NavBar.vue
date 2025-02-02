@@ -24,10 +24,6 @@ const logout = () => {
 }
 const menuItems = [
   {
-    label: 'Dashboard',
-    name: 'dashboard',
-  },
-  {
     label: 'Game',
     name: 'game-scenarios',
   },

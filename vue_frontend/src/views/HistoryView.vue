@@ -34,8 +34,8 @@ function handleRowClick(record: EssayRequest) {
   showDialog.value = true
 }
 
-function navigateToDashboard() {
-  router.push({ name: 'dashboard' })
+function navigateToGame() {
+  router.push({ name: 'game-scenarios' })
 }
 
 onMounted(() => {
@@ -47,12 +47,12 @@ onMounted(() => {
   <div class="container mx-auto">
     <div class="flex justify-between items-center mb-4">
       <div>
-        <h1 class="text-2xl font-bold">Evaluation History</h1>
+        <h1 class="text-2xl font-bold">Game History</h1>
         <p class="text-sm text-muted-foreground">Click on a row to view the details.</p>
       </div>
-      <Button @click="navigateToDashboard">
+      <Button @click="navigateToGame">
         <Plus class="mr-2 h-4 w-4" />
-        New Evaluation
+        New Game
       </Button>
     </div>
 
