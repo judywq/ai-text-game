@@ -238,7 +238,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
           <Combobox
             v-model="selectedGenre"
             :options="genreOptions"
-            placeholder="Select a genre"
+            placeholder="Search"
           />
           <div v-if="showCustomGenreInput" class="mt-2">
             <Input v-model="customGenre" placeholder="Enter your genre" />
