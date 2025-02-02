@@ -14,6 +14,15 @@ import { Separator } from '@/components/ui/separator'
 import { useGameStream } from '@/composables/useGameStream'
 import { marked } from 'marked'
 import { CircleHelp } from 'lucide-vue-next'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 
 const route = useRoute()
 const router = useRouter()
@@ -480,28 +489,32 @@ function stopExplanationPolling() {
     </div>
 
     <!-- Mobile: Modal for Lookup History -->
-    <div v-if="showHistoryPanel"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 md:hidden">
-      <div class="bg-white p-4 rounded shadow-lg w-11/12 max-h-[80vh] overflow-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h4 class="font-bold text-lg">Lookup History</h4>
-          <Button variant="outline" size="sm" @click="showHistoryPanel = false">Close</Button>
-        </div>
-        <Separator />
+    <Dialog v-model:open="showHistoryPanel">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Lookup History</DialogTitle>
+        </DialogHeader>
+
         <ul>
-          <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
-            @click="currentExplanation = item; explanationModalVisible = true; showHistoryPanel = false">
+          <li v-for="item in lookupHistory"
+              :key="item.id"
+              class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
+              @click="currentExplanation = item; explanationModalVisible = true; showHistoryPanel = false">
             <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
           </li>
-          <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">Select text in the story to lookup</li>
+          <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">
+            Select text in the story to lookup
+          </li>
         </ul>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
 
-    <!-- Update Explanation modal to show loading state -->
-    <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-        <h3 class="text-lg font-bold mb-4">Lookup</h3>
+    <!-- Explanation details -->
+    <Dialog v-model:open="explanationModalVisible">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Lookup</DialogTitle>
+        </DialogHeader>
 
         <div v-if="currentExplanation?.status === 'pending'" class="mb-4 flex items-center space-x-2">
           <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
@@ -521,11 +534,7 @@ function stopExplanationPolling() {
             <p>{{ currentExplanation?.explanation }}</p>
           </div>
         </div>
-
-        <div class="mt-6 flex justify-end">
-          <Button @click="explanationModalVisible = false">Close</Button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
