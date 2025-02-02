@@ -401,7 +401,7 @@ function formatMessage(interaction: GameInteraction) {
 
         <!-- Message input and buttons fixed at bottom of game area -->
         <div class="py-4 border-t">
-          <Textarea v-model="userInput" placeholder="What would you like to do?" :disabled="isLoading"
+          <Textarea v-model="userInput" placeholder="What would you like to do?"
             @keydown.enter.exact.prevent="sendMessage" />
           <div class="flex justify-end space-x-2 mt-2">
             <!-- Mobile: Lookup History -->
