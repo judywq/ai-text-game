@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { LLMModelService } from '@/services/llmModelService'
@@ -27,6 +27,8 @@ const modelOptions = ref<LLMModel[]>([])
 const scenarios = ref<GameScenario[]>([])
 const scenes = ref<Array<{ level: string; text: string }>>([])
 const isGeneratingScenes = ref(false)
+const customGenre = ref('')
+const showCustomGenreInput = ref(false)
 
 // Computed properties for genres and sub-genres
 const genres = computed(() =>
@@ -58,6 +60,14 @@ const genreOptions = computed(() => [
   {
     label: 'Sub-Genres',
     options: subGenres.value
+  },
+  {
+    label: 'Other',
+    options: [{
+      value: 'other',
+      label: 'Other (Custom Genre)',
+      example: 'Type your own genre'
+    }]
   }
 ])
 
@@ -109,11 +119,24 @@ onMounted(async () => {
   }
 })
 
+// Add a watch to handle the "other" selection
+watch(selectedGenre, (newValue) => {
+  showCustomGenreInput.value = newValue === 'other'
+  if (newValue !== 'other') {
+    customGenre.value = ''
+  }
+})
+
+// Modify the generateScenes function to use custom genre when appropriate
 async function generateScenes() {
-  if (!selectedGenre.value) {
+  const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
+
+  if (!genreToUse) {
     toast({
       title: 'Error',
-      description: 'Please select a genre first',
+      description: selectedGenre.value === 'other'
+        ? 'Please enter a custom genre'
+        : 'Please select a genre first',
       variant: 'destructive',
     })
     return
@@ -121,7 +144,7 @@ async function generateScenes() {
 
   isGeneratingScenes.value = true
   try {
-    const response = await GameService.generateScenes(selectedGenre.value)
+    const response = await GameService.generateScenes(genreToUse)
     scenes.value = response.scenes
   } catch (error) {
     console.error('Error generating scenes:', error)
@@ -135,8 +158,11 @@ async function generateScenes() {
   }
 }
 
+// Modify the startGame function to use custom genre when appropriate
 async function startGame(sceneText?: string, cefrLevel?: string) {
-  if (!selectedModel.value || !selectedGenre.value) {
+  const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
+
+  if (!selectedModel.value || !genreToUse) {
     toast({
       title: 'Error',
       description: 'Please select both a model and genre',
@@ -148,7 +174,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
   isLoading.value = true
   try {
     const story = await GameService.createStory(
-      selectedGenre.value,
+      genreToUse,
       selectedModel.value,
       sceneText,
       cefrLevel
@@ -213,11 +239,19 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
             :options="genreOptions"
             placeholder="Select a genre"
           />
+          <div v-if="showCustomGenreInput" class="mt-2">
+            <input
+              v-model="customGenre"
+              type="text"
+              placeholder="Enter your genre"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
         </div>
 
         <Button
           class="w-full"
-          :disabled="isGeneratingScenes || !selectedGenre"
+          :disabled="isGeneratingScenes || !selectedGenre || (selectedGenre === 'other' && !customGenre)"
           @click="generateScenes"
         >
           {{ isGeneratingScenes ? 'Generating Scenes...' : 'Generate Scenes' }}
