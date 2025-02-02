@@ -30,7 +30,6 @@ from .serializers import LLMModelSerializer
 from .tasks import LLMRequestParams
 from .tasks import process_openai_request
 from .utils import get_openai_client
-from .utils import read_prompt_template
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -264,7 +263,9 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        prompt = settings.EXPLANATION_PROMPT.format(
+        active_config = LLMConfig.get_active_config(purpose="text_explanation")
+
+        prompt = active_config.system_prompt.format(
             context_text=context_text,
             selected_text=selected_text,
         )
@@ -310,14 +311,7 @@ class GameSceneGeneratorView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Read the prompt template
-        try:
-            prompt_template = read_prompt_template("pre_game_prompt")
-        except FileNotFoundError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        active_config = LLMConfig.get_active_config(purpose="scene_generation")
 
         # Format the details prompt
         details_prompt = (
@@ -325,7 +319,7 @@ class GameSceneGeneratorView(APIView):
         )
 
         # Format the prompt
-        prompt = prompt_template.format(
+        prompt = active_config.system_prompt.format(
             genre=genre,
             details_prompt=details_prompt,
         )

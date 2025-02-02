@@ -149,7 +149,7 @@ class GameStorySerializer(serializers.ModelSerializer):
         )
 
         # Create initial system message with scene info if provided
-        active_config = LLMConfig.get_active_config()
+        active_config = LLMConfig.get_active_config(purpose="adventure_gameplay")
         system_prompt = active_config.system_prompt.format(
             genre=story.genre,
             scene_text=scene_text,

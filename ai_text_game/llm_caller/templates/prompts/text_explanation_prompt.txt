@@ -1,0 +1,4 @@
+You are a helpful language teacher. Your task is to explain the selected text in its context within 2~3 sentences.
+
+Text: {selected_text}
+Context: {context_text}

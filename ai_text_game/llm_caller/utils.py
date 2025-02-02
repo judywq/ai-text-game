@@ -29,8 +29,8 @@ def get_openai_client(key):
     return openai.OpenAI(api_key=key.key)
 
 
-def read_prompt_template(template_name):
-    template_path = f"ai_text_game/llm_caller/templates/prompts/{template_name}.txt"
+def read_prompt_template(template_filename):
+    template_path = f"ai_text_game/llm_caller/templates/prompts/{template_filename}"
     try:
         with Path(template_path).open("r") as f:
             return f.read()

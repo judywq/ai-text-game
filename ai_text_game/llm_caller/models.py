@@ -1,4 +1,5 @@
 import re
+from typing import Literal
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 
 from .utils import get_today_date_range
+from .utils import read_prompt_template
 
 User = get_user_model()
 
@@ -157,22 +159,31 @@ def validate_user_prompt_template(value):
 
 
 class LLMConfig(models.Model):
-    system_prompt = models.TextField(
-        help_text="The system prompt instructs the model to generate JSON format.",
-        default=settings.DEFAULT_SYSTEM_PROMPT,
+    PURPOSE_CHOICES = [
+        ("scene_generation", "Scene Generation"),
+        ("adventure_gameplay", "Adventure Gameplay"),
+        ("text_explanation", "Text Explanation"),
+    ]
+
+    purpose = models.CharField(
+        max_length=20,
+        choices=PURPOSE_CHOICES,
+        help_text="The purpose of this configuration",
     )
-    user_prompt_template = models.TextField(
-        help_text="Use '{essay}' (without the quote) as placeholder for user input",
-        default=settings.DEFAULT_USER_PROMPT_TEMPLATE,
-        validators=[validate_user_prompt_template],
+    system_prompt = models.TextField(
+        help_text="The system prompt for the LLM.",
     )
     temperature = models.FloatField(
-        default=0,
+        default=0.7,
         validators=[
             MinValueValidator(0.0),
             MaxValueValidator(2.0),
         ],
         help_text="Value between 0 and 2",
+    )
+    is_active = models.BooleanField(
+        default=False,
+        help_text="Only one config can be active per purpose",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -181,18 +192,78 @@ class LLMConfig(models.Model):
         get_latest_by = "created_at"
 
     def __str__(self):
-        return f"LLM Config (Updated: {self.updated_at})"
+        return f"LLM Config ({self.get_purpose_display()}, Updated: {self.updated_at})"
 
-    @classmethod
-    def get_active_config(cls):
-        try:
-            return cls.objects.latest()
-        except cls.DoesNotExist:
-            return cls.objects.create()
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            # Deactivate other configs with the same purpose
+            LLMConfig.objects.filter(purpose=self.purpose).exclude(id=self.id).update(
+                is_active=False,
+            )
+        super().save(*args, **kwargs)
 
     def clean(self):
-        # This ensures validation runs even when saving through admin
-        validate_user_prompt_template(self.user_prompt_template)
+        super().clean()
+
+        # Validate system prompt based on purpose
+        if self.purpose == "scene_generation":
+            if "{genre}" not in self.system_prompt:
+                msg = "Scene generation prompt must include {genre} placeholder"
+                raise ValidationError(msg)
+        elif self.purpose == "adventure_gameplay":
+            if (
+                "{genre}" not in self.system_prompt
+                or "{cefr_level}" not in self.system_prompt
+            ):
+                msg = (
+                    "Adventure gameplay prompt must include {genre}"
+                    " and {cefr_level} placeholders"
+                )
+                raise ValidationError(msg)
+        elif self.purpose == "text_explanation":
+            if (
+                "{selected_text}" not in self.system_prompt
+                or "{context_text}" not in self.system_prompt
+            ):
+                msg = (
+                    "Text explanation prompt must include {selected_text}"
+                    " and {context_text} placeholders"
+                )
+                raise ValidationError(msg)
+
+    @classmethod
+    def get_active_config(
+        cls,
+        purpose: Literal["scene_generation", "adventure_gameplay", "text_explanation"],
+    ):
+        """Get the active config for the given purpose."""
+        try:
+            return cls.objects.get(purpose=purpose, is_active=True)
+        except cls.DoesNotExist:
+            # Create a new config with default template
+            template_map = {
+                "scene_generation": "pre_game_prompt.txt",
+                "adventure_gameplay": "gameplay_prompt.txt",
+                "text_explanation": "text_explanation_prompt.txt",
+            }
+
+            template_filename = template_map.get(purpose)
+            if not template_filename:
+                msg = f"Invalid purpose: {purpose}"
+                raise ValueError(msg) from None
+
+            try:
+                system_prompt = read_prompt_template(template_filename)
+            except ValueError as e:
+                msg = f"Failed to load template {template_filename}: {e!s}"
+                raise ValueError(msg) from e
+
+            return cls.objects.create(
+                purpose=purpose,
+                system_prompt=system_prompt,
+                is_active=True,
+                temperature=0.7,
+            )
 
 
 class OpenAIKey(models.Model):

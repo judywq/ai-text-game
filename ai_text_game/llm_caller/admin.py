@@ -36,9 +36,10 @@ class LLMModelAdmin(admin.ModelAdmin):
 @admin.register(LLMConfig)
 class LLMConfigAdmin(admin.ModelAdmin):
     list_display = [
+        "purpose",
         "get_system_prompt",
-        "user_prompt_template",
         "temperature",
+        "is_active",
         "updated_at",
     ]
     list_filter = ["created_at"]
