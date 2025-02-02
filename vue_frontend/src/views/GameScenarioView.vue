@@ -230,8 +230,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
       <Card
         v-for="(scene, index) in scenes"
         :key="index"
-        class="cursor-pointer hover:shadow-lg transition-shadow"
-        @click="startGame(scene.text, scene.level)"
+        class="hover:shadow-lg transition-shadow"
       >
         <CardHeader>
           <CardTitle> Level {{ index + 1 }}</CardTitle>
@@ -246,7 +245,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
           <p class="text-sm">{{ scene.text }}</p>
         </CardContent>
         <CardFooter>
-          <Button class="w-full" variant="outline">
+          <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level)">
             Start with this difficulty
           </Button>
         </CardFooter>
