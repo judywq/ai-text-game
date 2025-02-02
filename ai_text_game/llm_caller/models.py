@@ -300,6 +300,12 @@ class GameStory(models.Model):
     def __str__(self):
         return f"{self.id}: {self.title} ({self.user.username})"
 
+    def get_context(self):
+        context = []
+        for interaction in self.interactions.all().order_by("created_at"):
+            context.extend(interaction.format_messages())
+        return context
+
 
 class GameInteraction(models.Model):
     story = models.ForeignKey(
@@ -342,16 +348,21 @@ class GameInteraction(models.Model):
 
     def format_messages(self):
         """Format the message for the LLM API."""
-        return [
+        messages = [
             {
                 "role": self.role,
                 "content": self.system_input,
             },
-            {
-                "role": "assistant",
-                "content": self.system_output,
-            },
         ]
+
+        if self.system_output:
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": self.system_output,
+                },
+            )
+        return messages
 
 
 # New model for text explanation lookups

@@ -208,9 +208,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         )
 
         # Get all messages for context
-        context = []
-        for prev_interaction in story.interactions.all():
-            context.extend(prev_interaction.format_messages())
+        context = story.get_context()
 
         response = StreamingHttpResponse(
             streaming_content=stream_response(story.model.name, context, interaction),
@@ -241,9 +239,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
             )
 
         # Get all messages for context
-        context = []
-        for prev_interaction in story.interactions.all():
-            context.extend(prev_interaction.format_messages())
+        context = story.get_context()
 
         response = StreamingHttpResponse(
             streaming_content=stream_response(story.model.name, context, interaction),
