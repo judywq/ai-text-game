@@ -16,4 +16,12 @@ export class ExplanationService {
     const response = await api.get<TextExplanation[]>(`/game-stories/${storyId}/explanations/`)
     return response.data
   }
+
+  // Add new method to get a single explanation
+  public static async getExplanation(storyId: number, explanationId: number) {
+    const response = await api.get<TextExplanation>(
+      `/game-stories/${storyId}/explanations/${explanationId}/`
+    )
+    return response.data
+  }
 }

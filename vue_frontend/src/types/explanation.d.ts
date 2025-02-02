@@ -5,5 +5,7 @@ export interface TextExplanation {
   selected_text: string
   context_text: string
   explanation: string
+  status: 'pending' | 'completed' | 'failed'
+  error?: string
   created_at: string
 }

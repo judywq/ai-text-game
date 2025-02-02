@@ -27,8 +27,11 @@ from .serializers import APIRequestSerializer
 from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
+from .serializers import TextExplanationSerializer
 from .tasks import LLMRequestParams
+from .tasks import TextExplanationParams
 from .tasks import process_openai_request
+from .tasks import process_text_explanation
 from .utils import get_openai_client
 
 
@@ -244,17 +247,12 @@ class GameStoryViewSet(viewsets.ModelViewSet):
     # NEW: Nested explanations endpoint for a specific game story
     @action(detail=True, methods=["get", "post"])
     def explanations(self, request, pk=None):
-        from django.conf import settings
-
-        from .serializers import TextExplanationSerializer
-
         story = self.get_object()
         if request.method == "GET":
-            # Return lookup history for this story
             lookups = story.explanations.all().order_by("-created_at")
             serializer = TextExplanationSerializer(lookups, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        # POST: create a new explanation lookup
+
         selected_text = request.data.get("selected_text")
         context_text = request.data.get("context_text")
         if not all([selected_text, context_text]):
@@ -263,40 +261,54 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        active_config = LLMConfig.get_active_config(purpose="text_explanation")
-
-        prompt = active_config.system_prompt.format(
-            context_text=context_text,
-            selected_text=selected_text,
-        )
-
-        if settings.FAKE_LLM_REQUEST:
-            explanation = "This is a fake explanation based on the provided context."
-            time.sleep(0.1)
-        else:
-            try:
-                client = get_openai_client(OpenAIKey.get_available_key())
-                response = client.chat.completions.create(
-                    model=settings.EXPLANATION_MODEL,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=settings.EXPLANATION_TEMPERATURE,
-                )
-                explanation = response.choices[0].message.content.strip()
-            except (openai.OpenAIError, ValueError) as e:
-                return Response(
-                    {"error": str(e)},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
+        # Create pending explanation
         lookup = TextExplanation.objects.create(
             user=request.user,
             story=story,
             selected_text=selected_text,
             context_text=context_text,
-            explanation=explanation,
+            status="pending",
         )
+
+        active_config = LLMConfig.get_active_config(purpose="text_explanation")
+
+        # Start async task
+        explanation_params = TextExplanationParams(
+            explanation_id=lookup.id,
+            model_name=settings.EXPLANATION_MODEL,
+            system_prompt=active_config.system_prompt,
+            context_text=context_text,
+            selected_text=selected_text,
+            temperature=settings.EXPLANATION_TEMPERATURE,
+        )
+
+        transaction.on_commit(
+            lambda: process_text_explanation.delay(
+                asdict(explanation_params),
+                delay_seconds=getattr(settings, "TASK_DELAY", 0),
+            ),
+        )
+
         serializer = TextExplanationSerializer(lookup)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="explanations/(?P<explanation_id>[^/.]+)",
+    )
+    def explanation_detail(self, request, pk=None, explanation_id=None):
+        """Get a specific explanation for a story."""
+        story = self.get_object()
+        try:
+            explanation = story.explanations.get(id=explanation_id)
+            serializer = TextExplanationSerializer(explanation)
+            return Response(serializer.data)
+        except TextExplanation.DoesNotExist:
+            return Response(
+                {"error": "Explanation not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class GameSceneGeneratorView(APIView):

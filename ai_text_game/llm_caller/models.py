@@ -438,6 +438,12 @@ class GameInteraction(models.Model):
 
 # New model for text explanation lookups
 class TextExplanation(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    ]
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -450,7 +456,13 @@ class TextExplanation(models.Model):
     )
     selected_text = models.TextField()
     context_text = models.TextField()
-    explanation = models.TextField()
+    explanation = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+    )
+    error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

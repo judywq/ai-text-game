@@ -38,6 +38,9 @@ const lookupHistory = ref<TextExplanation[]>([])
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
 
+// Add new polling interval for explanations
+const explanationPollInterval = ref<number | null>(null)
+
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
   // Get the text node in which the selection exists.
@@ -113,8 +116,15 @@ async function lookupExplanationSubmit() {
   try {
     const result = await ExplanationService.lookupExplanation(story.value.id, rawSelection.value, contextSelection.value)
     currentExplanation.value = result
-    explanationModalVisible.value = true
-    fetchLookupHistory()
+
+    // Start polling if explanation is pending
+    if (result.status === 'pending') {
+      explanationModalVisible.value = true
+      startExplanationPolling(result.id)
+    } else {
+      explanationModalVisible.value = true
+      fetchLookupHistory()
+    }
   } catch (error: any) {
     toast({
       title: 'Error',
@@ -196,6 +206,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopStream()
+  stopExplanationPolling()
   if (currentWatcher.value) {
     currentWatcher.value()
   }
@@ -353,6 +364,35 @@ async function startSystemMessage(storyId: number) {
 function formatMessage(interaction: GameInteraction) {
   return marked(interaction.system_output)
 }
+
+// Add new polling function for explanations
+async function pollExplanation(explanationId: number) {
+  try {
+    const explanation = await ExplanationService.getExplanation(story.value!.id, explanationId)
+    if (explanation.status !== 'pending') {
+      currentExplanation.value = explanation
+      stopExplanationPolling()
+      fetchLookupHistory()
+    }
+  } catch (error) {
+    console.error('Failed to poll explanation:', error)
+    stopExplanationPolling()
+  }
+}
+
+function startExplanationPolling(explanationId: number) {
+  if (explanationPollInterval.value) {
+    clearInterval(explanationPollInterval.value)
+  }
+  explanationPollInterval.value = setInterval(() => pollExplanation(explanationId), 2000)
+}
+
+function stopExplanationPolling() {
+  if (explanationPollInterval.value) {
+    clearInterval(explanationPollInterval.value)
+    explanationPollInterval.value = null
+  }
+}
 </script>
 
 <template>
@@ -457,11 +497,15 @@ function formatMessage(interaction: GameInteraction) {
       </div>
     </div>
 
-    <!-- Explanation modal remains unchanged -->
+    <!-- Update Explanation modal to show loading state -->
     <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div class="bg-white p-4 rounded shadow-lg max-w-md">
         <h3 class="font-bold mb-2">Explanation</h3>
-        <p class="mb-4">{{ currentExplanation?.explanation }}</p>
+        <div v-if="currentExplanation?.status === 'pending'" class="mb-4 flex items-center space-x-2">
+          <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+          <span>Generating explanation...</span>
+        </div>
+        <p v-else class="mb-4">{{ currentExplanation?.explanation }}</p>
         <Button @click="explanationModalVisible = false">Close</Button>
       </div>
     </div>
