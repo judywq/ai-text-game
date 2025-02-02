@@ -7,6 +7,7 @@ import type { LLMModel } from '@/types/llm'
 import type { GameScenario } from '@/types/game'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { Combobox } from '@/components/ui/combobox'
 import { useToast } from '@/components/ui/toast/use-toast'
 import {
@@ -240,12 +241,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
             placeholder="Select a genre"
           />
           <div v-if="showCustomGenreInput" class="mt-2">
-            <input
-              v-model="customGenre"
-              type="text"
-              placeholder="Enter your genre"
-              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            />
+            <Input v-model="customGenre" placeholder="Enter your genre" />
           </div>
         </div>
 
