@@ -500,14 +500,31 @@ function stopExplanationPolling() {
 
     <!-- Update Explanation modal to show loading state -->
     <div v-if="explanationModalVisible" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div class="bg-white p-4 rounded shadow-lg max-w-md">
-        <h3 class="font-bold mb-2">Explanation</h3>
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-lg font-bold mb-4">Lookup</h3>
+
         <div v-if="currentExplanation?.status === 'pending'" class="mb-4 flex items-center space-x-2">
           <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
           <span>Generating explanation...</span>
         </div>
-        <p v-else class="mb-4">{{ currentExplanation?.explanation }}</p>
-        <Button @click="explanationModalVisible = false">Close</Button>
+        <div v-else class="space-y-4">
+          <!-- Context with highlighted selection -->
+          <div class="bg-muted p-3 rounded text-sm">
+            {{ currentExplanation?.context_text.substring(0, currentExplanation?.context_text.indexOf(currentExplanation?.selected_text)) }}
+            <strong class="text-primary">{{ currentExplanation?.selected_text }}</strong>
+            {{ currentExplanation?.context_text.substring(currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) + currentExplanation?.selected_text.length) }}
+          </div>
+
+          <!-- Explanation -->
+          <div class="text-sm">
+            <div class="font-medium mb-1">Explanation:</div>
+            <p>{{ currentExplanation?.explanation }}</p>
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+          <Button @click="explanationModalVisible = false">Close</Button>
+        </div>
       </div>
     </div>
   </div>
