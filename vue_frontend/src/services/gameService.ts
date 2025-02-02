@@ -11,7 +11,8 @@ export class GameService {
     genre: string,
     modelName: string,
     sceneText?: string,
-    cefrLevel?: string
+    cefrLevel?: string,
+    details?: string
   ): Promise<GameStory> {
     const response = await api.post<GameStory>(
       '/game-stories/',
@@ -20,6 +21,7 @@ export class GameService {
         model_name: modelName,
         scene_text: sceneText,
         cefr_level: cefrLevel,
+        details: details
       }
     );
     return response.data;
@@ -45,13 +47,16 @@ export class GameService {
     return response.data;
   }
 
-  public static async generateScenes(genre: string) {
+  public static async generateScenes(genre: string, details?: string) {
     const response = await api.post<{
       scenes: Array<{
         level: string;
         text: string;
       }>;
-    }>('/generate-scenes/', { genre }, {
+    }>('/generate-scenes/', {
+      genre,
+      details
+    }, {
       timeout: 10000 // 10 second timeout
     });
     return response.data;

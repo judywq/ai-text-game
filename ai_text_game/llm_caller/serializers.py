@@ -127,7 +127,7 @@ class GameStorySerializer(serializers.ModelSerializer):
         model_name = validated_data.pop("model_name")
         scene_text = validated_data.pop("scene_text", None)
         cefr_level = validated_data.pop("cefr_level", None)
-
+        details = validated_data.pop("details", None)
         try:
             model = LLMModel.objects.get(name=model_name, is_active=True)
         except LLMModel.DoesNotExist as e:
@@ -140,12 +140,17 @@ class GameStorySerializer(serializers.ModelSerializer):
             **validated_data,
         )
 
+        details_prompt = (
+            f"\n* Additional details of the story: {details}" if details else ""
+        )
+
         # Create initial system message with scene info if provided
         active_config = LLMConfig.get_active_config()
         system_prompt = active_config.system_prompt.format(
             genre=story.genre,
             scene_text=scene_text,
             cefr_level=cefr_level,
+            details_prompt=details_prompt,
         )
 
         GameInteraction.objects.create(

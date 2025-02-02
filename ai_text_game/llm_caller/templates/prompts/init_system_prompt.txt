@@ -2,8 +2,8 @@ We're going to play a text-based RPG. Read all of the following before asking me
 
 ## Setting
 
-* The story is set in the style/genre/universe of {genre}.
-* The language level of the story should be {cefr_level}. When generating the game, please always use sentences at this level so that I can understand.
+* The story is set in the style/genre/universe of {genre}.{details_prompt}
+* The text of the story should be in CEFR Level {cefr_level}. When generating the game, please always use sentences at this level so that I can understand.
 * An example of a few sentences at this level is:
 ```
 {scene_text}

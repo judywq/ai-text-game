@@ -315,6 +315,7 @@ class GameSceneGeneratorView(APIView):
 
     def post(self, request):
         genre = request.data.get("genre")
+        details = request.data.get("details")
         if not genre:
             return Response(
                 {"error": "Genre is required"},
@@ -330,8 +331,16 @@ class GameSceneGeneratorView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+        # Format the details prompt
+        details_prompt = (
+            f"\n* Additional details of the story: {details}" if details else ""
+        )
+
         # Format the prompt
-        prompt = prompt_template.format(genre=genre)
+        prompt = prompt_template.format(
+            genre=genre,
+            details_prompt=details_prompt,
+        )
 
         if settings.FAKE_LLM_REQUEST:
             # Return fake data for testing

@@ -30,6 +30,7 @@ const scenes = ref<Array<{ level: string; text: string }>>([])
 const isGeneratingScenes = ref(false)
 const customGenre = ref('')
 const showCustomGenreInput = ref(false)
+const details = ref('')
 
 // Computed properties for genres and sub-genres
 const genres = computed(() =>
@@ -145,7 +146,7 @@ async function generateScenes() {
 
   isGeneratingScenes.value = true
   try {
-    const response = await GameService.generateScenes(genreToUse)
+    const response = await GameService.generateScenes(genreToUse, details.value)
     scenes.value = response.scenes
   } catch (error) {
     console.error('Error generating scenes:', error)
@@ -160,7 +161,7 @@ async function generateScenes() {
 }
 
 // Modify the startGame function to use custom genre when appropriate
-async function startGame(sceneText?: string, cefrLevel?: string) {
+async function startGame(sceneText?: string, cefrLevel?: string, details?: string) {
   const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
 
   if (!selectedModel.value || !genreToUse) {
@@ -178,7 +179,8 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
       genreToUse,
       selectedModel.value,
       sceneText,
-      cefrLevel
+      cefrLevel,
+      details
     )
     router.push(`/game/${story.id}`)
   } catch (error) {
@@ -238,11 +240,22 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
           <Combobox
             v-model="selectedGenre"
             :options="genreOptions"
-            placeholder="Search"
+            placeholder="Select a genre"
           />
           <div v-if="showCustomGenreInput" class="mt-2">
             <Input v-model="customGenre" placeholder="Enter your genre" />
           </div>
+        </div>
+
+        <!-- Add details input -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium">Scene Details (Optional)</label>
+          <textarea
+            v-model="details"
+            class="w-full min-h-10 p-2 border rounded-md text-sm"
+            placeholder="Add specific details about the story you want to generate..."
+            maxlength="500"
+          />
         </div>
 
         <Button
@@ -280,7 +293,7 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
             <p class="text-sm">{{ scene.text }}</p>
           </CardContent>
           <CardFooter>
-            <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level)">
+            <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level, details)">
               Start with this difficulty
             </Button>
           </CardFooter>
