@@ -23,6 +23,20 @@ module.exports = {
             },
         },
         extend: {
+            typography: {
+                DEFAULT: {
+                    css: {
+                        pre: {
+                            'white-space': 'pre-wrap',
+                            'word-wrap': 'break-word',
+                        },
+                        code: {
+                            'white-space': 'pre-wrap',
+                            'word-wrap': 'break-word',
+                        },
+                    },
+                },
+            },
             colors: {
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
@@ -98,5 +112,8 @@ module.exports = {
             },
         },
     },
-    plugins: [animate],
+    plugins: [
+        require('@tailwindcss/typography'),
+        animate,
+    ],
 };

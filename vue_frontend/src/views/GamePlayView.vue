@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { useGameStream } from '@/composables/useGameStream'
+import { marked } from 'marked'
 
 const route = useRoute()
 const router = useRouter()
@@ -350,7 +351,7 @@ async function startSystemMessage(storyId: number) {
 }
 
 function formatMessage(interaction: GameInteraction) {
-  return interaction.system_output.split('\n').join('<br>')
+  return marked(interaction.system_output)
 }
 </script>
 
@@ -383,7 +384,7 @@ function formatMessage(interaction: GameInteraction) {
                   <div v-else-if="interaction.status === 'failed'" class="text-destructive">
                     Failed to generate response. Please try again.
                   </div>
-                  <div v-else v-html="formatMessage(interaction)"></div>
+                  <div v-else class="prose dark:prose-invert" v-html="formatMessage(interaction)"></div>
                 </div>
               </div>
             </div>
