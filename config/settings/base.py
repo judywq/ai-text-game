@@ -416,6 +416,7 @@ Then you will ask the user to select a character from the list of 3 characters.
 
 DEFAULT_USER_PROMPT_TEMPLATE = "Please evalute the following essay:\n\n{essay}"
 
+SCENE_GENERATION_MODEL = "gpt-4o-mini"
 PRE_GAME_GENRE = [
     {
         "category": "Genre",

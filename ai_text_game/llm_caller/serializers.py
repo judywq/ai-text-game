@@ -4,6 +4,7 @@ from .models import APIRequest
 from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
+from .models import LLMConfig
 from .models import LLMModel
 from .models import TextExplanation
 
@@ -103,6 +104,8 @@ class GameInteractionSerializer(serializers.ModelSerializer):
 class GameStorySerializer(serializers.ModelSerializer):
     interactions = GameInteractionSerializer(many=True, read_only=True)
     model_name = serializers.CharField(write_only=True)
+    scene_text = serializers.CharField(write_only=True, required=False)
+    cefr_level = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = GameStory
@@ -111,6 +114,8 @@ class GameStorySerializer(serializers.ModelSerializer):
             "title",
             "genre",
             "model_name",
+            "scene_text",
+            "cefr_level",
             "status",
             "created_at",
             "updated_at",
@@ -120,6 +125,8 @@ class GameStorySerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         model_name = validated_data.pop("model_name")
+        scene_text = validated_data.pop("scene_text", None)
+        cefr_level = validated_data.pop("cefr_level", None)
 
         try:
             model = LLMModel.objects.get(name=model_name, is_active=True)
@@ -127,11 +134,28 @@ class GameStorySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(e)) from e
 
         # Create the story
-        return GameStory.objects.create(
+        story = GameStory.objects.create(
             model=model,
             title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
+
+        # Create initial system message with scene info if provided
+        active_config = LLMConfig.get_active_config()
+        system_prompt = active_config.system_prompt.format(
+            genre=story.genre,
+            scene_text=scene_text,
+            cefr_level=cefr_level,
+        )
+
+        GameInteraction.objects.create(
+            story=story,
+            role="system",
+            system_input=system_prompt,
+            status="pending",
+        )
+
+        return story
 
 
 class TextExplanationSerializer(serializers.ModelSerializer):

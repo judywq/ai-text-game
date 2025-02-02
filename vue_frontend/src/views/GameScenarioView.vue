@@ -6,7 +6,7 @@ import { LLMModelService } from '@/services/llmModelService'
 import type { LLMModel } from '@/types/llm'
 import type { GameScenario } from '@/types/game'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Combobox } from '@/components/ui/combobox'
 import { useToast } from '@/components/ui/toast/use-toast'
 import {
@@ -25,6 +25,8 @@ const selectedGenre = ref('')
 const isLoading = ref(false)
 const modelOptions = ref<LLMModel[]>([])
 const scenarios = ref<GameScenario[]>([])
+const scenes = ref<Array<{ level: string; scene: string; text: string }>>([])
+const isGeneratingScenes = ref(false)
 
 // Computed properties for genres and sub-genres
 const genres = computed(() =>
@@ -102,7 +104,33 @@ onMounted(async () => {
   }
 })
 
-async function startGame() {
+async function generateScenes() {
+  if (!selectedGenre.value) {
+    toast({
+      title: 'Error',
+      description: 'Please select a genre first',
+      variant: 'destructive',
+    })
+    return
+  }
+
+  isGeneratingScenes.value = true
+  try {
+    const response = await GameService.generateScenes(selectedGenre.value)
+    scenes.value = response.scenes
+  } catch (error) {
+    console.error('Error generating scenes:', error)
+    toast({
+      title: 'Error',
+      description: 'Failed to generate scenes',
+      variant: 'destructive',
+    })
+  } finally {
+    isGeneratingScenes.value = false
+  }
+}
+
+async function startGame(sceneText?: string, cefrLevel?: string) {
   if (!selectedModel.value || !selectedGenre.value) {
     toast({
       title: 'Error',
@@ -114,7 +142,12 @@ async function startGame() {
 
   isLoading.value = true
   try {
-    const story = await GameService.createStory(selectedGenre.value, selectedModel.value)
+    const story = await GameService.createStory(
+      selectedGenre.value,
+      selectedModel.value,
+      sceneText,
+      cefrLevel
+    )
     router.push(`/game/${story.id}`)
   } catch (error) {
     toast({
@@ -130,7 +163,7 @@ async function startGame() {
 
 <template>
   <div class="container mx-auto py-8">
-    <Card class="max-w-md mx-auto">
+    <Card class="max-w-md mx-auto mb-8">
       <CardHeader>
         <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
         <CardDescription>Select a model and genre to start your adventure</CardDescription>
@@ -177,15 +210,37 @@ async function startGame() {
           />
         </div>
 
-        <!-- Start Button -->
         <Button
           class="w-full"
-          :disabled="isLoading || !selectedModel || !selectedGenre"
-          @click="startGame"
+          :disabled="isGeneratingScenes || !selectedGenre"
+          @click="generateScenes"
         >
-          {{ isLoading ? 'Starting...' : 'Start Adventure' }}
+          {{ isGeneratingScenes ? 'Generating Scenes...' : 'Generate Scenes' }}
         </Button>
       </CardContent>
     </Card>
+
+    <!-- Generated Scenes -->
+    <div v-if="scenes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+      <Card
+        v-for="scene in scenes"
+        :key="scene.level"
+        class="cursor-pointer hover:shadow-lg transition-shadow"
+        @click="startGame(scene.text, scene.level)"
+      >
+        <CardHeader>
+          <CardTitle>{{ scene.scene }}</CardTitle>
+          <CardDescription>CEFR Level: {{ scene.level }}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p class="text-sm">{{ scene.text }}</p>
+        </CardContent>
+        <CardFooter>
+          <Button class="w-full" variant="outline">
+            Start with this scene
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   </div>
 </template>

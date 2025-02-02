@@ -7,12 +7,19 @@ export class GameService {
     return response.data
   }
 
-  public static async createStory(genre: string, modelName: string): Promise<GameStory> {
+  public static async createStory(
+    genre: string,
+    modelName: string,
+    sceneText?: string,
+    cefrLevel?: string
+  ): Promise<GameStory> {
     const response = await api.post<GameStory>(
       '/game-stories/',
       {
         genre,
         model_name: modelName,
+        scene_text: sceneText,
+        cefr_level: cefrLevel,
       }
     );
     return response.data;
@@ -35,6 +42,19 @@ export class GameService {
 
   public static async startSystemMessage(storyId: number): Promise<GameStory> {
     const response = await api.post<GameStory>(`/game-stories/${storyId}/start/`);
+    return response.data;
+  }
+
+  public static async generateScenes(genre: string) {
+    const response = await api.post<{
+      scenes: Array<{
+        level: string;
+        scene: string;
+        text: string;
+      }>;
+    }>('/generate-scenes/', { genre }, {
+      timeout: 10000 // 10 second timeout
+    });
     return response.data;
   }
 }

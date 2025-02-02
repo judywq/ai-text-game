@@ -30,6 +30,7 @@ from .serializers import LLMModelSerializer
 from .tasks import LLMRequestParams
 from .tasks import process_openai_request
 from .utils import get_openai_client
+from .utils import read_prompt_template
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -173,20 +174,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         return GameStory.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        # Create the story with system and initial user messages
-        story = serializer.save(user=self.request.user)
-        active_config = LLMConfig.get_active_config()
-
-        # Create initial system message
-        interaction = GameInteraction.objects.create(
-            story=story,
-            role="system",
-            system_input=active_config.system_prompt,
-            status="pending",
-        )
-        interaction.save()
-
-        return story
+        return serializer.save(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -320,3 +308,62 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         )
         serializer = TextExplanationSerializer(lookup)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GameSceneGeneratorView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        genre = request.data.get("genre")
+        if not genre:
+            return Response(
+                {"error": "Genre is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Read the prompt template
+        try:
+            prompt_template = read_prompt_template("pre_game_prompt")
+        except FileNotFoundError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # Format the prompt
+        prompt = prompt_template.format(genre=genre)
+
+        if settings.FAKE_LLM_REQUEST:
+            # Return fake data for testing
+            scenes = {
+                "scenes": [
+                    {
+                        "level": "A1",
+                        "scene": "Test Scene 1",
+                        "text": "Simple test scene",
+                    },
+                    {
+                        "level": "A2",
+                        "scene": "Test Scene 2",
+                        "text": "Another test scene",
+                    },
+                    # ... add more test scenes
+                ],
+            }
+        else:
+            try:
+                client = get_openai_client(OpenAIKey.get_available_key())
+                response = client.chat.completions.create(
+                    model=settings.SCENE_GENERATION_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7,
+                    response_format={"type": "json_object"},
+                )
+                scenes = json.loads(response.choices[0].message.content)
+            except (openai.OpenAIError, ValueError) as e:
+                return Response(
+                    {"error": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+        return Response(scenes)

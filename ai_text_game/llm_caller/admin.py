@@ -2,6 +2,7 @@ from io import BytesIO
 
 from django.contrib import admin
 from django.http import HttpResponse
+from django.template.defaultfilters import truncatechars
 from django.utils import timezone
 from openpyxl import Workbook
 
@@ -124,12 +125,16 @@ class LLMModelAdmin(admin.ModelAdmin):
 @admin.register(LLMConfig)
 class LLMConfigAdmin(admin.ModelAdmin):
     list_display = [
-        "system_prompt",
+        "get_system_prompt",
         "user_prompt_template",
         "temperature",
         "updated_at",
     ]
     list_filter = ["created_at"]
+
+    @admin.display(description="System Prompt", ordering="system_prompt")
+    def get_system_prompt(self, obj):
+        return truncatechars(obj.system_prompt, 50)
 
 
 @admin.register(OpenAIKey)
@@ -190,12 +195,20 @@ class GameInteractionAdmin(admin.ModelAdmin):
         "story",
         "role",
         "created_at",
-        "system_input",
-        "system_output",
+        "get_system_input",
+        "get_system_output",
         "status",
     ]
     list_filter = ["story__genre", "story__user"]
     search_fields = ["system_input", "system_output"]
+
+    @admin.display(description="System Input", ordering="system_input")
+    def get_system_input(self, obj):
+        return truncatechars(obj.system_input, 50)
+
+    @admin.display(description="System Output", ordering="system_output")
+    def get_system_output(self, obj):
+        return truncatechars(obj.system_output, 50)
 
 
 @admin.register(TextExplanation)

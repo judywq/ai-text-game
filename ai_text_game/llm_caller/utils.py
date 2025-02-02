@@ -1,4 +1,5 @@
 from datetime import timedelta
+from pathlib import Path
 
 import openai
 from django.utils import timezone
@@ -26,3 +27,13 @@ def get_openai_client(key):
         )
         raise ValueError(msg)
     return openai.OpenAI(api_key=key.key)
+
+
+def read_prompt_template(template_name):
+    template_path = f"ai_text_game/llm_caller/templates/prompts/{template_name}.txt"
+    try:
+        with Path(template_path).open("r") as f:
+            return f.read()
+    except FileNotFoundError as e:
+        msg = f"Prompt template file not found: {template_path}"
+        raise FileNotFoundError(msg) from e
