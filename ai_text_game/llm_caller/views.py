@@ -182,6 +182,18 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         story = self.perform_create(serializer)
         return Response(self.get_serializer(story).data, status=status.HTTP_201_CREATED)
 
+    def _create_streaming_response(self, story, interaction):
+        """Helper method to create a streaming response."""
+        context = story.get_context()
+        response = StreamingHttpResponse(
+            streaming_content=stream_response(story.model.name, context, interaction),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+        response["Connection"] = "keep-alive"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
     @action(detail=True, methods=["post", "get"])
     @transaction.atomic
     def interact(self, request, pk=None):
@@ -207,17 +219,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
             status="pending",
         )
 
-        # Get all messages for context
-        context = story.get_context()
-
-        response = StreamingHttpResponse(
-            streaming_content=stream_response(story.model.name, context, interaction),
-            content_type="text/event-stream",
-        )
-        response["Cache-Control"] = "no-cache"
-        response["Connection"] = "keep-alive"
-        response["X-Accel-Buffering"] = "no"
-        return response
+        return self._create_streaming_response(story, interaction)
 
     @action(detail=True, methods=["post", "get"])
     @transaction.atomic
@@ -238,17 +240,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get all messages for context
-        context = story.get_context()
-
-        response = StreamingHttpResponse(
-            streaming_content=stream_response(story.model.name, context, interaction),
-            content_type="text/event-stream",
-        )
-        response["Cache-Control"] = "no-cache"
-        response["Connection"] = "keep-alive"
-        response["X-Accel-Buffering"] = "no"
-        return response
+        return self._create_streaming_response(story, interaction)
 
     # NEW: Nested explanations endpoint for a specific game story
     @action(detail=True, methods=["get", "post"])
