@@ -1,59 +1,60 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
+
+interface Option {
+  value: string
+  label: string
+  example?: string
+}
+
+interface OptionGroup {
+  label: string
+  options: Option[]
+}
 
 const props = defineProps<{
   modelValue: string
-  options: string[]
+  options: OptionGroup[]
   placeholder?: string
-  allowCustom?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  'update:modelValue': [value: string]
 }>()
 
 const open = ref(false)
-const search = ref('')
-const customValue = ref('')
+const searchTerm = ref('')
 
-const filteredOptions = computed(() => {
-  if (!search.value) return props.options
-  return props.options.filter((option) =>
-    option.toLowerCase().includes(search.value.toLowerCase())
-  )
-})
-
-watch(() => props.modelValue, (newValue) => {
-  if (newValue && !props.options.includes(newValue)) {
-    customValue.value = newValue
+const getCurrentLabel = () => {
+  for (const group of props.options) {
+    const option = group.options.find(opt => opt.value === props.modelValue)
+    if (option) return option.label
   }
-})
-
-const selectOption = (value: string) => {
-  emit('update:modelValue', value)
-  open.value = false
+  return ''
 }
 
-const handleCustomInput = (value: string) => {
-  if (props.allowCustom) {
-    customValue.value = value
-    emit('update:modelValue', value)
+// Reset search when closing
+watch(open, (newValue) => {
+  if (!newValue) {
+    searchTerm.value = ''
   }
-}
+})
 </script>
 
 <template>
@@ -65,36 +66,43 @@ const handleCustomInput = (value: string) => {
         :aria-expanded="open"
         class="w-full justify-between"
       >
-        {{ modelValue || placeholder || "Select option..." }}
+        {{ getCurrentLabel() || placeholder }}
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-full p-0">
-      <Command>
-        <CommandInput
-          v-model="search"
-          placeholder="Search options..."
-          @input="handleCustomInput($event.target.value)"
-        />
-        <CommandEmpty v-if="!allowCustom">No options found.</CommandEmpty>
-        <CommandEmpty v-else>
-          Press enter to use "{{ search }}"
-        </CommandEmpty>
-        <CommandGroup>
-          <CommandItem
-            v-for="option in filteredOptions"
-            :key="option"
-            @select="selectOption(option)"
-          >
-            <Check
-              :class="[
-                'mr-2 h-4 w-4',
-                modelValue === option ? 'opacity-100' : 'opacity-0'
-              ]"
-            />
-            {{ option }}
-          </CommandItem>
-        </CommandGroup>
+      <Command v-model:value="searchTerm">
+        <CommandInput :placeholder="placeholder" />
+        <CommandEmpty>No option found.</CommandEmpty>
+        <CommandList>
+          <CommandGroup v-for="group in options" :key="group.label">
+            <h3 class="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+              {{ group.label }}
+            </h3>
+            <CommandItem
+              v-for="option in group.options"
+              :key="option.value"
+              :value="option.value"
+              @select="() => {
+                emit('update:modelValue', option.value)
+                open = false
+              }"
+            >
+              <Check
+                :class="cn(
+                  'mr-2 h-4 w-4',
+                  modelValue === option.value ? 'opacity-100' : 'opacity-0'
+                )"
+              />
+              <div>
+                <div>{{ option.label }}</div>
+                <div v-if="option.example" class="text-sm text-muted-foreground">
+                  {{ option.example }}
+                </div>
+              </div>
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
       </Command>
     </PopoverContent>
   </Popover>

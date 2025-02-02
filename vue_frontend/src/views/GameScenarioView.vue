@@ -174,15 +174,7 @@ async function startGame() {
             v-model="selectedGenre"
             :options="genreOptions"
             placeholder="Select a genre"
-            :allow-custom="false"
-          >
-            <template #option="{ option }">
-              <div>
-                <div>{{ option.label }}</div>
-                <div class="text-sm text-muted-foreground">{{ option.example }}</div>
-              </div>
-            </template>
-          </Combobox>
+          />
         </div>
 
         <!-- Start Button -->
