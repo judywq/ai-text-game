@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-
+import { Separator } from '@/components/ui/separator'
 const router = useRouter()
 const { toast } = useToast()
 const selectedModel = ref('')
@@ -225,31 +225,37 @@ async function startGame(sceneText?: string, cefrLevel?: string) {
       </CardContent>
     </Card>
 
-    <!-- Generated Scenes -->
-    <div v-if="scenes.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-      <Card
-        v-for="(scene, index) in scenes"
-        :key="index"
-        class="hover:shadow-lg transition-shadow"
-      >
-        <CardHeader>
-          <CardTitle> Level {{ index + 1 }}</CardTitle>
-          <CardDescription>
-            <span class="flex">
-              <span v-for="i in Math.min(index + 1, 5)" :key="i" class="text-yellow-400">★</span>
-              <span v-for="i in getEmptyStars(index + 1)" :key="`empty-${i}`" class="text-gray-300">★</span>
-            </span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p class="text-sm">{{ scene.text }}</p>
-        </CardContent>
-        <CardFooter>
-          <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level)">
-            Start with this difficulty
-          </Button>
-        </CardFooter>
-      </Card>
+    <div v-if="scenes.length > 0" class="mt-8">
+      <Separator />
+      <div class="text-sm text-muted-foreground text-center mt-4">
+        Please select a difficulty that you are comfortable with.
+      </div>
+      <!-- Generated Scenes -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+        <Card
+          v-for="(scene, index) in scenes"
+          :key="index"
+          class="hover:shadow-lg transition-shadow"
+        >
+          <CardHeader>
+            <CardTitle> Level {{ index + 1 }}</CardTitle>
+            <CardDescription>
+              <span class="flex">
+                <span v-for="i in Math.min(index + 1, 5)" :key="i" class="text-yellow-400">★</span>
+                <span v-for="i in getEmptyStars(index + 1)" :key="`empty-${i}`" class="text-gray-300">★</span>
+              </span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p class="text-sm">{{ scene.text }}</p>
+          </CardContent>
+          <CardFooter>
+            <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level)">
+              Start with this difficulty
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   </div>
 </template>
