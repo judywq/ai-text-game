@@ -91,14 +91,14 @@ class GameScenarioAdmin(admin.ModelAdmin):
 class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "title",
-        "user",
+        "created_by",
         "genre",
         "status",
         "created_at",
         "updated_at",
     ]
-    list_filter = ["status", "genre", "user"]
-    search_fields = ["title", "user__username"]
+    list_filter = ["status", "genre", "created_by"]
+    search_fields = ["title", "created_by__username"]
 
 
 @admin.register(GameInteraction)
@@ -111,7 +111,7 @@ class GameInteractionAdmin(admin.ModelAdmin):
         "get_system_output",
         "status",
     ]
-    list_filter = ["story__genre", "story__user"]
+    list_filter = ["story__genre", "story__created_by"]
     search_fields = ["system_input", "system_output"]
 
     @admin.display(description="System Input", ordering="system_input")
@@ -126,12 +126,12 @@ class GameInteractionAdmin(admin.ModelAdmin):
 @admin.register(TextExplanation)
 class TextExplanationAdmin(admin.ModelAdmin):
     list_display = [
-        "user",
+        "created_by",
         "story",
         "selected_text",
         "context_text",
         "explanation",
         "created_at",
     ]
-    list_filter = ["user", "story"]
+    list_filter = ["created_by", "story"]
     search_fields = ["selected_text", "explanation"]

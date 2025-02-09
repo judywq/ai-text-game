@@ -1,12 +1,14 @@
 import re
 from typing import Literal
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.db import models
+
+from ai_text_game.core.models import CreatableBase
+from ai_text_game.core.models import TimestampedBase
 
 from .utils import get_today_date_range
 from .utils import read_prompt_template
@@ -14,7 +16,7 @@ from .utils import read_prompt_template
 User = get_user_model()
 
 
-class LLMModel(models.Model):
+class LLMModel(TimestampedBase):
     order = models.IntegerField(
         default=10,
         help_text="Order of the model in the UI (smaller number comes first)",
@@ -39,8 +41,6 @@ class LLMModel(models.Model):
         default=True,
         help_text="Only active models will be listed in the UI",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order"]
@@ -85,7 +85,7 @@ class LLMModel(models.Model):
         return used_quota < quota_config.daily_limit
 
 
-class QuotaConfig(models.Model):
+class QuotaConfig(TimestampedBase):
     model = models.OneToOneField(
         LLMModel,
         on_delete=models.CASCADE,
@@ -96,8 +96,6 @@ class QuotaConfig(models.Model):
         default=10,
         help_text="Maximum number of requests per day for this model",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         get_latest_by = "created_at"
@@ -106,8 +104,7 @@ class QuotaConfig(models.Model):
         return f"QuotaConfig({self.model.display_name}, limit={self.daily_limit})"
 
 
-class APIRequest(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class APIRequest(TimestampedBase):
     essay = models.TextField()
     model = models.ForeignKey(
         LLMModel,
@@ -127,8 +124,6 @@ class APIRequest(models.Model):
         ],
         default="PENDING",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     task_id = models.CharField(max_length=100, blank=True, default="")
 
     def __str__(self):
@@ -158,7 +153,7 @@ def validate_user_prompt_template(value):
         )
 
 
-class LLMConfig(models.Model):
+class LLMConfig(TimestampedBase):
     PURPOSE_CHOICES = [
         ("scene_generation", "Scene Generation"),
         ("adventure_gameplay", "Adventure Gameplay"),
@@ -185,8 +180,6 @@ class LLMConfig(models.Model):
         default=False,
         help_text="Only one config can be active per purpose",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         get_latest_by = "created_at"
@@ -266,7 +259,7 @@ class LLMConfig(models.Model):
             )
 
 
-class OpenAIKey(models.Model):
+class OpenAIKey(TimestampedBase):
     key = models.CharField(
         max_length=255,
         help_text="OpenAI API Key (starts with 'sk-')",
@@ -284,8 +277,6 @@ class OpenAIKey(models.Model):
         validators=[MinValueValidator(0)],
         help_text="Keys with lower order values will be used first",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order"]
@@ -301,7 +292,7 @@ class OpenAIKey(models.Model):
         return cls.objects.filter(is_active=True).order_by("order").first()
 
 
-class GameScenario(models.Model):
+class GameScenario(TimestampedBase):
     category = models.CharField(
         max_length=100,
         choices=[
@@ -327,8 +318,6 @@ class GameScenario(models.Model):
         default=True,
         help_text="Only active scenarios will be shown to users",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["order"]
@@ -337,8 +326,7 @@ class GameScenario(models.Model):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
 
 
-class GameStory(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+class GameStory(CreatableBase, TimestampedBase):
     genre = models.CharField(
         max_length=100,
         help_text="Genre of the story (e.g., Fantasy, Sci-Fi)",
@@ -361,15 +349,13 @@ class GameStory(models.Model):
         ],
         default="IN_PROGRESS",
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-updated_at"]
         verbose_name_plural = "Game stories"
 
     def __str__(self):
-        return f"{self.id}: {self.title} ({self.user.username})"
+        return f"{self.id}: {self.title} ({self.created_by})"
 
     def get_context(self):
         context = []
@@ -378,7 +364,7 @@ class GameStory(models.Model):
         return context
 
 
-class GameInteraction(models.Model):
+class GameInteraction(TimestampedBase):
     story = models.ForeignKey(
         GameStory,
         on_delete=models.CASCADE,
@@ -404,7 +390,6 @@ class GameInteraction(models.Model):
         default="pending",
     )
     error = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -437,18 +422,12 @@ class GameInteraction(models.Model):
 
 
 # New model for text explanation lookups
-class TextExplanation(models.Model):
+class TextExplanation(CreatableBase, TimestampedBase):
     STATUS_CHOICES = [
         ("pending", "Pending"),
         ("completed", "Completed"),
         ("failed", "Failed"),
     ]
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="explanations",
-    )
     story = models.ForeignKey(
         "GameStory",
         on_delete=models.CASCADE,
@@ -463,7 +442,6 @@ class TextExplanation(models.Model):
         default="pending",
     )
     error = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Explanation for {self.selected_text[:30]} by {self.user}"
+        return f"Explanation for {self.selected_text[:30]} by {self.created_by}"
