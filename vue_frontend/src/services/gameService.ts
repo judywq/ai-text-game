@@ -9,7 +9,6 @@ export class GameService {
 
   public static async createStory(
     genre: string,
-    modelName: string,
     sceneText?: string,
     cefrLevel?: string,
     details?: string
@@ -18,7 +17,6 @@ export class GameService {
       '/game-stories/',
       {
         genre,
-        model_name: modelName,
         scene_text: sceneText,
         cefr_level: cefrLevel,
         details: details

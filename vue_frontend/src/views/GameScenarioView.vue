@@ -2,8 +2,6 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
-import { LLMModelService } from '@/services/llmModelService'
-import type { LLMModel } from '@/types/llm'
 import type { GameScenario } from '@/types/game'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
@@ -21,10 +19,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 const router = useRouter()
 const { toast } = useToast()
-const selectedModel = ref('')
 const selectedGenre = ref('')
 const isLoading = ref(false)
-const modelOptions = ref<LLMModel[]>([])
 const scenarios = ref<GameScenario[]>([])
 const scenes = ref<Array<{ level: string; text: string }>>([])
 const isGeneratingScenes = ref(false)
@@ -78,24 +74,6 @@ const getEmptyStars = computed(() => (index: number) => {
   return Math.max(0, Math.min(maxStars - index, maxStars))
 })
 
-const updateModelQuotas = async () => {
-  try {
-    const models = await LLMModelService.getActiveModels()
-    modelOptions.value = models
-    if (!models.find(model => model.name === selectedModel.value)) {
-      const defaultModel = models.find(model => model.is_default)
-      selectedModel.value = defaultModel?.name || models[0]?.name || ''
-    }
-  } catch (err) {
-    console.error('Error updating models:', err)
-    toast({
-      title: 'Error',
-      description: 'Failed to load models',
-      variant: 'destructive',
-    })
-  }
-}
-
 const loadScenarios = async () => {
   try {
     scenarios.value = await GameService.getScenarios()
@@ -111,7 +89,7 @@ const loadScenarios = async () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([updateModelQuotas(), loadScenarios()])
+    await loadScenarios()
   } catch (error) {
     toast({
       title: 'Error',
@@ -164,10 +142,10 @@ async function generateScenes() {
 async function startGame(sceneText?: string, cefrLevel?: string, details?: string) {
   const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
 
-  if (!selectedModel.value || !genreToUse) {
+  if (!genreToUse) {
     toast({
       title: 'Error',
-      description: 'Please select both a model and genre',
+      description: 'Please select a genre',
       variant: 'destructive',
     })
     return
@@ -177,7 +155,6 @@ async function startGame(sceneText?: string, cefrLevel?: string, details?: strin
   try {
     const story = await GameService.createStory(
       genreToUse,
-      selectedModel.value,
       sceneText,
       cefrLevel,
       details
@@ -200,39 +177,9 @@ async function startGame(sceneText?: string, cefrLevel?: string, details?: strin
     <Card class="max-w-md mx-auto mb-8">
       <CardHeader>
         <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
-        <CardDescription>Select a model and genre to start your adventure</CardDescription>
+        <CardDescription>Select a genre to start your adventure</CardDescription>
       </CardHeader>
-      <CardContent class="space-y-4 pt-6">
-        <!-- Model Selection -->
-        <div class="space-y-2">
-          <label class="text-sm font-medium mb-2 block">Select Model</label>
-          <Select v-model="selectedModel">
-            <SelectTrigger class="w-full">
-              <SelectValue placeholder="Select a model" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-for="model in modelOptions"
-                  :key="model.name"
-                  :value="model.name"
-                >
-                  {{ model.display_name }}
-                  <span
-                    v-if="model.daily_limit"
-                    :class="{
-                      'text-red-500': model.used_quota >= model.daily_limit,
-                      'text-muted-foreground': model.used_quota < model.daily_limit
-                    }"
-                    class="ml-2"
-                  >
-                    ({{ model.used_quota }}/{{ model.daily_limit }})
-                  </span>
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+      <CardContent class="space-y-4">
 
         <!-- Genre Selection -->
         <div class="space-y-2">
