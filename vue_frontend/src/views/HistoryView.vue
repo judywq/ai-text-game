@@ -1,3 +1,6 @@
+// This file should be refactored to use a different model for history,
+// or removed if essay history functionality is no longer needed
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { EssayService } from '@/services/essayService'

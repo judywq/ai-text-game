@@ -10,7 +10,6 @@ from django.db import models
 from ai_text_game.core.models import CreatableBase
 from ai_text_game.core.models import TimestampedBase
 
-from .utils import get_today_date_range
 from .utils import read_prompt_template
 
 User = get_user_model()
@@ -59,31 +58,6 @@ class LLMModel(TimestampedBase):
     def get_active_models(cls):
         return cls.objects.filter(is_active=True)
 
-    def get_used_quota(self, user) -> int:
-        """Get the number of completed requests for today for this model and user."""
-        today_start, today_end = get_today_date_range()
-
-        return APIRequest.objects.filter(
-            user=user,
-            model=self,
-            status="COMPLETED",
-            created_at__range=(today_start, today_end),
-        ).count()
-
-    def check_quota(self, user) -> bool:
-        """
-        Check if the user has exceeded their quota for this model.
-        Returns True if the user has exceeded their quota, False otherwise.
-        """
-        try:
-            quota_config = self.quota_config
-        except QuotaConfig.DoesNotExist:
-            # No quota config means unlimited requests
-            return True
-
-        used_quota = self.get_used_quota(user)
-        return used_quota < quota_config.daily_limit
-
 
 class QuotaConfig(TimestampedBase):
     model = models.OneToOneField(
@@ -102,33 +76,6 @@ class QuotaConfig(TimestampedBase):
 
     def __str__(self):
         return f"QuotaConfig({self.model.display_name}, limit={self.daily_limit})"
-
-
-class APIRequest(TimestampedBase):
-    essay = models.TextField()
-    model = models.ForeignKey(
-        LLMModel,
-        on_delete=models.PROTECT,
-        related_name="requests",
-        help_text="The LLM model used for this request",
-    )
-    result = models.TextField(blank=True, default="")
-    score = models.FloatField(null=True, blank=True)
-    error = models.TextField(blank=True, default="")
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("PENDING", "Pending"),
-            ("COMPLETED", "Completed"),
-            ("FAILED", "Failed"),
-        ],
-        default="PENDING",
-    )
-    task_id = models.CharField(max_length=100, blank=True, default="")
-
-    def __str__(self):
-        return f"APIRequest(user={self.user}, status={self.status}, \
-            model={self.model.display_name}, essay={self.essay[:20]})"
 
 
 def validate_user_prompt_template(value):
