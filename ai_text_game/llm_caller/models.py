@@ -1,4 +1,3 @@
-import re
 from typing import Literal
 
 from django.contrib.auth import get_user_model
@@ -76,28 +75,6 @@ class QuotaConfig(TimestampedBase):
 
     def __str__(self):
         return f"QuotaConfig({self.model.display_name}, limit={self.daily_limit})"
-
-
-def validate_user_prompt_template(value):
-    # Count occurrences of {essay}
-    essay_count = value.count("{essay}")
-    if essay_count < 1:
-        msg = "Did you forget to include a '{essay}' placeholder?"
-        raise ValidationError(
-            msg,
-        )
-
-    # Check for any other placeholders using regex
-    # This will find anything like {word} or {word_word} except {essay}
-    other_placeholders = re.findall(r"(?<!{){(?!essay})[^{}]+}(?!})", value)
-    if other_placeholders:
-        msg = (
-            f"Template contains invalid placeholders: {', '.join(other_placeholders)}. "
-            "Only '{essay}' is allowed."
-        )
-        raise ValidationError(
-            msg,
-        )
 
 
 class LLMConfig(TimestampedBase):
