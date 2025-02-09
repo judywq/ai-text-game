@@ -38,6 +38,10 @@ rm-vol-%:
 csu-%:
 	docker compose -f docker-compose.$*.yml run --rm django python manage.py createsuperuser
 
+# Initialize game data
+igd-%:
+	docker compose -f docker-compose.$*.yml run --rm django python manage.py init_game_data
+
 # Make migrations (local only)
 mm:
 	docker compose -f docker-compose.local.yml run --rm django python manage.py makemigrations
