@@ -89,6 +89,13 @@ class LLMConfig(TimestampedBase):
         choices=PURPOSE_CHOICES,
         help_text="The purpose of this configuration",
     )
+    model = models.ForeignKey(
+        LLMModel,
+        on_delete=models.SET_NULL,
+        related_name="llm_configs",
+        help_text="The LLM model this config applies to",
+        null=True,
+    )
     system_prompt = models.TextField(
         help_text="The system prompt for the LLM.",
     )

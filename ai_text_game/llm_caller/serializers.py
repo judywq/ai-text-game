@@ -66,7 +66,6 @@ class GameInteractionSerializer(serializers.ModelSerializer):
 
 class GameStorySerializer(serializers.ModelSerializer):
     interactions = serializers.SerializerMethodField()
-    model_name = serializers.CharField(write_only=True)
     scene_text = serializers.CharField(write_only=True, required=False)
     cefr_level = serializers.CharField(write_only=True, required=False)
 
@@ -80,7 +79,6 @@ class GameStorySerializer(serializers.ModelSerializer):
             "id",
             "title",
             "genre",
-            "model_name",
             "scene_text",
             "cefr_level",
             "status",
@@ -91,18 +89,16 @@ class GameStorySerializer(serializers.ModelSerializer):
         read_only_fields = ["title", "status", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        model_name = validated_data.pop("model_name")
         scene_text = validated_data.pop("scene_text", None)
         cefr_level = validated_data.pop("cefr_level", None)
         details = validated_data.pop("details", None)
-        try:
-            model = LLMModel.objects.get(name=model_name, is_active=True)
-        except LLMModel.DoesNotExist as e:
-            raise serializers.ValidationError(str(e)) from e
+
+        # Create initial system message with scene info if provided
+        active_config = LLMConfig.get_active_config(purpose="adventure_gameplay")
 
         # Create the story
         story = GameStory.objects.create(
-            model=model,
+            model=active_config.model,
             title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
@@ -111,8 +107,6 @@ class GameStorySerializer(serializers.ModelSerializer):
             f"\n* Additional details of the story: {details}" if details else ""
         )
 
-        # Create initial system message with scene info if provided
-        active_config = LLMConfig.get_active_config(purpose="adventure_gameplay")
         system_prompt = active_config.system_prompt.format(
             genre=story.genre,
             scene_text=scene_text,
