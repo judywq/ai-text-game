@@ -37,12 +37,13 @@ class LLMModelAdmin(admin.ModelAdmin):
 class LLMConfigAdmin(admin.ModelAdmin):
     list_display = [
         "purpose",
+        "model",
         "get_system_prompt",
         "temperature",
         "is_active",
         "updated_at",
     ]
-    list_filter = ["created_at"]
+    list_filter = ["model"]
 
     @admin.display(description="System Prompt", ordering="system_prompt")
     def get_system_prompt(self, obj):

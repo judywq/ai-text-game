@@ -398,8 +398,76 @@ OPENAI_JSON_SCHEMA_MODELS = [
     "gpt-4o-2024-11-20",
 ]
 
+# LLM Models
+# ------------------------------------------------------------------------------
+INIT_LLM_MODELS = [
+    {
+        "name": "gpt-3.5-turbo",
+        "display_name": "GPT-3.5 Turbo",
+        "is_default": True,
+        "is_active": True,
+        "order": 1,
+    },
+    {
+        "name": "gpt-4o",
+        "display_name": "GPT-4o",
+        "is_default": False,
+        "is_active": True,
+        "order": 10,
+    },
+    {
+        "name": "gpt-4o-mini-2024-07-18",
+        "display_name": "GPT-4o Mini",
+        "is_default": False,
+        "is_active": True,
+        "order": 11,
+    },
+    {
+        "name": "o1-2024-12-17",
+        "display_name": "o1",
+        "is_default": False,
+        "is_active": True,
+        "order": 20,
+    },
+    {
+        "name": "o1-mini-2024-09-12",
+        "display_name": "o1-mini",
+        "is_default": False,
+        "is_active": True,
+        "order": 21,
+    },
+    {
+        "name": "o3-mini-2025-01-31",
+        "display_name": "o3-mini",
+        "is_default": False,
+        "is_active": True,
+        "order": 30,
+    },
+]
+
+
+# Init LLM Configs
+# ------------------------------------------------------------------------------
+INIT_LLM_CONFIGS = {
+    "scene_generation": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "pre_game_prompt.txt",
+        "temperature": 0.7,
+    },
+    "adventure_gameplay": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "gameplay_prompt.txt",
+        "temperature": 0.7,
+    },
+    "text_explanation": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "text_explanation_prompt.txt",
+        "temperature": 0.1,
+    },
+}
+
 # Explanation related settings
-EXPLANATION_MODEL = "gpt-4o-mini"
+EXPLANATION_MODEL = "gpt-4o-mini-2024-07-18"
 EXPLANATION_TEMPERATURE = 0.1
 EXPLANATION_PROMPT = """Explain the following text in context.
 Text: {selected_text}
@@ -416,8 +484,8 @@ Then you will ask the user to select a character from the list of 3 characters.
 
 DEFAULT_USER_PROMPT_TEMPLATE = "Please evalute the following essay:\n\n{essay}"
 
-SCENE_GENERATION_MODEL = "gpt-4o-mini"
-PRE_GAME_GENRE = [
+SCENE_GENERATION_MODEL = "gpt-4o-mini-2024-07-18"
+INIT_GAME_GENRE = [
     {
         "category": "Genre",
         "name": "Fantasy",
