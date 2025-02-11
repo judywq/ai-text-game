@@ -5,6 +5,10 @@
 config-%:
 	docker compose -f docker-compose.$*.yml config
 
+# Enter logs
+logs-%:
+	docker compose -f docker-compose.$*.yml logs -f
+
 # Build images
 build-%:
 	docker compose -f docker-compose.$*.yml build
@@ -17,22 +21,38 @@ start-%:
 start-local-debug:
 	docker compose -f docker-compose.local.yml -f docker-compose.debug.yml up -d
 
-# Enter shell
-shell-%:
-	docker compose -f docker-compose.$*.yml run --rm django python manage.py shell
-
 # Stop containers
 stop-%:
 	docker compose -f docker-compose.$*.yml down
 
 # Restart containers
 restart-%:
+	docker compose -f docker-compose.$*.yml restart
+
+# Full restart containers
+frestart-%:
 	$(MAKE) stop-$*
 	$(MAKE) start-$*
 
 # Stop containers and remove all volumes
 rm-vol-%:
 	docker compose -f docker-compose.$*.yml down -v
+
+# Enter shell
+sh-%:
+	docker compose -f docker-compose.$*.yml exec -it django /bin/bash
+
+# Enter django shell
+djshell-%:
+	docker compose -f docker-compose.$*.yml run --rm django python manage.py shell_plus
+
+# List files in media directory
+list-media-files-%:
+	docker compose -f docker-compose.$*.yml run --rm django python manage.py list_media_files
+
+# Delete files in media directory older than 30 days
+delete-media-files-%:
+	docker compose -f docker-compose.$*.yml run --rm django python manage.py delete_media_files --days 30
 
 # Create a superuser
 csu-%:
