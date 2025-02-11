@@ -289,10 +289,10 @@ class GameStory(CreatableBase, TimestampedBase):
         return f"{self.id}: {self.title} ({self.created_by})"
 
     def get_context(self):
-        context = []
-        for interaction in self.interactions.all().order_by("created_at"):
-            context.extend(interaction.format_messages())
-        return context
+        return [
+            interaction.format_message()
+            for interaction in self.interactions.all().order_by("created_at")
+        ]
 
 
 class GameInteraction(TimestampedBase):
@@ -306,17 +306,19 @@ class GameInteraction(TimestampedBase):
         choices=[
             ("system", "System"),
             ("user", "User"),
+            ("assistant", "Assistant"),
         ],
         default="user",
     )
-    system_input = models.TextField()
-    system_output = models.TextField(blank=True)
+    content = models.TextField(blank=True)
     status = models.CharField(
         max_length=20,
         choices=[
             ("pending", "Pending"),
+            ("streaming", "Streaming"),
             ("completed", "Completed"),
             ("failed", "Failed"),
+            ("aborted", "Aborted"),
         ],
         default="pending",
     )
@@ -333,23 +335,12 @@ class GameInteraction(TimestampedBase):
         # Update the parent story's updated_at timestamp
         self.story.save(update_fields=["updated_at"])
 
-    def format_messages(self):
+    def format_message(self):
         """Format the message for the LLM API."""
-        messages = [
-            {
-                "role": self.role,
-                "content": self.system_input,
-            },
-        ]
-
-        if self.system_output:
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": self.system_output,
-                },
-            )
-        return messages
+        return {
+            "role": self.role,
+            "content": self.content or "",
+        }
 
 
 # New model for text explanation lookups

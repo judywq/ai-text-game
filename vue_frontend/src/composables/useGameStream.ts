@@ -15,8 +15,7 @@ export function useGameStream() {
         id: Date.now(),
         story: storyId,
         role: isSystem ? 'system' : 'user',
-        system_input: userInput,
-        system_output: '',
+        content: userInput,
         status: 'streaming',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -24,7 +23,7 @@ export function useGameStream() {
 
       const endpoint = isSystem
         ? `${API_BASE_URL}/game-stories/${storyId}/start/`
-        : `${API_BASE_URL}/game-stories/${storyId}/interact/?system_input=${encodeURIComponent(userInput)}`
+        : `${API_BASE_URL}/game-stories/${storyId}/interact/?content=${encodeURIComponent(userInput)}`
 
       eventSource = new EventSource(endpoint, { withCredentials: true })
 
@@ -44,8 +43,8 @@ export function useGameStream() {
           return
         }
 
-        interaction.system_output += data.content
-        streamingContent.value = interaction.system_output
+        interaction.content += data.content
+        streamingContent.value = interaction.content
       }
 
       eventSource.onerror = (error) => {

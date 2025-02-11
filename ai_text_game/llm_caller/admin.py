@@ -109,20 +109,15 @@ class GameInteractionAdmin(admin.ModelAdmin):
         "story",
         "role",
         "created_at",
-        "get_system_input",
-        "get_system_output",
+        "get_content",
         "status",
     ]
     list_filter = ["story__genre", "story__created_by"]
-    search_fields = ["system_input", "system_output"]
+    search_fields = ["content"]
 
-    @admin.display(description="System Input", ordering="system_input")
-    def get_system_input(self, obj):
-        return truncatechars(obj.system_input, 50)
-
-    @admin.display(description="System Output", ordering="system_output")
-    def get_system_output(self, obj):
-        return truncatechars(obj.system_output, 50)
+    @admin.display(description="Content", ordering="content")
+    def get_content(self, obj):
+        return truncatechars(obj.content, 50)
 
 
 @admin.register(TextExplanation)

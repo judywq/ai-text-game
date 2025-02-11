@@ -50,18 +50,10 @@ class GameInteractionSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "role",
-            "system_input",
-            "system_output",
+            "content",
             "status",
             "created_at",
         ]
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # For system messages, only return the system output as assistant message
-        if instance.role == "system":
-            data["system_input"] = None
-        return data
 
 
 class GameStorySerializer(serializers.ModelSerializer):
@@ -117,7 +109,7 @@ class GameStorySerializer(serializers.ModelSerializer):
         GameInteraction.objects.create(
             story=story,
             role="system",
-            system_input=system_prompt,
+            content=system_prompt,
             status="pending",
         )
 

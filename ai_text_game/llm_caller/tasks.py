@@ -51,7 +51,7 @@ def process_game_interaction(
                 raise ValueError(msg) from e
 
         if settings.FAKE_LLM_REQUEST:
-            interaction.system_output = "This is a test response."
+            interaction.content = "This is a test response."
             interaction.status = "completed"
             interaction.save()
             return True
@@ -64,8 +64,8 @@ def process_game_interaction(
             temperature=params.temperature,
         )
 
-        system_output = response.choices[0].message.content
-        interaction.system_output = system_output
+        content = response.choices[0].message.content
+        interaction.content = content
         interaction.status = "completed"
         interaction.save()
 

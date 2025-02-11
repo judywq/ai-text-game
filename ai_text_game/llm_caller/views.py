@@ -74,7 +74,7 @@ def stream_response(model_name, context, interaction):
                 accumulated_response += word
                 time.sleep(0.05)  # Add small delay to simulate real streaming
 
-            interaction.system_output = accumulated_response
+            interaction.content = accumulated_response
             interaction.status = "completed"
             interaction.save()
             yield "data: [DONE]\n\n"
@@ -96,7 +96,7 @@ def stream_response(model_name, context, interaction):
                 yield f"data: {json.dumps({'content': content})}\n\n"
 
         # Update interaction status when done
-        interaction.system_output = accumulated_response
+        interaction.content = accumulated_response
         interaction.status = "completed"
         interaction.save()
         yield "data: [DONE]\n\n"
@@ -146,25 +146,33 @@ class GameStoryViewSet(viewsets.ModelViewSet):
 
         # Handle GET request for SSE
         if request.method == "GET":
-            system_input = request.GET.get("system_input")
+            content = request.GET.get("content")
         else:
-            system_input = request.data.get("system_input")
+            content = request.data.get("content")
 
-        if not system_input:
+        if not content:
             return Response(
-                {"error": "system_input is required"},
+                {"error": "content is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Create the interaction
-        interaction = GameInteraction.objects.create(
+        user_interaction = GameInteraction.objects.create(
             story=story,
             role="user",
-            system_input=system_input,
+            content=content,
+            status="completed",
+        )
+        user_interaction.save()
+
+        assistant_interaction = GameInteraction.objects.create(
+            story=story,
+            role="assistant",
+            content="",
             status="pending",
         )
 
-        return self._create_streaming_response(story, interaction)
+        return self._create_streaming_response(story, assistant_interaction)
 
     @action(detail=True, methods=["post", "get"])
     @transaction.atomic
@@ -173,19 +181,29 @@ class GameStoryViewSet(viewsets.ModelViewSet):
 
         # Get the existing system interaction
         try:
-            interaction = story.interactions.get(role="system")
+            system_interaction = story.interactions.get(role="system")
         except GameInteraction.DoesNotExist:
             return Response(
                 {"error": "System interaction not found"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if interaction.status != "pending":
+        if system_interaction.status != "pending":
             return Response(
                 {"error": "System interaction already completed"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return self._create_streaming_response(story, interaction)
+        system_interaction.status = "completed"
+        system_interaction.save()
+
+        assistant_interaction = GameInteraction.objects.create(
+            story=story,
+            role="assistant",
+            content="",
+            status="pending",
+        )
+
+        return self._create_streaming_response(story, assistant_interaction)
 
     # NEW: Nested explanations endpoint for a specific game story
     @action(detail=True, methods=["get", "post"])

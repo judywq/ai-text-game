@@ -10,10 +10,9 @@ export interface GameScenario {
 export interface GameInteraction {
   id: number
   story: number
-  role: string
-  system_input: string
-  system_output: string
-  status: 'pending' | 'completed' | 'failed' | 'streaming'
+  role: 'user' | 'system' | 'assistant'
+  content: string
+  status: 'pending' | 'streaming' | 'completed' | 'failed' | 'aborted'
   created_at: string
   updated_at: string
 }

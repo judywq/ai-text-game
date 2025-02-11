@@ -246,22 +246,35 @@ async function sendMessage() {
   isLoading.value = true
 
   try {
-    const pendingInteraction: GameInteraction = {
+    // Create user message
+    const userInteraction: GameInteraction = {
       id: Date.now(),
       story: story.value.id,
       role: 'user',
-      system_input: input,
-      system_output: '',
+      content: input,
+      status: 'completed',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+
+    // Create system response placeholder
+    const systemInteraction: GameInteraction = {
+      id: Date.now() + 1,
+      story: story.value.id,
+      role: 'system',
+      content: '',
       status: 'streaming',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 
-    story.value.interactions.push(pendingInteraction)
+    // Add both interactions
+    story.value.interactions.push(userInteraction)
+    story.value.interactions.push(systemInteraction)
     scrollToBottom()
 
     const streamPromise = startStream(story.value.id, input)
-    const streamingInteractionId = pendingInteraction.id
+    const streamingInteractionId = systemInteraction.id
 
     currentWatcher.value = watch(streamingContent, (newContent) => {
       if (story.value) {
@@ -269,7 +282,7 @@ async function sendMessage() {
           i => i.id === streamingInteractionId
         )
         if (streamingInteraction) {
-          streamingInteraction.system_output = newContent
+          streamingInteraction.content = newContent
           scrollToBottom()
         }
       }
@@ -292,8 +305,9 @@ async function sendMessage() {
       variant: 'destructive',
     })
     if (story.value) {
+      // Remove both pending interactions on error
       story.value.interactions = story.value.interactions.filter(
-        i => i.id !== Date.now()
+        i => i.id !== Date.now() && i.id !== Date.now() + 1
       )
     }
     userInput.value = input
@@ -317,8 +331,7 @@ async function startSystemMessage(storyId: number) {
       id: systemInteraction.id,
       story: storyId,
       role: 'system',
-      system_input: '',
-      system_output: '',
+      content: '',
       status: 'streaming',
       created_at: systemInteraction.created_at,
       updated_at: systemInteraction.updated_at
@@ -339,7 +352,7 @@ async function startSystemMessage(storyId: number) {
           i => i.id === streamingInteractionId
         )
         if (streamingInteraction) {
-          streamingInteraction.system_output = newContent
+          streamingInteraction.content = newContent
           scrollToBottom()
         }
       }
@@ -372,7 +385,7 @@ async function startSystemMessage(storyId: number) {
 }
 
 function formatMessage(interaction: GameInteraction) {
-  return marked(interaction.system_output)
+  return interaction.content ? marked(interaction.content) : ''
 }
 
 // Add new polling function for explanations
@@ -424,16 +437,18 @@ function stopExplanationPolling() {
         >
           <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
             <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
-              <div v-if="interaction.system_input" class="flex justify-end">
+              <!-- User message -->
+              <div v-if="interaction.role === 'user'" class="flex justify-end">
                 <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
-                  {{ interaction.system_input }}
+                  {{ interaction.content }}
                 </div>
               </div>
 
-              <div class="flex">
+              <!-- System/AI message -->
+              <div v-if="interaction.role === 'assistant'" class="flex">
                 <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
                   <div v-if="interaction.status === 'streaming'">
-                    {{ interaction.system_output }}<span class="animate-pulse">▋</span>
+                    {{ interaction.content }}<span class="animate-pulse">▋</span>
                   </div>
                   <div v-else-if="interaction.status === 'failed'" class="text-destructive">
                     Failed to generate response. Please try again.
