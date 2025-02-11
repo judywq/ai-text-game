@@ -276,19 +276,19 @@ const handleGameClick = (story: GameStory) => {
       <!-- New Recent Games Panel -->
       <div class="w-full md:w-60 md:shrink-0">
         <Card>
-          <CardHeader>
+          <CardHeader class="pb-3">
             <CardTitle class="text-lg">Recent Games</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div class="space-y-2">
+          <CardContent class="space-y-1">
+            <div class="space-y-1">
               <div
                 v-for="(story, idx) in recentGames"
                 :key="story.id"
-                class="px-3 py-2 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                class="px-2 py-1.5 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
                 @click="handleGameClick(story)"
               >
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium">#{{ idx + 1 }}</span>
+                  <span class="text-xs font-medium">#{{ idx + 1 }}</span>
                   <span
                     :class="{
                       'text-yellow-500': story.status === 'IN_PROGRESS',
@@ -300,21 +300,21 @@ const handleGameClick = (story: GameStory) => {
                     {{ story.status }}
                   </span>
                 </div>
-                <div class="text-sm text-muted-foreground truncate">
+                <div class="text-xs text-muted-foreground truncate">
                   {{ story.title }}
                 </div>
               </div>
               <div v-if="recentGames.length === 0">
-                <p class="text-sm text-muted-foreground">(No recent games)</p>
+                <p class="text-xs text-muted-foreground">(No recent games)</p>
               </div>
             </div>
 
             <router-link
               :to="{ name: 'history' }"
-              class="flex items-center justify-center w-full mt-4 text-sm text-muted-foreground hover:text-primary"
+              class="flex items-center justify-center w-full mt-2 text-xs text-muted-foreground hover:text-primary"
             >
               View all history
-              <ArrowRight class="w-4 h-4 ml-1" />
+              <ArrowRight class="w-3 h-3 ml-1" />
             </router-link>
           </CardContent>
         </Card>
