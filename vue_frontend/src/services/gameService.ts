@@ -1,5 +1,5 @@
 import api from '@/services/api'
-import type { GameScenario, GameStory } from '@/types/game'
+import type { GameScenario, GameStory, GameStoryListResponse } from '@/types/game'
 
 export class GameService {
   public static async getScenarios(): Promise<GameScenario[]> {
@@ -58,5 +58,18 @@ export class GameService {
       timeout: 30000 // 30 second timeout
     });
     return response.data;
+  }
+
+  public static async getRecentStories(
+    page: number = 1,
+    pageSize: number = 10,
+  ): Promise<GameStoryListResponse> {
+    const response = await api.get<GameStoryListResponse>(`/game-stories/`, {
+      params: {
+        page,
+        page_size: pageSize
+      }
+    })
+    return response.data
   }
 }

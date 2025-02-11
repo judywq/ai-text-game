@@ -110,11 +110,13 @@ def stream_response(model_name, context, interaction):
 class GameStoryViewSet(viewsets.ModelViewSet):
     serializer_class = GameStorySerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     # https://stackoverflow.com/a/78210808/1938012
     content_negotiation_class = IgnoreClientContentNegotiation
 
     def get_queryset(self):
-        return GameStory.objects.filter(created_by=self.request.user)
+        queryset = GameStory.objects.filter(created_by=self.request.user)
+        return queryset.order_by("-created_at")
 
     def perform_create(self, serializer):
         return serializer.save(created_by=self.request.user)

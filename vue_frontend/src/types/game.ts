@@ -27,3 +27,10 @@ export interface GameStory {
   updated_at: string
   interactions: GameInteraction[]
 }
+
+export interface GameStoryListResponse {
+  count: number
+  next: string | null
+  previous: string | null
+  results: GameStory[]
+}

@@ -2,7 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
-import type { GameScenario } from '@/types/game'
+import type { GameScenario, GameStory } from '@/types/game'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { ArrowRight } from 'lucide-vue-next'
+
+const RECENT_GAMES_LIMIT = 5
 const router = useRouter()
 const { toast } = useToast()
 const selectedGenre = ref('')
@@ -27,6 +30,7 @@ const isGeneratingScenes = ref(false)
 const customGenre = ref('')
 const showCustomGenreInput = ref(false)
 const details = ref('')
+const recentGames = ref<GameStory[]>([])
 
 // Computed properties for genres and sub-genres
 const genres = computed(() =>
@@ -87,9 +91,21 @@ const loadScenarios = async () => {
   }
 }
 
+const loadRecentGames = async () => {
+  try {
+    const response = await GameService.getRecentStories(1, RECENT_GAMES_LIMIT)
+    recentGames.value = response.results
+  } catch (error) {
+    console.error('Error loading recent games:', error)
+  }
+}
+
 onMounted(async () => {
   try {
-    await loadScenarios()
+    await Promise.all([
+      loadScenarios(),
+      loadRecentGames()
+    ])
   } catch (error) {
     toast({
       title: 'Error',
@@ -170,80 +186,137 @@ async function startGame(sceneText?: string, cefrLevel?: string, details?: strin
     isLoading.value = false
   }
 }
+
+// Add function to handle clicking a recent game
+const handleGameClick = (story: GameStory) => {
+  router.push(`/game/${story.id}`)
+}
 </script>
 
 <template>
   <div class="container mx-auto py-8">
-    <Card class="max-w-md mx-auto mb-8">
-      <CardHeader>
-        <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
-        <CardDescription>Select a genre to start your adventure</CardDescription>
-      </CardHeader>
-      <CardContent class="space-y-4">
+    <div class="flex flex-col md:flex-row gap-8">
+      <!-- Existing Card wrapped in a div -->
+      <div class="flex-1">
+        <Card class="max-w-md mx-auto mb-8">
+          <CardHeader>
+            <CardTitle class="text-3xl font-bold">Start Your Adventure</CardTitle>
+            <CardDescription>Select a genre to start your adventure</CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-4">
 
-        <!-- Genre Selection -->
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Select Genre</label>
-          <Combobox
-            v-model="selectedGenre"
-            :options="genreOptions"
-            placeholder="Select a genre"
-          />
-          <div v-if="showCustomGenreInput" class="mt-2">
-            <Input v-model="customGenre" placeholder="Enter your genre" />
+            <!-- Genre Selection -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Select Genre</label>
+              <Combobox
+                v-model="selectedGenre"
+                :options="genreOptions"
+                placeholder="Select a genre"
+              />
+              <div v-if="showCustomGenreInput" class="mt-2">
+                <Input v-model="customGenre" placeholder="Enter your genre" />
+              </div>
+            </div>
+
+            <!-- Add details input -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Scene Details (Optional)</label>
+              <textarea
+                v-model="details"
+                class="w-full min-h-10 p-2 border rounded-md text-sm"
+                placeholder="Add specific details about the story you want to generate..."
+                maxlength="500"
+              />
+            </div>
+
+            <Button
+              class="w-full"
+              :disabled="isGeneratingScenes || !selectedGenre || (selectedGenre === 'other' && !customGenre)"
+              @click="generateScenes"
+            >
+              {{ isGeneratingScenes ? 'Generating Scenes...' : 'Generate Scenes' }}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <div v-if="scenes.length > 0" class="mt-8">
+          <Separator />
+          <div class="text-sm text-muted-foreground text-center mt-4">
+            Please select a difficulty that you are comfortable with.
+          </div>
+          <!-- Generated Scenes -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            <Card
+              v-for="(scene, index) in scenes"
+              :key="index"
+              class="hover:shadow-lg transition-shadow"
+            >
+              <CardHeader>
+                <CardTitle> Level {{ index + 1 }}</CardTitle>
+                <CardDescription>
+                  <span class="flex">
+                    <span v-for="i in Math.min(index + 1, 5)" :key="i" class="text-yellow-400">★</span>
+                    <span v-for="i in getEmptyStars(index + 1)" :key="`empty-${i}`" class="text-gray-300">★</span>
+                  </span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p class="text-sm">{{ scene.text }}</p>
+              </CardContent>
+              <CardFooter>
+                <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level, details)">
+                  Start with this difficulty
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
-
-        <!-- Add details input -->
-        <div class="space-y-2">
-          <label class="text-sm font-medium">Scene Details (Optional)</label>
-          <textarea
-            v-model="details"
-            class="w-full min-h-10 p-2 border rounded-md text-sm"
-            placeholder="Add specific details about the story you want to generate..."
-            maxlength="500"
-          />
-        </div>
-
-        <Button
-          class="w-full"
-          :disabled="isGeneratingScenes || !selectedGenre || (selectedGenre === 'other' && !customGenre)"
-          @click="generateScenes"
-        >
-          {{ isGeneratingScenes ? 'Generating Scenes...' : 'Generate Scenes' }}
-        </Button>
-      </CardContent>
-    </Card>
-
-    <div v-if="scenes.length > 0" class="mt-8">
-      <Separator />
-      <div class="text-sm text-muted-foreground text-center mt-4">
-        Please select a difficulty that you are comfortable with.
       </div>
-      <!-- Generated Scenes -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-        <Card
-          v-for="(scene, index) in scenes"
-          :key="index"
-          class="hover:shadow-lg transition-shadow"
-        >
+
+      <!-- New Recent Games Panel -->
+      <div class="w-full md:w-60 md:shrink-0">
+        <Card>
           <CardHeader>
-            <CardTitle> Level {{ index + 1 }}</CardTitle>
-            <CardDescription>
-              <span class="flex">
-                <span v-for="i in Math.min(index + 1, 5)" :key="i" class="text-yellow-400">★</span>
-                <span v-for="i in getEmptyStars(index + 1)" :key="`empty-${i}`" class="text-gray-300">★</span>
-              </span>
-            </CardDescription>
+            <CardTitle class="text-lg">Recent Games</CardTitle>
           </CardHeader>
           <CardContent>
-            <p class="text-sm">{{ scene.text }}</p>
+            <div class="space-y-2">
+              <div
+                v-for="(story, idx) in recentGames"
+                :key="story.id"
+                class="px-3 py-2 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                @click="handleGameClick(story)"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium">#{{ idx + 1 }}</span>
+                  <span
+                    :class="{
+                      'text-yellow-500': story.status === 'IN_PROGRESS',
+                      'text-red-500': story.status === 'ABANDONED',
+                      'text-green-500': story.status === 'COMPLETED'
+                    }"
+                    class="text-xs"
+                  >
+                    {{ story.status }}
+                  </span>
+                </div>
+                <div class="text-sm text-muted-foreground truncate">
+                  {{ story.title }}
+                </div>
+              </div>
+              <div v-if="recentGames.length === 0">
+                <p class="text-sm text-muted-foreground">(No recent games)</p>
+              </div>
+            </div>
+
+            <router-link
+              :to="{ name: 'history' }"
+              class="flex items-center justify-center w-full mt-4 text-sm text-muted-foreground hover:text-primary"
+            >
+              View all history
+              <ArrowRight class="w-4 h-4 ml-1" />
+            </router-link>
           </CardContent>
-          <CardFooter>
-            <Button class="w-full" variant="outline" @click="startGame(scene.text, scene.level, details)">
-              Start with this difficulty
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>
