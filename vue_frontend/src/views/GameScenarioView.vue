@@ -241,7 +241,7 @@ const handleGameClick = (story: GameStory) => {
         </Card>
 
         <!-- Recent Games Panel -->
-        <div class="w-full w-60 md:shrink-0">
+        <div class="w-60 md:shrink-0">
           <Card>
             <CardHeader class="pb-3">
               <CardTitle class="text-lg">Recent Games</CardTitle>
