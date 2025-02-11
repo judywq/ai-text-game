@@ -114,10 +114,10 @@ class GameStoryViewSet(viewsets.ModelViewSet):
     content_negotiation_class = IgnoreClientContentNegotiation
 
     def get_queryset(self):
-        return GameStory.objects.filter(user=self.request.user)
+        return GameStory.objects.filter(created_by=self.request.user)
 
     def perform_create(self, serializer):
-        return serializer.save(user=self.request.user)
+        return serializer.save(created_by=self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -204,7 +204,7 @@ class GameStoryViewSet(viewsets.ModelViewSet):
 
         # Create pending explanation
         lookup = TextExplanation.objects.create(
-            user=request.user,
+            created_by=request.user,
             story=story,
             selected_text=selected_text,
             context_text=context_text,
