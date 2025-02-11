@@ -202,6 +202,8 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        active_config = LLMConfig.get_active_config(purpose="text_explanation")
+
         # Create pending explanation
         lookup = TextExplanation.objects.create(
             created_by=request.user,
@@ -209,18 +211,17 @@ class GameStoryViewSet(viewsets.ModelViewSet):
             selected_text=selected_text,
             context_text=context_text,
             status="pending",
+            model=active_config.model,
         )
-
-        active_config = LLMConfig.get_active_config(purpose="text_explanation")
 
         # Start async task
         explanation_params = TextExplanationParams(
             explanation_id=lookup.id,
-            model_name=settings.EXPLANATION_MODEL,
+            model_name=active_config.model.name,
             system_prompt=active_config.system_prompt,
             context_text=context_text,
             selected_text=selected_text,
-            temperature=settings.EXPLANATION_TEMPERATURE,
+            temperature=active_config.temperature,
         )
 
         transaction.on_commit(
@@ -311,9 +312,9 @@ class GameSceneGeneratorView(APIView):
             try:
                 client = get_openai_client(OpenAIKey.get_available_key())
                 response = client.chat.completions.create(
-                    model=settings.SCENE_GENERATION_MODEL,
+                    model=active_config.model.name,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
+                    temperature=active_config.temperature,
                     response_format={"type": "json_object"},
                 )
                 scenes = json.loads(response.choices[0].message.content)

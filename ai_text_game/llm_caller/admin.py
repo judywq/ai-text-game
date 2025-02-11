@@ -93,12 +93,13 @@ class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "title",
         "created_by",
+        "model",
         "genre",
         "status",
         "created_at",
         "updated_at",
     ]
-    list_filter = ["status", "genre", "created_by"]
+    list_filter = ["status", "genre", "created_by", "model"]
     search_fields = ["title", "created_by__username"]
 
 
@@ -129,10 +130,11 @@ class TextExplanationAdmin(admin.ModelAdmin):
     list_display = [
         "created_by",
         "story",
+        "model",
         "selected_text",
         "context_text",
         "explanation",
         "created_at",
     ]
-    list_filter = ["created_by", "story"]
+    list_filter = ["created_by", "story", "model"]
     search_fields = ["selected_text", "explanation"]

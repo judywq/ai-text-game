@@ -359,6 +359,12 @@ class TextExplanation(CreatableBase, TimestampedBase):
         ("completed", "Completed"),
         ("failed", "Failed"),
     ]
+    model = models.ForeignKey(
+        LLMModel,
+        on_delete=models.SET_NULL,
+        related_name="text_explanations",
+        null=True,
+    )
     story = models.ForeignKey(
         "GameStory",
         on_delete=models.CASCADE,

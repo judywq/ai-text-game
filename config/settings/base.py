@@ -398,7 +398,7 @@ OPENAI_JSON_SCHEMA_MODELS = [
     "gpt-4o-2024-11-20",
 ]
 
-# LLM Models
+# Init LLM Models
 # ------------------------------------------------------------------------------
 INIT_LLM_MODELS = [
     {
@@ -466,25 +466,8 @@ INIT_LLM_CONFIGS = {
     },
 }
 
-# Explanation related settings
-EXPLANATION_MODEL = "gpt-4o-mini-2024-07-18"
-EXPLANATION_TEMPERATURE = 0.1
-EXPLANATION_PROMPT = """Explain the following text in context.
-Text: {selected_text}
-Context: {context_text}
-"""
-
-
-DEFAULT_SYSTEM_PROMPT = """You are AI Text Game Master. You are responsible for creating a story for the user.
-You will be given a genre and a model name. You will then create a story for the user.
-You will then interact with the user and respond to their input.
-You start the story with a one-line description of the story.
-Then you will ask the user to select a character from the list of 3 characters.
-"""
-
-DEFAULT_USER_PROMPT_TEMPLATE = "Please evalute the following essay:\n\n{essay}"
-
-SCENE_GENERATION_MODEL = "gpt-4o-mini-2024-07-18"
+# Init Game Genre
+# ------------------------------------------------------------------------------
 INIT_GAME_GENRE = [
     {
         "category": "Genre",
