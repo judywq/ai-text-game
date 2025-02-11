@@ -36,4 +36,12 @@ except Exception as e:
 EOF
 fi
 
-exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
+# exec /usr/local/bin/gunicorn config.wsgi --bind 0.0.0.0:5000 --chdir=/app
+exec /usr/local/bin/gunicorn config.asgi:application \
+    --bind 0.0.0.0:5000 \
+    --chdir=/app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --timeout 300 \
+    --keep-alive 5 \
+    --log-level info
