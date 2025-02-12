@@ -9,6 +9,7 @@ export interface GameScenario {
 
 export interface GameInteraction {
   id: number
+  client_id: number
   story: number
   role: 'user' | 'system' | 'assistant'
   content: string
