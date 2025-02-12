@@ -48,10 +48,12 @@ services:
       - django
     volumes:
       - production_traefik:/etc/traefik/acme
-    ports:
-      - '0.0.0.0:80:80'
-      - '0.0.0.0:443:443'
-      - '0.0.0.0:5555:5555'
+    networks:
+      - nginxproxymanager_default
+    # ports:
+    #   - '80:80'
+    #   - '0.0.0.0:443:443'
+    #   - '0.0.0.0:5555:5555'
 
   redis:
     image: docker.io/redis:6
@@ -86,3 +88,8 @@ services:
     volumes:
       - production_django_media:/usr/share/nginx/media:ro
       - production_django_static:/usr/share/nginx/static:ro
+
+networks:
+  nginxproxymanager_default:
+    name: nginxproxymanager_default
+    external: true
