@@ -9,6 +9,12 @@ import { AxiosError } from 'axios';
 const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 console.debug('api.ts initialization - API_BASE_URL:', { API_BASE_URL });
 
+let csrf_key = 'csrftoken';
+if (window.location.protocol === 'https:') {
+  // If https, set csrf_key to '__Secure-csrftoken'
+  csrf_key = '__Secure-csrftoken';
+}
+
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -21,7 +27,7 @@ const api: AxiosInstance = axios.create({
 // Add a request interceptor to dynamically set the CSRF token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    const csrfToken = Cookies.get('csrftoken');
+    const csrfToken = Cookies.get(csrf_key);
     if (csrfToken) {
       if (config.headers) {
         config.headers['X-CSRFToken'] = csrfToken;
