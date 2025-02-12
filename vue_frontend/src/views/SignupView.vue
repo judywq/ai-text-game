@@ -26,8 +26,8 @@ const router = useRouter()
 const generalError = ref<string | null>(null)
 
 const form = useForm({
-  schema: signupFormSchema,
-  defaultValues: {
+  validationSchema: toTypedSchema(signupFormSchema),
+  initialValues: {
     email: '',
     password: '',
     confirmPassword: '',
