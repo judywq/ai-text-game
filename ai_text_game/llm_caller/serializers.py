@@ -55,6 +55,13 @@ class GameInteractionSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # For system messages, return empty content
+        if instance.role == "system":
+            data["content"] = ""
+        return data
+
 
 class GameStorySerializer(serializers.ModelSerializer):
     interactions = serializers.SerializerMethodField()
@@ -62,7 +69,9 @@ class GameStorySerializer(serializers.ModelSerializer):
     cefr_level = serializers.CharField(write_only=True, required=False)
 
     def get_interactions(self, obj):
-        interactions = obj.interactions.order_by("created_at")
+        interactions = obj.interactions.filter(role__in=["assistant", "user"]).order_by(
+            "created_at",
+        )
         return GameInteractionSerializer(interactions, many=True).data
 
     class Meta:

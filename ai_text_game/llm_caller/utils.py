@@ -29,6 +29,16 @@ def get_openai_client(key):
     return openai.OpenAI(api_key=key.key)
 
 
+def get_openai_client_async(key):
+    if not key:
+        msg = (
+            "No active OpenAI API key found."
+            " Please add an API key in the admin interface."
+        )
+        raise ValueError(msg)
+    return openai.AsyncOpenAI(api_key=key.key)
+
+
 def read_prompt_template(template_filename):
     template_path = f"ai_text_game/llm_caller/templates/prompts/{template_filename}"
     try:

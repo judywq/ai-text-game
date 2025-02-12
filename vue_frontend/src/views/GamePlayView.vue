@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Separator } from '@/components/ui/separator'
-import { useGameStream } from '@/composables/useGameStream'
+import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { marked } from 'marked'
 import { CircleHelp } from 'lucide-vue-next'
 import {
@@ -33,9 +33,15 @@ const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 const pollInterval = ref<ReturnType<typeof setInterval> | null>(null)
-const currentWatcher = ref<(() => void) | null>(null)
 
-const { streamingContent, startStream, stopStream } = useGameStream()
+const {
+  isConnected,
+  connect,
+  startInteraction,
+  startStory,
+  onInteractionCreated,
+  onStream
+} = useGameWebSocket()
 
 const rawSelection = ref('')
 const contextSelection = ref('')
@@ -156,30 +162,6 @@ async function fetchLookupHistory() {
   }
 }
 
-async function pollForUpdates() {
-  if (!story.value?.id) return
-
-  try {
-    const updatedStory = await GameService.pollStoryUpdates(story.value.id)
-    story.value = updatedStory
-
-    const pendingInteractions = updatedStory.interactions.some(
-      interaction => interaction.status === 'pending'
-    )
-    if (!pendingInteractions && pollInterval.value) {
-      clearInterval(pollInterval.value)
-      pollInterval.value = null
-    }
-
-    scrollToBottom()
-  } catch (error) {
-    console.error('Failed to poll for updates:', error)
-    if (pollInterval.value) {
-      clearInterval(pollInterval.value)
-      pollInterval.value = null
-    }
-  }
-}
 
 onMounted(async () => {
   const storyId = Number(route.params.id)
@@ -189,20 +171,87 @@ onMounted(async () => {
   }
 
   try {
+    // Load initial story data
     story.value = await GameService.getStory(storyId)
 
-    if (story.value.interactions.length === 1 && story.value.interactions[0].role === 'system' && story.value.interactions[0].status === 'pending') {
-      await startSystemMessage(storyId)
+    if (story.value?.id) {
+      // Set up interaction created handler
+      onInteractionCreated.value = (interaction: GameInteraction) => {
+        console.log('onInteractionCreated callback. interaction', interaction)
+        if (story.value) {
+
+          switch (interaction.role) {
+            case 'system':
+              break
+            case 'user':
+              let userInteraction = story.value.interactions.find(i => i.client_id === interaction.client_id)
+              if (userInteraction) {
+                console.log('2 updating interaction', interaction)
+                // copy everything from interaction to userInteraction
+                Object.assign(userInteraction, interaction)
+              }
+              break
+            case 'assistant':
+                // Check if interaction already exists
+                const exists = story.value.interactions.some(i => i.id === interaction.id)
+                if (!exists) {
+                  console.log('1 pushing interaction', interaction)
+                  story.value.interactions.push(interaction)
+                  scrollToBottom()
+                }
+              break
+          }
+        }
+      }
+
+      onStream.value = (id: number, content: string) => {
+        // console.log('onStream callback. id', id, 'content', content)
+        if (story.value) {
+          const index = story.value.interactions.findIndex(i => i.id === id)
+          if (index >= 0) {
+            story.value.interactions[index].content += content
+            scrollToBottom()
+          }
+        }
+      }
+
+      // First establish the connection
+      connect(story.value.id)
+
+      // Wait for the connection to be established
+      await new Promise<void>((resolve, reject) => {
+        const checkConnection = setInterval(() => {
+          if (isConnected.value) {
+            clearInterval(checkConnection)
+            resolve()
+          }
+        }, 100)
+
+        // Add timeout after 5 seconds
+        setTimeout(() => {
+          clearInterval(checkConnection)
+          reject(new Error('WebSocket connection timeout'))
+        }, 5000)
+      })
+
+      console.log('story.value.interactions', story.value.interactions.length, story.value.interactions)
+
+      // If there are no interactions, start the story
+      if (story.value.interactions.length === 0) {
+        await startStory(story.value.id)
+      }
+
+      // // Check for any pending interactions
+      // const pendingInteraction = story.value.interactions.find(
+      //   i => i.status === 'pending'
+      // )
+
+      // if (pendingInteraction) {
+      //   pollInterval.value = setInterval(pollForUpdates, 2000)
+      // }
     }
 
     scrollToBottom()
-
-    const hasPendingInteractions = story.value.interactions.some(
-      interaction => interaction.status === 'pending'
-    )
-    if (hasPendingInteractions) {
-      pollInterval.value = setInterval(pollForUpdates, 2000)
-    }
     fetchLookupHistory()
   } catch (error) {
     toast({
@@ -215,11 +264,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  stopStream()
-  stopExplanationPolling()
-  if (currentWatcher.value) {
-    currentWatcher.value()
-  }
+  onInteractionCreated.value = null
   if (pollInterval.value) {
     clearInterval(pollInterval.value)
   }
@@ -234,153 +279,48 @@ function scrollToBottom() {
 }
 
 async function sendMessage() {
-  if (!userInput.value.trim() || !story.value) return
-
-  if (currentWatcher.value) {
-    currentWatcher.value()
-    currentWatcher.value = null
-  }
+  if (!story.value || !userInput.value.trim() || isLoading.value) return
 
   const input = userInput.value
   userInput.value = ''
   isLoading.value = true
 
   try {
-    // Create user message
+    // Create a user interaction
     const userInteraction: GameInteraction = {
       id: Date.now(),
+      client_id: Date.now(),
       story: story.value.id,
       role: 'user',
       content: input,
-      status: 'completed',
+      status: 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
 
-    // Create system response placeholder
-    const systemInteraction: GameInteraction = {
-      id: Date.now() + 1,
-      story: story.value.id,
-      role: 'system',
-      content: '',
-      status: 'streaming',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    // Add both interactions
     story.value.interactions.push(userInteraction)
-    story.value.interactions.push(systemInteraction)
-    scrollToBottom()
+    console.log('4 pushing interaction', userInteraction)
+    // The interaction will be created by the WebSocket handler
+    const completedInteraction = await startInteraction(story.value.id, input, userInteraction.client_id)
 
-    const streamPromise = startStream(story.value.id, input)
-    const streamingInteractionId = systemInteraction.id
-
-    currentWatcher.value = watch(streamingContent, (newContent) => {
-      if (story.value) {
-        const streamingInteraction = story.value.interactions.find(
-          i => i.id === streamingInteractionId
-        )
-        if (streamingInteraction) {
-          streamingInteraction.content = newContent
-          scrollToBottom()
-        }
-      }
-    })
-
-    const completedInteraction = await streamPromise
+    // Update the completed interaction
     if (story.value) {
-      const index = story.value.interactions.findIndex(
-        i => i.id === streamingInteractionId
-      )
+      const index = story.value.interactions.findIndex(i => i.id === completedInteraction.id)
       if (index >= 0) {
         story.value.interactions[index] = completedInteraction
       }
     }
 
-  } catch (error) {
+  } catch (error: any) {
     toast({
       title: 'Error',
-      description: 'Failed to send message',
+      description: error.message,
       variant: 'destructive',
     })
-    if (story.value) {
-      // Remove both pending interactions on error
-      story.value.interactions = story.value.interactions.filter(
-        i => i.id !== Date.now() && i.id !== Date.now() + 1
-      )
-    }
     userInput.value = input
   } finally {
-    if (currentWatcher.value) {
-      currentWatcher.value()
-      currentWatcher.value = null
-    }
+    console.log('finally in sendMessage')
     isLoading.value = false
-    stopStream()
-  }
-}
-
-async function startSystemMessage(storyId: number) {
-  try {
-    const systemInteraction = story.value?.interactions[0]
-    if (!systemInteraction) {
-      throw new Error('No system interaction found')
-    }
-    const pendingInteraction: GameInteraction = {
-      id: systemInteraction.id,
-      story: storyId,
-      role: 'system',
-      content: '',
-      status: 'streaming',
-      created_at: systemInteraction.created_at,
-      updated_at: systemInteraction.updated_at
-    }
-    if (story.value) {
-      const index = story.value.interactions.findIndex(i => i.id === systemInteraction.id)
-      if (index >= 0) {
-        story.value.interactions[index] = pendingInteraction
-      }
-    }
-    scrollToBottom()
-    const streamPromise = startStream(storyId, '', true)
-    const streamingInteractionId = pendingInteraction.id
-
-    currentWatcher.value = watch(streamingContent, (newContent) => {
-      if (story.value) {
-        const streamingInteraction = story.value.interactions.find(
-          i => i.id === streamingInteractionId
-        )
-        if (streamingInteraction) {
-          streamingInteraction.content = newContent
-          scrollToBottom()
-        }
-      }
-    })
-
-    const completedInteraction = await streamPromise
-    if (story.value) {
-      const index = story.value.interactions.findIndex(
-        i => i.id === streamingInteractionId
-      )
-      if (index >= 0) {
-        story.value.interactions[index] = completedInteraction
-      }
-    }
-
-  } catch (error) {
-    console.error('Failed to start system message:', error)
-    toast({
-      title: 'Error',
-      description: 'Failed to start game',
-      variant: 'destructive',
-    })
-  } finally {
-    if (currentWatcher.value) {
-      currentWatcher.value()
-      currentWatcher.value = null
-    }
-    stopStream()
   }
 }
 
