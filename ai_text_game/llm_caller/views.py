@@ -1,11 +1,9 @@
 import json
-import time
 from dataclasses import asdict
 
 import openai
 from django.conf import settings
 from django.db import transaction
-from django.http import StreamingHttpResponse
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -14,7 +12,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMConfig
@@ -58,55 +55,6 @@ class GameScenarioViewSet(viewsets.ReadOnlyModelViewSet):
         return GameScenario.objects.filter(is_active=True)
 
 
-def stream_response(model_name, context, interaction):
-    try:
-        # Add fake response handling
-        if settings.FAKE_LLM_REQUEST:
-            import re
-
-            # Send fake content in chunks to simulate streaming
-            fake_response = "This is a test response. " * 10
-
-            result = re.split(r"(?<= )", fake_response)
-            accumulated_response = ""
-            for word in result:
-                yield f"data: {json.dumps({'content': word})}\n\n"
-                accumulated_response += word
-                time.sleep(0.05)  # Add small delay to simulate real streaming
-
-            interaction.content = accumulated_response
-            interaction.status = "completed"
-            interaction.save()
-            yield "data: [DONE]\n\n"
-            return
-
-        # Existing code...
-        key = OpenAIKey.get_available_key()
-        client = get_openai_client(key)
-        accumulated_response = ""
-        for chunk in client.chat.completions.create(
-            model=model_name,
-            messages=context,
-            stream=True,
-        ):
-            if chunk and chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                accumulated_response += content
-                # Send the chunk to the client
-                yield f"data: {json.dumps({'content': content})}\n\n"
-
-        # Update interaction status when done
-        interaction.content = accumulated_response
-        interaction.status = "completed"
-        interaction.save()
-        yield "data: [DONE]\n\n"
-    except (openai.OpenAIError, ValueError) as e:
-        interaction.status = "failed"
-        interaction.error = str(e)
-        interaction.save()
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
-
-
 class GameStoryViewSet(viewsets.ModelViewSet):
     serializer_class = GameStorySerializer
     permission_classes = [IsAuthenticated]
@@ -126,84 +74,6 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         story = self.perform_create(serializer)
         return Response(self.get_serializer(story).data, status=status.HTTP_201_CREATED)
-
-    def _create_streaming_response(self, story, interaction):
-        """Helper method to create a streaming response."""
-        context = story.get_context()
-        response = StreamingHttpResponse(
-            streaming_content=stream_response(story.model.name, context, interaction),
-            content_type="text/event-stream",
-        )
-        response["Cache-Control"] = "no-cache"
-        response["Connection"] = "keep-alive"
-        response["X-Accel-Buffering"] = "no"
-        return response
-
-    @action(detail=True, methods=["post", "get"])
-    @transaction.atomic
-    def interact(self, request, pk=None):
-        story = self.get_object()
-
-        # Handle GET request for SSE
-        if request.method == "GET":
-            content = request.GET.get("content")
-        else:
-            content = request.data.get("content")
-
-        if not content:
-            return Response(
-                {"error": "content is required"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Create the interaction
-        user_interaction = GameInteraction.objects.create(
-            story=story,
-            role="user",
-            content=content,
-            status="completed",
-        )
-        user_interaction.save()
-
-        assistant_interaction = GameInteraction.objects.create(
-            story=story,
-            role="assistant",
-            content="",
-            status="pending",
-        )
-
-        return self._create_streaming_response(story, assistant_interaction)
-
-    @action(detail=True, methods=["post", "get"])
-    @transaction.atomic
-    def start(self, request, pk=None):
-        story = self.get_object()
-
-        # Get the existing system interaction
-        try:
-            system_interaction = story.interactions.get(role="system")
-        except GameInteraction.DoesNotExist:
-            return Response(
-                {"error": "System interaction not found"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        if system_interaction.status != "pending":
-            return Response(
-                {"error": "System interaction already completed"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        system_interaction.status = "completed"
-        system_interaction.save()
-
-        assistant_interaction = GameInteraction.objects.create(
-            story=story,
-            role="assistant",
-            content="",
-            status="pending",
-        )
-
-        return self._create_streaming_response(story, assistant_interaction)
 
     # NEW: Nested explanations endpoint for a specific game story
     @action(detail=True, methods=["get", "post"])
