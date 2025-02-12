@@ -50,6 +50,7 @@ services:
       - production_traefik:/etc/traefik/acme
     networks:
       - nginxproxymanager_default
+      - default
     # ports:
     #   - '80:80'
     #   - '0.0.0.0:443:443'
