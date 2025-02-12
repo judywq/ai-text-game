@@ -12,8 +12,8 @@ services:
     build:
       context: .
       dockerfile: ./compose/production/django/Dockerfile
-
     image: ai_text_game_production_django
+    restart: unless-stopped
     volumes:
       - production_django_media:/app/ai_text_game/media
       - production_django_static:/app/staticfiles
@@ -30,6 +30,7 @@ services:
       context: .
       dockerfile: ./compose/production/postgres/Dockerfile
     image: ai_text_game_production_postgres
+    restart: unless-stopped
     volumes:
       - production_postgres_data:/var/lib/postgresql/data
       - production_postgres_data_backups:/backups
@@ -42,6 +43,7 @@ services:
       context: .
       dockerfile: ./compose/production/traefik/Dockerfile
     image: ai_text_game_production_traefik
+    restart: unless-stopped
     depends_on:
       - django
     volumes:
@@ -53,7 +55,7 @@ services:
 
   redis:
     image: docker.io/redis:6
-
+    restart: unless-stopped
     volumes:
       - production_redis_data:/data
 
@@ -78,6 +80,7 @@ services:
       context: .
       dockerfile: ./compose/production/nginx/Dockerfile
     image: ai_text_game_production_nginx
+    restart: unless-stopped
     depends_on:
       - django
     volumes:
