@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import re
 
 from channels.db import database_sync_to_async
@@ -12,21 +13,30 @@ from .models import OpenAIKey
 from .serializers import GameInteractionSerializer
 from .utils import get_openai_client_async
 
+logger = logging.getLogger(__name__)
+
 
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Get story_id from URL route
-        self.story_id = self.scope["url_route"]["kwargs"]["story_id"]
-        self.room_group_name = f"game_{self.story_id}"
+        logger.debug("WebSocket connect attempt with scope: %s", self.scope)
+        try:
+            # Get story_id from URL route
+            self.story_id = self.scope["url_route"]["kwargs"]["story_id"]
+            self.room_group_name = f"game_{self.story_id}"
 
-        # Join room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name,
-        )
-        await self.accept()
+            # Join room group
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name,
+            )
+            await self.accept()
+            logger.debug("WebSocket connection accepted")
+        except (KeyError, TypeError, ValueError):
+            logger.exception("WebSocket connection error")
+            raise
 
     async def disconnect(self, close_code):
+        logger.debug("WebSocket disconnected with code: %s", close_code)
         # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,

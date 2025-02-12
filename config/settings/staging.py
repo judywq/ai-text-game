@@ -1,3 +1,4 @@
+from .base import MIDDLEWARE
 from .base import env
 from .production import *  # noqa: F403
 
@@ -10,3 +11,8 @@ CSRF_COOKIE_SECURE = USE_HTTPS
 if not USE_HTTPS:
     SESSION_COOKIE_NAME = "sessionid"
     CSRF_COOKIE_NAME = "csrftoken"
+
+MIDDLEWARE = [
+    "config.middleware.RequestLoggingMiddleware",
+    *MIDDLEWARE,
+]
