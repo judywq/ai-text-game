@@ -5,12 +5,12 @@
 # DJANGO_READ_DOT_ENV_FILE=True
 
 DJANGO_DEBUG=True
-DJANGO_DOMAIN_NAME=localhost
+DJANGO_DOMAIN_NAME=atg.judywang.jp
 
 DJANGO_SETTINGS_MODULE=config.settings.staging
 # DJANGO_SECRET_KEY=YOUR_SECRET_KEY_HERE
 # DJANGO_ADMIN_URL=admin/
-DJANGO_ALLOWED_HOSTS=localhost
+DJANGO_ALLOWED_HOSTS=atg.judywang.jp
 
 # Security
 # ------------------------------------------------------------------------------
@@ -30,4 +30,4 @@ DJANGO_SECURE_SSL_REDIRECT=False
 # REDIS_URL=redis://redis:6379/0
 
 # Vue
-VITE_API_BASE_URL=http://localhost/api
+VITE_API_BASE_URL=http://atg.judywang.jp/api
