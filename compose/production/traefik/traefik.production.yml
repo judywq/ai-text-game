@@ -13,7 +13,7 @@ http:
   routers:
     # Django API and Admin routes
     django-router:
-      rule: 'Host(`atg.judywang.jp`) && (PathPrefix(`/api`) || PathPrefix(`/admin`))'
+      rule: 'Host(`atg.judywang.jp`) && (PathPrefix(`/api`) || PathPrefix(`/ws`) || PathPrefix(`/admin`))'
       entryPoints:
         - web
       middlewares:
