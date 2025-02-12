@@ -5,11 +5,6 @@ entryPoints:
   web:
     # http
     address: ':80'
-
-  web-secure:
-    # https
-    address: ':443'
-
   flower:
     address: ':5555'
 
@@ -22,6 +17,15 @@ http:
         - web
       middlewares:
         - csrf
+      service: django
+
+    # Separate router for WebSocket connections
+    django-ws-router:
+      rule: 'Host(`atg.judywang.jp`) && PathPrefix(`/ws`)'
+      entryPoints:
+        - web
+      middlewares:
+        - websocket
       service: django
 
     # Vue frontend, static and media - catch all other routes
@@ -39,7 +43,18 @@ http:
       service: flower
 
   middlewares:
+    debug:
+      headers:
+        customRequestHeaders:
+          X-Debug: "true"
+    websocket:
+      headers:
+        customRequestHeaders:
+          Connection: "Upgrade"
+          Upgrade: "websocket"
     csrf:
+      # https://doc.traefik.io/traefik/master/middlewares/http/headers/#hostsproxyheaders
+      # https://docs.djangoproject.com/en/dev/ref/csrf/#ajax
       headers:
         hostsProxyHeaders: ['X-CSRFToken']
 
@@ -48,6 +63,8 @@ http:
       loadBalancer:
         servers:
           - url: http://django:5000
+        responseForwarding:
+          flushInterval: "1ms"  # This helps with WebSocket performance
 
     flower:
       loadBalancer:
