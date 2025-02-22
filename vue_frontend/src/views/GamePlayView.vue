@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
 import type { GameStory, GameInteraction } from '@/types/game'
-import type { TextExplanation } from '@/types/explanation'
+import type { TextExplanation, ExplanationStatus } from '@/types/explanation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -39,8 +39,13 @@ const {
   connect,
   startInteraction,
   startStory,
+  lookupExplanation,
   onInteractionCreated,
-  onStream
+  onStream,
+  onExplanationCreated,
+  onExplanationStream,
+  onExplanationStatus,
+  onExplanationCompleted
 } = useGameWebSocket()
 
 const rawSelection = ref('')
@@ -130,23 +135,36 @@ function clearTextSelection() {
 async function lookupExplanationSubmit() {
   if (!story.value) return
   try {
-    const result = await ExplanationService.lookupExplanation(story.value.id, rawSelection.value, contextSelection.value)
-    currentExplanation.value = result
-
-    // Start polling if explanation is pending
-    if (result.status === 'pending') {
-      explanationModalVisible.value = true
-      startExplanationPolling(result.id)
-    } else {
-      explanationModalVisible.value = true
-      fetchLookupHistory()
+    const clientId = Date.now()
+    // Open the modal before starting the request
+    currentExplanation.value = {
+      id: 0, // temporary id
+      story: story.value.id,
+      selected_text: rawSelection.value,
+      context_text: contextSelection.value,
+      explanation: '',
+      status: 'pending',
+      created_at: new Date().toISOString(),
     }
+    explanationModalVisible.value = true
+
+    // Start the WebSocket request
+    const result = await lookupExplanation(
+      story.value.id,
+      rawSelection.value,
+      contextSelection.value,
+      clientId
+    )
+    currentExplanation.value = result
+    fetchLookupHistory()
   } catch (error: any) {
     toast({
       title: 'Error',
       description: 'Failed to lookup explanation',
       variant: 'destructive',
     })
+    // Close the modal on error
+    explanationModalVisible.value = false
   } finally {
     clearTextSelection()
   }
@@ -253,6 +271,37 @@ onMounted(async () => {
 
     scrollToBottom()
     fetchLookupHistory()
+
+    // Set up explanation handlers
+    onExplanationCreated.value = (explanation: TextExplanation) => {
+      if (currentExplanation.value) {
+        currentExplanation.value = {
+          ...explanation,
+          explanation: '', // Reset explanation text as it will come through stream
+          status: 'pending' // Keep as pending until streaming starts
+        }
+      }
+    }
+
+    // Add handler for status updates
+    onExplanationCompleted.value = (explanation: TextExplanation) => {
+      if (currentExplanation.value?.id === explanation.id) {
+        currentExplanation.value = explanation
+        fetchLookupHistory()
+      }
+    }
+
+    onExplanationStream.value = (id: number, content: string) => {
+      if (currentExplanation.value?.id === id) {
+        currentExplanation.value.explanation += content
+      }
+    }
+
+    onExplanationStatus.value = (id: number, status: ExplanationStatus) => {
+      if (currentExplanation.value?.id === id) {
+        currentExplanation.value.status = status
+      }
+    }
   } catch (error) {
     toast({
       title: 'Error',
@@ -482,15 +531,33 @@ function stopExplanationPolling() {
     </Dialog>
 
     <!-- Explanation details -->
-    <Dialog v-model:open="explanationModalVisible">
+    <Dialog :open="explanationModalVisible" @update:open="explanationModalVisible = $event">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Lookup</DialogTitle>
+          <DialogTitle>
+            <div class="flex items-center space-x-2">
+              <span>Lookup</span>
+              <div v-if="currentExplanation?.status === 'streaming'" class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+            </div>
+          </DialogTitle>
         </DialogHeader>
 
         <div v-if="currentExplanation?.status === 'pending'" class="mb-4 flex items-center space-x-2">
-          <div class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
-          <span>Generating explanation...</span>
+          <span>Waiting for server response...</span>
+        </div>
+        <div v-else-if="currentExplanation?.status === 'streaming'" class="mb-4">
+          <!-- Show streaming content -->
+          <div class="space-y-4">
+            <div class="bg-muted p-3 rounded text-sm">
+              {{ currentExplanation?.context_text.substring(0, currentExplanation?.context_text.indexOf(currentExplanation?.selected_text)) }}
+              <strong class="text-primary">{{ currentExplanation?.selected_text }}</strong>
+              {{ currentExplanation?.context_text.substring(currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) + currentExplanation?.selected_text.length) }}
+            </div>
+            <div class="text-sm">
+              <div class="font-medium mb-1">Explanation:</div>
+              <p>{{ currentExplanation?.explanation }}<span class="animate-pulse">▋</span></p>
+            </div>
+          </div>
         </div>
         <div v-else class="space-y-4">
           <!-- Context with highlighted selection -->

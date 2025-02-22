@@ -3,6 +3,7 @@ import json
 import logging
 import re
 
+import anyio
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.conf import settings
 from .models import GameInteraction
 from .models import GameStory
 from .models import OpenAIKey
+from .models import TextExplanation
 from .serializers import GameInteractionSerializer
 from .utils import get_openai_client_async
 
@@ -51,6 +53,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.handle_interaction(data)
         elif message_type == "start_story":
             await self.handle_start_story()
+        elif message_type == "explain_text":
+            await self.handle_text_explanation(data)
 
     async def handle_interaction(self, data):
         try:
@@ -132,6 +136,41 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.stream_response(story, assistant_interaction)
 
         except (ValueError, GameInteraction.DoesNotExist) as e:
+            await self.send_error(str(e))
+
+    async def handle_text_explanation(self, data):
+        try:
+            story = await self.get_story(self.story_id)
+            selected_text = data.get("selected_text")
+            context_text = data.get("context_text")
+            client_explanation_id = data.get("explanation_id")
+
+            if not all([selected_text, context_text]):
+                await self.send_error("selected_text and context_text are required")
+                return
+
+            # Create explanation
+            explanation = await self.create_text_explanation(
+                story,
+                selected_text,
+                context_text,
+            )
+
+            # Send creation confirmation
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "explanation_created",
+                        "client_id": client_explanation_id,
+                        "explanation": await self.serialize_explanation(explanation),
+                    },
+                ),
+            )
+
+            # Process the explanation
+            await self.process_explanation(story, explanation)
+
+        except (ValueError, TextExplanation.DoesNotExist) as e:
             await self.send_error(str(e))
 
     @database_sync_to_async
@@ -245,4 +284,119 @@ class GameConsumer(AsyncWebsocketConsumer):
                     "error": error_message,
                 },
             ),
+        )
+
+    @database_sync_to_async
+    def create_text_explanation(self, story, selected_text, context_text):
+        from .models import LLMConfig
+
+        active_config = LLMConfig.get_active_config(purpose="text_explanation")
+
+        return TextExplanation.objects.create(
+            story=story,
+            selected_text=selected_text,
+            context_text=context_text,
+            status="pending",
+            model=active_config.model,
+        )
+
+    @database_sync_to_async
+    def serialize_explanation(self, explanation):
+        from .serializers import TextExplanationSerializer
+
+        return TextExplanationSerializer(explanation).data
+
+    async def process_explanation(self, story, explanation):
+        try:
+            if settings.FAKE_LLM_REQUEST:
+                stream = self.get_fake_explanation_stream()
+            else:
+                key = await database_sync_to_async(OpenAIKey.get_available_key)()
+                client = get_openai_client_async(key)
+                model_name = await self.get_story_model_name(story)
+                stream = await self.get_explanation_stream(
+                    client,
+                    model_name,
+                    explanation.selected_text,
+                    explanation.context_text,
+                )
+
+            # Update status to streaming when starting to process
+            explanation.status = "streaming"
+            await database_sync_to_async(explanation.save)()
+
+            # Send status update
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "explanation_status",
+                        "explanation_id": explanation.id,
+                        "status": "streaming",
+                    },
+                ),
+            )
+
+            explanation_text = ""
+            async for chunk in stream:
+                delta = ""
+                if settings.FAKE_LLM_REQUEST:
+                    delta = chunk
+                elif chunk and chunk.choices[0].delta.content:
+                    delta = chunk.choices[0].delta.content
+
+                if delta:
+                    explanation_text += delta
+                    await self.send(
+                        text_data=json.dumps(
+                            {
+                                "type": "explanation_stream",
+                                "explanation_id": explanation.id,
+                                "content": delta,
+                            },
+                        ),
+                    )
+
+            # Update explanation with final content
+            explanation.explanation = explanation_text
+            explanation.status = "completed"
+            await database_sync_to_async(explanation.save)()
+
+            # Send completion message
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "explanation_completed",
+                        "explanation": await self.serialize_explanation(explanation),
+                    },
+                ),
+            )
+
+        except (ValueError, TextExplanation.DoesNotExist) as e:
+            explanation.status = "failed"
+            explanation.error = str(e)
+            await database_sync_to_async(explanation.save)()
+            await self.send_error(str(e))
+
+    async def get_fake_explanation_stream(self):
+        fake_response = "This is a fake explanation of the selected text. " * 3
+        words = re.split(r"(?<= )", fake_response)
+        for word in words:
+            await asyncio.sleep(0.05)
+            yield word
+
+    @staticmethod
+    async def get_explanation_stream(client, model_name, selected_text, context_text):
+        fn = "ai_text_game/llm_caller/templates/prompts/text_explanation_prompt.txt"
+        async with await anyio.open_file(fn) as f:
+            prompt_template = await f.read()
+
+        prompt = prompt_template.format(
+            selected_text=selected_text,
+            context_text=context_text,
+        )
+
+        return await client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
         )
