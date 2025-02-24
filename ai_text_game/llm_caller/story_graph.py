@@ -357,6 +357,10 @@ def format_decision_point(decision_point: DecisionPoint) -> str:
     return (
         f"DecisionPoint [{decision_point['decision_point_id']}]: "
         f"{decision_point['description']}\n"
+        f"Options:\n"
+        + "\n".join(
+            [f"    - {option['option_name']}" for option in decision_point["options"]],
+        )
     )
 
 
@@ -384,6 +388,12 @@ def format_story_skeleton(skeleton: StorySkeleton) -> str:
                         f" {decision['description']}"
                     ),
                 )
+
+                # Format options
+                for option in decision["options"]:
+                    formatted_parts.append(
+                        f"    - {option['option_name']}",
+                    )
 
     # Format endings
     formatted_parts.append("\n### Possible Endings:")
