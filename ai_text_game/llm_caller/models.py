@@ -1,3 +1,5 @@
+# ruff: noqa: PERF401
+
 from typing import Literal
 
 from django.contrib.auth import get_user_model
@@ -82,10 +84,14 @@ class LLMConfig(TimestampedBase):
         ("scene_generation", "Scene Generation"),
         ("adventure_gameplay", "Adventure Gameplay"),
         ("text_explanation", "Text Explanation"),
+        ("story_skeleton_generation", "Story Skeleton Generation"),
+        ("story_continuation", "Story Continuation"),
+        ("story_ending", "Story Ending"),
+        ("cefr_check", "CEFR Level Check"),
     ]
 
     purpose = models.CharField(
-        max_length=20,
+        max_length=50,
         choices=PURPOSE_CHOICES,
         help_text="The purpose of this configuration",
     )
@@ -158,7 +164,12 @@ class LLMConfig(TimestampedBase):
     @classmethod
     def get_active_config(
         cls,
-        purpose: Literal["scene_generation", "adventure_gameplay", "text_explanation"],
+        purpose: Literal[
+            "scene_generation",
+            "adventure_gameplay",
+            "text_explanation",
+            "story_skeleton_generation",
+        ],
     ):
         """Get the active config for the given purpose."""
         try:
@@ -167,6 +178,7 @@ class LLMConfig(TimestampedBase):
             # Create a new config with default template
             template_map = {
                 "scene_generation": "pre_game_prompt.txt",
+                "story_skeleton_generation": "story_skeleton_generation_prompt.txt",
                 "adventure_gameplay": "gameplay_prompt.txt",
                 "text_explanation": "text_explanation_prompt.txt",
             }
@@ -257,15 +269,79 @@ class GameScenario(TimestampedBase):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
 
 
+class StorySkeleton(TimestampedBase):
+    story = models.OneToOneField(
+        "GameStory",
+        on_delete=models.CASCADE,
+        related_name="skeleton",
+    )
+    background = models.TextField()
+    raw_data = models.JSONField()  # Stores the complete skeleton structure
+
+    def get_current_decision_point(self):
+        """Get the current decision point from raw_data based on story progress"""
+        # Implementation depends on story progress tracking
+
+
+class StoryProgress(TimestampedBase):
+    story = models.ForeignKey(
+        "GameStory",
+        on_delete=models.CASCADE,
+        related_name="progress_entries",
+    )
+    content = models.TextField()
+    decision_point_id = models.CharField(max_length=50, blank=True)
+    chosen_option_id = models.CharField(max_length=50, blank=True)
+    is_end_point = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    @property
+    def is_fulfilled(self):
+        """Check if the progress entry is fulfilled (has a chosen option)"""
+        return bool(self.chosen_option_id)
+
+    def set_chosen_option(self, option_id: str):
+        if not self.is_option_valid(option_id):
+            return False
+        self.chosen_option_id = option_id
+        self.save()
+        return True
+
+    def is_option_valid(self, option_id: str) -> bool:
+        """Check if the option ID is valid"""
+        # Remove the last part of the option ID (the option ID)
+        decision_point_id = ".".join(option_id.split(".")[:-1])
+        return self.decision_point_id == decision_point_id
+
+
 class GameStory(CreatableBase, TimestampedBase):
+    CEFR_CHOICES = [
+        ("A1", "A1"),
+        ("A2", "A2"),
+        ("B1", "B1"),
+        ("B2", "B2"),
+        ("C1", "C1"),
+        ("C2", "C2"),
+    ]
     genre = models.CharField(
         max_length=100,
         help_text="Genre of the story (e.g., Fantasy, Sci-Fi)",
     )
-    model = models.ForeignKey(
-        LLMModel,
-        on_delete=models.PROTECT,
-        related_name="game_stories",
+    cefr_level = models.CharField(
+        max_length=10,
+        choices=CEFR_CHOICES,
+        help_text="CEFR level of the story (e.g., A1, B2)",
+        default="A1",
+    )
+    scene_text = models.TextField(
+        blank=True,
+        help_text="Scene text of the story (generated or user-provided)",
+    )
+    details = models.TextField(
+        blank=True,
+        help_text="Additional details of the story (generated or user-provided)",
     )
     title = models.CharField(
         max_length=200,
@@ -274,11 +350,12 @@ class GameStory(CreatableBase, TimestampedBase):
     status = models.CharField(
         max_length=20,
         choices=[
+            ("INIT", "Init"),
             ("IN_PROGRESS", "In Progress"),
             ("COMPLETED", "Completed"),
             ("ABANDONED", "Abandoned"),
         ],
-        default="IN_PROGRESS",
+        default="INIT",
     )
 
     class Meta:
@@ -293,6 +370,92 @@ class GameStory(CreatableBase, TimestampedBase):
             interaction.format_message()
             for interaction in self.interactions.all().order_by("created_at")
         ]
+
+    def is_option_id_valid(self, option_id: str) -> bool:
+        """Check if the option ID is valid"""
+        if not hasattr(self, "skeleton"):
+            return False
+        skeleton = self.skeleton.raw_data
+        for chapter in skeleton["chapters"]:
+            for milestone in chapter["milestones"]:
+                for decision_point in milestone["decision_points"]:
+                    if (
+                        decision_point["decision_point_id"]
+                        == self.get_current_decision_point()
+                    ):
+                        for option in decision_point["options"]:
+                            if option["option_id"] == option_id:
+                                return True
+        return False
+
+    def get_next_decision_point(self):
+        # Flatten the story skeleton into a single list of decision points
+        decision_points = []
+        for chapter in self.skeleton.raw_data["chapters"]:
+            for milestone in chapter["milestones"]:
+                for decision_point in milestone["decision_points"]:
+                    decision_points.append(
+                        (
+                            decision_point["decision_point_id"],
+                            milestone["milestone_id"],
+                            chapter["chapter_id"],
+                        ),
+                    )
+
+        # Sort decision points by decision id
+        decision_points.sort(key=lambda x: x[0])
+
+        # Find the next decision point
+        current_decision_point = self._get_last_decision_point()
+        next_decision_point = next(
+            (dp for dp in decision_points if dp[0] > current_decision_point),
+            None,
+        )
+
+        if next_decision_point:
+            return next_decision_point[0]
+        return ""
+
+    @property
+    def story_state(self) -> dict:
+        """Get the current story state for the graph"""
+        progress_entries = self.progress_entries.all()
+        return {
+            "story_skeleton": self.skeleton.raw_data
+            if hasattr(self, "skeleton")
+            else None,
+            "current_decision_point": self.get_current_decision_point(),
+            "story_progress": [entry.content for entry in progress_entries],
+            "chosen_decisions": [
+                entry.chosen_option_id
+                for entry in progress_entries
+                if entry.chosen_option_id
+            ],
+            "cefr_level": self.get_cefr_level(),
+            "status": self.status,
+        }
+
+    def get_current_decision_point(self):
+        """Get the current decision point ID"""
+        if self.progress_entries.count() == 0:
+            return "C1.M1.D1"
+        latest_progress = self.progress_entries.last()
+        if latest_progress.is_fulfilled:
+            # Get the next decision point
+            return self.get_next_decision_point()
+        return latest_progress.decision_point_id
+
+    def _get_last_decision_point(self):
+        """Get the last decision point ID"""
+        if self.progress_entries.count() == 0:
+            return "C1.M1.D1"
+        latest_progress = self.progress_entries.last()
+        return latest_progress.decision_point_id
+
+    def get_cefr_level(self):
+        """Get the CEFR level for this story"""
+        # Implementation depends on where you store CEFR level
+        return "A1"  # Default level
 
 
 class GameInteraction(TimestampedBase):

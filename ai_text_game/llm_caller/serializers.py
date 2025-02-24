@@ -3,7 +3,6 @@ from rest_framework import serializers
 from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
-from .models import LLMConfig
 from .models import LLMModel
 from .models import TextExplanation
 
@@ -81,6 +80,7 @@ class GameStorySerializer(serializers.ModelSerializer):
             "title",
             "genre",
             "scene_text",
+            "details",
             "cefr_level",
             "status",
             "created_at",
@@ -90,39 +90,11 @@ class GameStorySerializer(serializers.ModelSerializer):
         read_only_fields = ["title", "status", "created_at", "updated_at"]
 
     def create(self, validated_data):
-        scene_text = validated_data.pop("scene_text", None)
-        cefr_level = validated_data.pop("cefr_level", None)
-        details = validated_data.pop("details", None)
-
-        # Create initial system message with scene info if provided
-        active_config = LLMConfig.get_active_config(purpose="adventure_gameplay")
-
         # Create the story
-        story = GameStory.objects.create(
-            model=active_config.model,
+        return GameStory.objects.create(
             title=f"A {validated_data['genre']} Story",  # Use genre in title
             **validated_data,
         )
-
-        details_prompt = (
-            f"\n* Additional details of the story: {details}" if details else ""
-        )
-
-        system_prompt = active_config.system_prompt.format(
-            genre=story.genre,
-            scene_text=scene_text,
-            cefr_level=cefr_level,
-            details_prompt=details_prompt,
-        )
-
-        GameInteraction.objects.create(
-            story=story,
-            role="system",
-            content=system_prompt,
-            status="pending",
-        )
-
-        return story
 
 
 class TextExplanationSerializer(serializers.ModelSerializer):

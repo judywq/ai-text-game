@@ -1,0 +1,51 @@
+You are an expert novelist. I need a story structure for a branching drama game with the following theme: {theme}
+The game should consist of several chapters.
+In each chapter, there will be milestones where a major event will happen no matter what has happened previously, albeit with different developments influenced by previous plots.
+There will be several decision-making points in story development that lead to each milestone.
+The story doesn't have to end well and bad consequences and endings are allowed.
+The story should be structured like this example:
+{{
+"story_background": "A mysterious adventure begins...",
+"chapters": [
+    {{
+    "chapter_id": "C1",
+    "milestones": [
+        {{
+        "milestone_id": "C1.M1",
+        "description": "The journey begins",
+        "decision_points": [
+            {{
+            "decision_point_id": "C1.M1.D1",
+            "description": "First choice",
+            "options": [
+                {{
+                "option_id": "C1.M1.D1.O1",
+                "option_name": "Take the path",
+                "consequence": "You begin your journey"
+                }}
+            ]
+            }}
+        ]
+        }}
+    ]
+    }}
+],
+"endings": [
+    {{
+    "ending_id": "E1",
+    "description": "A successful conclusion"
+    }}
+]
+}}
+
+
+Requirements:
+- Write in CEFR level {cefr_level} English
+- There should be
+  - 3 chapters
+  - 3 milestones in each chapter
+  - 2~3 decision points in each milestone
+  - 2~3 options in each decision point
+  - 2~3 endings
+- The story should be engaging and have multiple meaningful choice points that affect the story's direction.
+- Format the output as a valid JSON object matching the example structure. DO NOT RETURN ANYTHING ELSE."""

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import openai
 from django.utils import timezone
+from langchain_openai import ChatOpenAI
 
 
 def get_today_date_range():
@@ -47,3 +48,7 @@ def read_prompt_template(template_filename):
     except FileNotFoundError as e:
         msg = f"Prompt template file not found: {template_path}"
         raise FileNotFoundError(msg) from e
+
+
+def get_llm_model(model_name, key):
+    return ChatOpenAI(model=model_name, api_key=key.key)

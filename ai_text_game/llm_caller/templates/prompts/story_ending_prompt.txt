@@ -1,0 +1,14 @@
+Write the ending of the story based on these elements:
+
+## Previous decisions made by the user (take into account these consequences):\n{decisions_made}
+
+## Requirements:
+- Write in CEFR level {cefr_level} English
+- Keep the tone consistent
+- Write approximately 150-200 words
+- Start by mentioning the previous decisions made by the user naturally
+- Do NOT create any more options for the user to choose from
+- Generate only the new story segment, written in an engaging narrative style.
+
+## The story skeleton is:\n{skeleton}
+## The current story progress is:\n{progress}

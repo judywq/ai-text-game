@@ -8,6 +8,8 @@ from .models import LLMConfig
 from .models import LLMModel
 from .models import OpenAIKey
 from .models import QuotaConfig
+from .models import StoryProgress
+from .models import StorySkeleton
 from .models import TextExplanation
 
 
@@ -93,14 +95,24 @@ class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "title",
         "created_by",
-        "model",
         "genre",
+        "cefr_level",
+        "get_scene_text",
+        "get_details",
         "status",
         "created_at",
         "updated_at",
     ]
-    list_filter = ["status", "genre", "created_by", "model"]
+    list_filter = ["status", "genre", "created_by"]
     search_fields = ["title", "created_by__username"]
+
+    @admin.display(description="Scene Text", ordering="scene_text")
+    def get_scene_text(self, obj):
+        return truncatechars(obj.scene_text, 50)
+
+    @admin.display(description="Details", ordering="details")
+    def get_details(self, obj):
+        return truncatechars(obj.details, 50)
 
 
 @admin.register(GameInteraction)
@@ -133,3 +145,30 @@ class TextExplanationAdmin(admin.ModelAdmin):
     ]
     list_filter = ["created_by", "story", "model"]
     search_fields = ["selected_text", "explanation"]
+
+
+@admin.register(StorySkeleton)
+class StorySkeletonAdmin(admin.ModelAdmin):
+    list_display = [
+        "story",
+        "background",
+        "created_at",
+        "updated_at",
+    ]
+
+
+@admin.register(StoryProgress)
+class StoryProgressAdmin(admin.ModelAdmin):
+    list_display = [
+        "story",
+        "get_content",
+        "decision_point_id",
+        "chosen_option_id",
+        "created_at",
+    ]
+    list_filter = ["story", "created_at"]
+    search_fields = ["content"]
+
+    @admin.display(description="Content", ordering="content")
+    def get_content(self, obj):
+        return truncatechars(obj.content, 50)

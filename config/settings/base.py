@@ -491,6 +491,26 @@ INIT_LLM_CONFIGS = {
         "template": "text_explanation_prompt.txt",
         "temperature": 0.1,
     },
+    "story_skeleton_generation": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "story_skeleton_generation_prompt.txt",
+        "temperature": 0.7,
+    },
+    "story_continuation": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "story_continuation_prompt.txt",
+        "temperature": 0.7,
+    },
+    "story_ending": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "story_ending_prompt.txt",
+        "temperature": 0.7,
+    },
+    "cefr_check": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "cefr_check_prompt.txt",
+        "temperature": 0.3,
+    },
 }
 
 # Init Game Genre

@@ -25,6 +25,11 @@ drf-spectacular==0.28.0  # https://github.com/tfranzel/drf-spectacular
 dj-rest-auth==7.0.0 # https://github.com/iMerica/dj-rest-auth
 # LLM
 openai==1.58.1 # https://github.com/openai/openai-python
+langchain==0.3.19 # https://github.com/langchain-ai/langchain
+langchain-openai==0.3.6 # https://github.com/langchain-ai/langchain
+langchain-anthropic==0.3.7 # https://github.com/langchain-ai/langchain
+langgraph==0.2.74 # https://github.com/langchain-ai/langgraph
+langchain-community==0.3.18 # https://github.com/langchain-ai/langchain
 
 django-anymail[mailjet]==12.0  # https://github.com/anymail/django-anymail
 

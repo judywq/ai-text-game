@@ -42,6 +42,7 @@ const {
   lookupExplanation,
   onInteractionCreated,
   onStream,
+  onStoryUpdate,
   onExplanationCreated,
   onExplanationStream,
   onExplanationStatus,
@@ -267,6 +268,30 @@ onMounted(async () => {
       // if (pendingInteraction) {
       //   pollInterval.value = setInterval(pollForUpdates, 2000)
       // }
+
+      // Add story update handler
+      onStoryUpdate.value = (update: any) => {
+        if (story.value) {
+          // Create a new interaction for the story update
+          const newInteraction = {
+            id: Date.now(),
+            story: story.value.id,
+            role: 'assistant',
+            content: update.content,
+            status: 'completed',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+
+          story.value.interactions.push(newInteraction)
+          scrollToBottom()
+
+          // Update story status if provided
+          if (update.status) {
+            story.value.status = update.status
+          }
+        }
+      }
     }
 
     scrollToBottom()
@@ -330,35 +355,16 @@ function scrollToBottom() {
 async function sendMessage() {
   if (!story.value || !userInput.value.trim() || isLoading.value) return
 
-  const input = userInput.value
+  const optionId = userInput.value  // This should now be the option_id
   userInput.value = ''
   isLoading.value = true
 
   try {
-    // Create a user interaction
-    const userInteraction: GameInteraction = {
-      id: Date.now(),
-      client_id: Date.now(),
-      story: story.value.id,
-      role: 'user',
-      content: input,
-      status: 'pending',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    story.value.interactions.push(userInteraction)
-    console.log('4 pushing interaction', userInteraction)
-    // The interaction will be created by the WebSocket handler
-    const completedInteraction = await startInteraction(story.value.id, input, userInteraction.client_id)
-
-    // Update the completed interaction
-    if (story.value) {
-      const index = story.value.interactions.findIndex(i => i.id === completedInteraction.id)
-      if (index >= 0) {
-        story.value.interactions[index] = completedInteraction
-      }
-    }
+    // Send the option_id to the server
+    await startInteraction(story.value.id, {
+      type: "interact",
+      option_id: optionId
+    })
 
   } catch (error: any) {
     toast({
@@ -366,9 +372,8 @@ async function sendMessage() {
       description: error.message,
       variant: 'destructive',
     })
-    userInput.value = input
+    userInput.value = optionId
   } finally {
-    console.log('finally in sendMessage')
     isLoading.value = false
   }
 }

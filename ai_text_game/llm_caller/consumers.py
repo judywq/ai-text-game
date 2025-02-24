@@ -7,24 +7,43 @@ import anyio
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from langchain_core.prompts import ChatPromptTemplate
 
+from .fake_llms import get_fake_llm_model
 from .models import GameInteraction
 from .models import GameStory
+from .models import LLMConfig
 from .models import OpenAIKey
+from .models import StoryProgress
+from .models import StorySkeleton
 from .models import TextExplanation
 from .serializers import GameInteractionSerializer
+from .story_graph import StoryGraph
+from .utils import get_llm_model
 from .utils import get_openai_client_async
 
 logger = logging.getLogger(__name__)
 
 
 class GameConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.story_graph = None
+        self.story_thread = {"configurable": {"thread_id": "1"}}
+
     async def connect(self):
         logger.debug("WebSocket connect attempt with scope: %s", self.scope)
         try:
             # Get story_id from URL route
             self.story_id = self.scope["url_route"]["kwargs"]["story_id"]
             self.room_group_name = f"game_{self.story_id}"
+            self.story_thread = {"configurable": {"thread_id": self.story_id}}
+
+            # Get story
+            story = await self.get_story(self.story_id)
+
+            # Initialize story graph
+            await self.initialize_story_graph(story)
 
             # Join room group
             await self.channel_layer.group_add(
@@ -59,84 +78,93 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def handle_interaction(self, data):
         try:
             story = await self.get_story(self.story_id)
-            content = data.get("content")
-            client_interaction_id = data.get("interaction_id")
+            option_id = data.get("option_id")
 
-            if not content:
-                await self.send_error("content is required")
+            if not option_id:
+                await self.send_error("option_id is required")
                 return
 
-            # Create user interaction
-            user_interaction = await self.create_user_interaction(story, content)
+            is_option_id_valid = await database_sync_to_async(story.is_option_id_valid)(
+                option_id,
+            )
+            if not is_option_id_valid:
+                await self.send_error("Invalid option_id")
+                return
 
-            # Send creation confirmation
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "type": "interaction_created",
-                        "client_id": client_interaction_id,
-                        "interaction": GameInteractionSerializer(user_interaction).data,
-                    },
-                ),
+            # Update the story progress with chosen option
+            await self.update_story_progress(story, option_id)
+
+            # Get current story state
+            state = await database_sync_to_async(lambda: story.story_state)()
+
+            # Add the chosen decision to state
+            if "chosen_decisions" not in state:
+                state["chosen_decisions"] = []
+            state["chosen_decisions"].append(option_id)
+
+            logger.debug("---------------- State: ----------------")
+            logger.debug(state)
+            logger.debug("---------------- End of State ----------------")
+
+            # Run the graph
+            new_state = await database_sync_to_async(self.story_graph.invoke)(
+                state,
+                self.story_thread,
             )
 
-            # Create assistant interaction
-            assistant_interaction = await self.create_assistant_interaction(story)
+            # Save progress
+            await self.save_story_progress(story, new_state)
 
-            # Send assistant interaction creation
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "type": "interaction_created",
-                        "interaction": GameInteractionSerializer(
-                            assistant_interaction,
-                        ).data,
-                    },
-                ),
-            )
+            # Send response to client
+            await self.send_story_update(new_state)
 
-            # Stream the response
-            await self.stream_response(story, assistant_interaction)
-
-        except (ValueError, GameInteraction.DoesNotExist) as e:
+        except ValueError as e:
             await self.send_error(str(e))
+            raise
 
     async def handle_start_story(self):
         try:
             story = await self.get_story(self.story_id)
-            system_interaction = await self.get_system_interaction(story)
 
-            if not system_interaction:
-                await self.send_error("System interaction not found")
+            if story.status != "INIT":
+                await self.send_error("Story already started.")
                 return
 
-            if system_interaction.status != "pending":
-                await self.send_error("System interaction already completed")
-                return
+            initial_state = {
+                "theme": story.genre,
+                "cefr_level": story.cefr_level,
+                "scene_text": story.scene_text,
+                "details": story.details,
+            }
 
-            system_interaction.status = "completed"
-            await database_sync_to_async(system_interaction.save)()
+            skeleton_data = await database_sync_to_async(
+                self.story_graph.generate_skeleton,
+            )(initial_state)
 
-            # Create assistant interaction for initial response
-            assistant_interaction = await self.create_assistant_interaction(story)
-
-            # Send assistant interaction creation
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "type": "interaction_created",
-                        "interaction": GameInteractionSerializer(
-                            assistant_interaction,
-                        ).data,
-                    },
-                ),
+            await database_sync_to_async(StorySkeleton.objects.create)(
+                story=story,
+                background=skeleton_data["story_skeleton"]["story_background"],
+                raw_data=skeleton_data["story_skeleton"],
             )
 
-            # Stream the response
-            await self.stream_response(story, assistant_interaction)
+            # Get current story state
+            state = await database_sync_to_async(lambda: story.story_state)()
 
-        except (ValueError, GameInteraction.DoesNotExist) as e:
+            # Run the graph
+            new_state = await database_sync_to_async(self.story_graph.invoke)(
+                state,
+                self.story_thread,
+            )
+
+            # Save progress
+            await self.save_story_progress(story, new_state)
+
+            # Send response to client
+            await self.send_story_update(new_state)
+
+        except ValueError as e:
             await self.send_error(str(e))
+            raise
 
     async def handle_text_explanation(self, data):
         try:
@@ -288,8 +316,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def create_text_explanation(self, story, selected_text, context_text):
-        from .models import LLMConfig
-
         active_config = LLMConfig.get_active_config(purpose="text_explanation")
 
         return TextExplanation.objects.create(
@@ -386,6 +412,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @staticmethod
     async def get_explanation_stream(client, model_name, selected_text, context_text):
+        # TODO: Use the prompt from the LLMConfig
         fn = "ai_text_game/llm_caller/templates/prompts/text_explanation_prompt.txt"
         async with await anyio.open_file(fn) as f:
             prompt_template = await f.read()
@@ -400,3 +427,112 @@ class GameConsumer(AsyncWebsocketConsumer):
             messages=[{"role": "user", "content": prompt}],
             stream=True,
         )
+
+    async def initialize_story_graph(self, story):
+        """Initialize the story graph with the current story state"""
+        # Get API key
+        key = await database_sync_to_async(OpenAIKey.get_available_key)()
+
+        # Create LLM models dictionary
+        llm_models = await self.create_story_graph_llms(key)
+
+        # Create story graph
+        self.story_graph = StoryGraph(llm_models)
+
+    @database_sync_to_async
+    def create_story_graph_llms(self, key):
+        """Create LLM models for story graph nodes.
+
+        Args:
+            key: OpenAI API key to use for the models
+
+        Returns:
+            Dictionary mapping node types to configured LLM models
+        """
+        llms = {}
+
+        # Get configs for each purpose
+        node_name_to_purpose = {
+            "skeleton": "story_skeleton_generation",
+            "continuation": "story_continuation",
+            "ending": "story_ending",
+            "cefr": "cefr_check",
+        }
+
+        for node_name, purpose in node_name_to_purpose.items():
+            config = LLMConfig.get_active_config(purpose=purpose)
+            prompt = ChatPromptTemplate.from_template(config.system_prompt)
+            if settings.FAKE_LLM_REQUEST:
+                llms[node_name] = prompt | get_fake_llm_model(node_name, key)
+            else:
+                llms[node_name] = prompt | get_llm_model(config.model.name, key)
+
+        return llms
+
+    async def save_story_progress(self, story, state):
+        """Save story progress to database"""
+        if state.get("story_progress"):
+            await database_sync_to_async(StoryProgress.objects.create)(
+                story=story,
+                content=state["story_progress"][-1],
+                decision_point_id=state.get("current_decision_point"),
+            )
+
+            story.status = state["status"]
+            await database_sync_to_async(story.save)()
+
+    async def send_story_update(self, state):
+        """Send story update to client"""
+        current_decision_point_id = state.get("current_decision_point")
+        options = []
+
+        if current_decision_point_id:
+            # Get the story skeleton
+            skeleton = state["story_skeleton"]
+
+            # Find the current decision point
+            for chapter in skeleton["chapters"]:
+                for milestone in chapter["milestones"]:
+                    for decision_point in milestone["decision_points"]:
+                        if (
+                            decision_point["decision_point_id"]
+                            == current_decision_point_id
+                        ):
+                            options = [
+                                {
+                                    "option_id": option["option_id"],
+                                    "option_name": option["option_name"],
+                                }
+                                for option in decision_point["options"]
+                            ]
+                            break
+
+        await self.send(
+            text_data=json.dumps(
+                {
+                    "type": "story_update",
+                    "content": state.get("story_progress", [""])[-1],
+                    "status": state.get("status"),
+                    "current_decision": current_decision_point_id,
+                    "options": options,
+                },
+            ),
+        )
+
+    @database_sync_to_async
+    def update_story_progress(self, story, option_id):
+        """Update the story progress with the chosen option"""
+        from .models import StoryProgress
+
+        # Get the latest progress
+        latest_progress = (
+            StoryProgress.objects.filter(
+                story=story,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        if latest_progress:
+            # Update with chosen option
+            latest_progress.set_chosen_option(option_id)
