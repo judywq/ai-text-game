@@ -4,6 +4,8 @@ from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMModel
+from .models import StoryOption
+from .models import StoryProgress
 from .models import TextExplanation
 
 
@@ -63,15 +65,12 @@ class GameInteractionSerializer(serializers.ModelSerializer):
 
 
 class GameStorySerializer(serializers.ModelSerializer):
-    interactions = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField()
     scene_text = serializers.CharField(write_only=True, required=False)
     cefr_level = serializers.CharField(write_only=True, required=False)
 
-    def get_interactions(self, obj):
-        interactions = obj.interactions.filter(role__in=["assistant", "user"]).order_by(
-            "created_at",
-        )
-        return GameInteractionSerializer(interactions, many=True).data
+    def get_progress(self, obj):
+        return StoryProgressSerializer(obj.progress_entries, many=True).data
 
     class Meta:
         model = GameStory
@@ -85,7 +84,7 @@ class GameStorySerializer(serializers.ModelSerializer):
             "status",
             "created_at",
             "updated_at",
-            "interactions",
+            "progress",
         ]
         read_only_fields = ["title", "status", "created_at", "updated_at"]
 
@@ -101,3 +100,26 @@ class TextExplanationSerializer(serializers.ModelSerializer):
     class Meta:
         model = TextExplanation
         fields = "__all__"
+
+
+class StoryOptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoryOption
+        fields = ["option_id", "option_name"]
+
+
+class StoryProgressSerializer(serializers.ModelSerializer):
+    options = StoryOptionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = StoryProgress
+        fields = [
+            "id",
+            "content",
+            "decision_point_id",
+            "chosen_option_id",
+            "chosen_option_text",
+            "is_end_point",
+            "created_at",
+            "options",
+        ]

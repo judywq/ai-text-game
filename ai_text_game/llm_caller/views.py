@@ -17,11 +17,13 @@ from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
 from .models import OpenAIKey
+from .models import StoryProgress
 from .models import TextExplanation
 from .negotiation import IgnoreClientContentNegotiation
 from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
+from .serializers import StoryProgressSerializer
 from .serializers import TextExplanationSerializer
 from .tasks import TextExplanationParams
 from .tasks import process_text_explanation
@@ -141,6 +143,14 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 {"error": "Explanation not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+    @action(detail=True, methods=["GET"])
+    def progress(self, request, pk=None):
+        """Get story progress entries"""
+        story = self.get_object()
+        progress = StoryProgress.objects.filter(story=story).order_by("created_at")
+        serializer = StoryProgressSerializer(progress, many=True)
+        return Response(serializer.data)
 
 
 class GameSceneGeneratorView(APIView):

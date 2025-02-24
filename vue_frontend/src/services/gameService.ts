@@ -1,5 +1,5 @@
 import api from '@/services/api'
-import type { GameScenario, GameStory, GameStoryListResponse } from '@/types/game'
+import type { GameScenario, GameStory, GameStoryListResponse, StoryProgress } from '@/types/game'
 
 export class GameService {
   public static async getScenarios(): Promise<GameScenario[]> {
@@ -70,6 +70,13 @@ export class GameService {
         page_size: pageSize
       }
     })
+    return response.data
+  }
+
+  static async getStoryProgress(storyId: number): Promise<StoryProgress[]> {
+    const response = await api.get(`/game-stories/${storyId}/progress/`)
+
+    console.log('response', response)
     return response.data
   }
 }

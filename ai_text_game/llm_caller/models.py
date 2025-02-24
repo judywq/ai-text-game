@@ -292,6 +292,7 @@ class StoryProgress(TimestampedBase):
     content = models.TextField()
     decision_point_id = models.CharField(max_length=50, blank=True)
     chosen_option_id = models.CharField(max_length=50, blank=True)
+    chosen_option_text = models.TextField(blank=True)
     is_end_point = models.BooleanField(default=False)
 
     class Meta:
@@ -302,10 +303,11 @@ class StoryProgress(TimestampedBase):
         """Check if the progress entry is fulfilled (has a chosen option)"""
         return bool(self.chosen_option_id)
 
-    def set_chosen_option(self, option_id: str):
+    def set_chosen_option(self, option_id: str, option_text: str):
         if not self.is_option_valid(option_id):
             return False
         self.chosen_option_id = option_id
+        self.chosen_option_text = option_text
         self.save()
         return True
 
@@ -314,6 +316,33 @@ class StoryProgress(TimestampedBase):
         # Remove the last part of the option ID (the option ID)
         decision_point_id = ".".join(option_id.split(".")[:-1])
         return self.decision_point_id == decision_point_id
+
+    @property
+    def options_data(self):
+        """Return options in the format expected by the frontend"""
+        return [
+            {
+                "option_id": option.option_id,
+                "option_name": option.option_name,
+            }
+            for option in self.options.all()
+        ]
+
+
+class StoryOption(TimestampedBase):
+    progress = models.ForeignKey(
+        "StoryProgress",
+        on_delete=models.CASCADE,
+        related_name="options",
+    )
+    option_id = models.CharField(max_length=50)
+    option_name = models.TextField()
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.option_id}: {self.option_name}"
 
 
 class GameStory(CreatableBase, TimestampedBase):
@@ -371,10 +400,10 @@ class GameStory(CreatableBase, TimestampedBase):
             for interaction in self.interactions.all().order_by("created_at")
         ]
 
-    def is_option_id_valid(self, option_id: str) -> bool:
-        """Check if the option ID is valid"""
+    def get_option_text(self, option_id: str) -> str | None:
+        """Get the text for the option ID"""
         if not hasattr(self, "skeleton"):
-            return False
+            return None
         skeleton = self.skeleton.raw_data
         for chapter in skeleton["chapters"]:
             for milestone in chapter["milestones"]:
@@ -385,8 +414,8 @@ class GameStory(CreatableBase, TimestampedBase):
                     ):
                         for option in decision_point["options"]:
                             if option["option_id"] == option_id:
-                                return True
-        return False
+                                return option["option_name"]
+        return None
 
     def get_next_decision_point(self):
         # Flatten the story skeleton into a single list of decision points

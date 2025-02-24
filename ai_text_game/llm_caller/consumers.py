@@ -14,6 +14,7 @@ from .models import GameInteraction
 from .models import GameStory
 from .models import LLMConfig
 from .models import OpenAIKey
+from .models import StoryOption
 from .models import StoryProgress
 from .models import StorySkeleton
 from .models import TextExplanation
@@ -84,15 +85,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.send_error("option_id is required")
                 return
 
-            is_option_id_valid = await database_sync_to_async(story.is_option_id_valid)(
+            option_text = await database_sync_to_async(story.get_option_text)(
                 option_id,
             )
-            if not is_option_id_valid:
+            if not option_text:
                 await self.send_error("Invalid option_id")
                 return
 
+            option_text = await database_sync_to_async(story.get_option_text)(option_id)
+
             # Update the story progress with chosen option
-            await self.update_story_progress(story, option_id)
+            await self.update_story_progress(story, option_id, option_text)
 
             # Get current story state
             state = await database_sync_to_async(lambda: story.story_state)()
@@ -469,28 +472,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return llms
 
-    async def save_story_progress(self, story, state):
-        """Save story progress to database"""
-        if state.get("story_progress"):
-            await database_sync_to_async(StoryProgress.objects.create)(
-                story=story,
-                content=state["story_progress"][-1],
-                decision_point_id=state.get("current_decision_point"),
-            )
-
-            story.status = state["status"]
-            await database_sync_to_async(story.save)()
-
-    async def send_story_update(self, state):
-        """Send story update to client"""
-        current_decision_point_id = state.get("current_decision_point")
+    def get_options(self, state):
         options = []
-
+        current_decision_point_id = state.get("current_decision_point")
         if current_decision_point_id:
-            # Get the story skeleton
             skeleton = state["story_skeleton"]
+            options = []
 
-            # Find the current decision point
+            # Find the current decision point and its options
             for chapter in skeleton["chapters"]:
                 for milestone in chapter["milestones"]:
                     for decision_point in milestone["decision_points"]:
@@ -498,14 +487,38 @@ class GameConsumer(AsyncWebsocketConsumer):
                             decision_point["decision_point_id"]
                             == current_decision_point_id
                         ):
-                            options = [
-                                {
-                                    "option_id": option["option_id"],
-                                    "option_name": option["option_name"],
-                                }
-                                for option in decision_point["options"]
-                            ]
+                            options = decision_point["options"]
                             break
+        return options
+
+    async def save_story_progress(self, story, state):
+        """Save story progress to database"""
+        if state.get("story_progress"):
+            # Create the progress entry
+            progress = await database_sync_to_async(StoryProgress.objects.create)(
+                story=story,
+                content=state["story_progress"][-1],
+                decision_point_id=state.get("current_decision_point"),
+            )
+
+            options = self.get_options(state)
+
+            if options:
+                # Create option objects
+                for option in options:
+                    await database_sync_to_async(StoryOption.objects.create)(
+                        progress=progress,
+                        option_id=option["option_id"],
+                        option_name=option["option_name"],
+                    )
+
+            story.status = state["status"]
+            await database_sync_to_async(story.save)()
+
+    async def send_story_update(self, state):
+        """Send story update to client"""
+        # TODO: remove the consequence from the options (or use a unified interface)
+        options = self.get_options(state)
 
         await self.send(
             text_data=json.dumps(
@@ -513,14 +526,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                     "type": "story_update",
                     "content": state.get("story_progress", [""])[-1],
                     "status": state.get("status"),
-                    "current_decision": current_decision_point_id,
+                    "current_decision": state.get("current_decision_point"),
                     "options": options,
                 },
             ),
         )
 
     @database_sync_to_async
-    def update_story_progress(self, story, option_id):
+    def update_story_progress(self, story, option_id, option_text):
         """Update the story progress with the chosen option"""
         from .models import StoryProgress
 
@@ -535,4 +548,4 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if latest_progress:
             # Update with chosen option
-            latest_progress.set_chosen_option(option_id)
+            latest_progress.set_chosen_option(option_id, option_text)

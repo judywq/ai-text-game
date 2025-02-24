@@ -1,5 +1,5 @@
 import { ref, onUnmounted } from 'vue'
-import type { GameInteraction, TextExplanation, ExplanationStatus } from '@/types/game'
+import type { GameInteraction, TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
 // const WS_BASE_URL = 'ws://localhost:8000/ws'
@@ -15,7 +15,109 @@ export function useGameWebSocket() {
   const onExplanationStream = ref<((id: number, content: string) => void) | null>(null)
   const onExplanationCompleted = ref<((explanation: TextExplanation) => void) | null>(null)
   const onExplanationStatus = ref<((id: number, status: ExplanationStatus) => void) | null>(null)
-  const onStoryUpdate = ref<((update: any) => void) | null>(null)
+  const onStoryUpdate = ref<((update: StoryUpdate) => void) | null>(null)
+
+  // Add these new refs to track promises
+  const pendingStoryPromise = ref<{
+    resolve: (value: GameInteraction) => void;
+    reject: (reason: Error) => void;
+    currentInteraction: GameInteraction | null;
+  } | null>(null)
+
+  const pendingExplanationPromise = ref<{
+    resolve: (value: TextExplanation) => void;
+    reject: (reason: Error) => void;
+    currentExplanation: TextExplanation | null;
+    clientExplanationId: number;
+  } | null>(null)
+
+  function handleMessage(event: MessageEvent) {
+    const data = JSON.parse(event.data)
+    console.log('WebSocket message:', data)
+
+    switch (data.type) {
+      case 'story_update':
+        if (onStoryUpdate.value) {
+          onStoryUpdate.value(data as StoryUpdate)
+        }
+        break
+
+      case 'interaction_created':
+        if (pendingStoryPromise.value) {
+          pendingStoryPromise.value.currentInteraction = data.interaction
+        }
+        if (onInteractionCreated.value && data.interaction) {
+          onInteractionCreated.value(data.interaction)
+        }
+        break
+
+      case 'stream':
+        if (data.interaction_id && onStream.value) {
+          onStream.value(data.interaction_id, data.content)
+        }
+        break
+
+      case 'interaction_completed':
+        if (pendingStoryPromise.value &&
+            pendingStoryPromise.value.currentInteraction?.id === data.interaction.id) {
+          pendingStoryPromise.value.resolve(data.interaction)
+          pendingStoryPromise.value = null
+        }
+        if (onInteractionCompleted.value) {
+          onInteractionCompleted.value(data.interaction)
+        }
+        break
+
+      case 'explanation_created':
+        if (pendingExplanationPromise.value &&
+            data.client_id === pendingExplanationPromise.value.clientExplanationId) {
+          pendingExplanationPromise.value.currentExplanation = data.explanation
+          if (onExplanationCreated.value) {
+            onExplanationCreated.value(data.explanation)
+          }
+        }
+        break
+
+      case 'explanation_status':
+        if (pendingExplanationPromise.value?.currentExplanation?.id === data.explanation_id) {
+          if (onExplanationStatus.value) {
+            onExplanationStatus.value(data.explanation_id, data.status)
+          }
+        }
+        break
+
+      case 'explanation_stream':
+        if (pendingExplanationPromise.value?.currentExplanation?.id === data.explanation_id) {
+          if (onExplanationStream.value) {
+            onExplanationStream.value(data.explanation_id, data.content)
+          }
+        }
+        break
+
+      case 'explanation_completed':
+        if (pendingExplanationPromise.value?.currentExplanation?.id === data.explanation.id) {
+          if (onExplanationCompleted.value) {
+            onExplanationCompleted.value(data.explanation)
+          }
+          pendingExplanationPromise.value.resolve(data.explanation)
+          pendingExplanationPromise.value = null
+        }
+        break
+
+      case 'error':
+        const error = new Error(data.error)
+        if (pendingStoryPromise.value) {
+          pendingStoryPromise.value.reject(error)
+          pendingStoryPromise.value = null
+        }
+        if (pendingExplanationPromise.value) {
+          pendingExplanationPromise.value.reject(error)
+          pendingExplanationPromise.value = null
+        }
+        console.error('WebSocket error:', error)
+        break
+    }
+  }
 
   const connect = (storyId: number) => {
     socket.value = new WebSocket(`${WS_BASE_URL}/game/${storyId}/`)
@@ -44,89 +146,26 @@ export function useGameWebSocket() {
     }
 
     return new Promise((resolve, reject) => {
-      let currentInteraction: GameInteraction | null = null
-
-      socket.value.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        console.log('data', data)
-
-        switch (data.type) {
-          case 'interaction_created':
-            currentInteraction = data.interaction
-            if (onInteractionCreated.value && data.interaction) {
-              onInteractionCreated.value(data.interaction)
-            }
-            break
-
-          case 'stream':
-            if (currentInteraction && data.interaction_id === currentInteraction.id) {
-              if (onStream.value) {
-                onStream.value(currentInteraction.id, data.content)
-              }
-            }
-            break
-
-          case 'interaction_completed':
-            if (currentInteraction && data.interaction.id === currentInteraction.id) {
-              if (onInteractionCompleted.value) {
-                onInteractionCompleted.value(data.interaction)
-              }
-            }
-            resolve(data.interaction)
-            break
-
-          case 'error':
-            reject(new Error(data.error))
-            break
-        }
+      pendingStoryPromise.value = {
+        resolve,
+        reject,
+        currentInteraction: null
       }
 
-      socket.value.send(JSON.stringify({
+      socket.value?.send(JSON.stringify({
         type: 'start_story'
       }))
     })
   }
 
-  function handleMessage(event: MessageEvent) {
-    const data = JSON.parse(event.data)
-
-    switch (data.type) {
-      case 'story_update':
-        if (onStoryUpdate.value) {
-          onStoryUpdate.value(data)
-        }
-        break
-      case 'interaction_created':
-        if (onInteractionCreated.value && data.interaction) {
-          onInteractionCreated.value(data.interaction)
-        }
-        break
-      case 'stream':
-        if (data.interaction_id && data.content) {
-          if (onStream.value) {
-            onStream.value(data.interaction_id, data.content)
-          }
-        }
-        break
-      case 'interaction_completed':
-        if (data.interaction && onInteractionCompleted.value) {
-          onInteractionCompleted.value(data.interaction)
-        }
-        break
-      case 'error':
-        console.error('WebSocket error:', data.error)
-        break
-    }
-  }
-
-  async function startInteraction(storyId: number, data: any) {
-    if (!socket.value || !isConnected.value) {
+  const selectOption = (optionId: string) => {
+    if (!socket.value || socket.value.readyState !== WebSocket.OPEN) {
       throw new Error('WebSocket not connected')
     }
 
     socket.value.send(JSON.stringify({
       type: 'interact',
-      ...data
+      option_id: optionId
     }))
   }
 
@@ -141,54 +180,14 @@ export function useGameWebSocket() {
     }
 
     return new Promise((resolve, reject) => {
-      let currentExplanation: TextExplanation | null = null
-
-      socket.value.onmessage = (event) => {
-        const data = JSON.parse(event.data)
-        console.log('explanation data', data)
-
-        switch (data.type) {
-          case 'explanation_created':
-            if (data.client_id === clientExplanationId) {
-              currentExplanation = data.explanation
-              if (onExplanationCreated.value) {
-                onExplanationCreated.value(data.explanation)
-              }
-            }
-            break
-
-          case 'explanation_status':
-            if (currentExplanation && data.explanation_id === currentExplanation.id) {
-              if (onExplanationStatus.value) {
-                onExplanationStatus.value(currentExplanation.id, data.status)
-              }
-            }
-            break
-
-          case 'explanation_stream':
-            if (currentExplanation && data.explanation_id === currentExplanation.id) {
-              if (onExplanationStream.value) {
-                onExplanationStream.value(currentExplanation.id, data.content)
-              }
-            }
-            break
-
-          case 'explanation_completed':
-            if (currentExplanation && data.explanation.id === currentExplanation.id) {
-              if (onExplanationCompleted.value) {
-                onExplanationCompleted.value(data.explanation)
-              }
-              resolve(data.explanation)
-            }
-            break
-
-          case 'error':
-            reject(new Error(data.error))
-            break
-        }
+      pendingExplanationPromise.value = {
+        resolve,
+        reject,
+        currentExplanation: null,
+        clientExplanationId
       }
 
-      socket.value.send(JSON.stringify({
+      socket.value?.send(JSON.stringify({
         type: 'explain_text',
         selected_text: selectedText,
         context_text: contextText,
@@ -205,7 +204,7 @@ export function useGameWebSocket() {
     isConnected,
     connect,
     disconnect,
-    startInteraction,
+    selectOption,
     startStory,
     onInteractionCreated,
     onInteractionCompleted,

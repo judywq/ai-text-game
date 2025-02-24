@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
-import type { GameStory, GameInteraction } from '@/types/game'
+import type { GameStory, GameInteraction, StoryProgress } from '@/types/game'
 import type { TextExplanation, ExplanationStatus } from '@/types/explanation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator'
 import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { marked } from 'marked'
 import { CircleHelp } from 'lucide-vue-next'
+import StoryOptions from '@/components/StoryOptions.vue'
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ const router = useRouter()
 const { toast } = useToast()
 
 const story = ref<GameStory | null>(null)
+const progressEntries = ref<StoryProgress[]>([])
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
@@ -37,10 +39,9 @@ const pollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 const {
   isConnected,
   connect,
-  startInteraction,
+  selectOption,
   startStory,
   lookupExplanation,
-  onInteractionCreated,
   onStream,
   onStoryUpdate,
   onExplanationCreated,
@@ -49,6 +50,7 @@ const {
   onExplanationCompleted
 } = useGameWebSocket()
 
+const currentOptions = ref<StoryOption[]>([])
 const rawSelection = ref('')
 const contextSelection = ref('')
 const popupPosition = ref({ x: 0, y: 0 })
@@ -181,6 +183,78 @@ async function fetchLookupHistory() {
   }
 }
 
+// Load story and progress
+const loadStory = async () => {
+  try {
+    const storyId = parseInt(route.params.id as string)
+    story.value = await GameService.getStory(storyId)
+    progressEntries.value = await GameService.getStoryProgress(storyId)
+
+    // Connect WebSocket and wait for connection
+    await connect(storyId)
+
+    // Wait for WebSocket connection to be established
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('WebSocket connection timeout'))
+      }, 5000)
+
+      const checkConnection = setInterval(() => {
+        if (isConnected.value) {
+          clearInterval(checkConnection)
+          clearTimeout(timeout)
+          resolve()
+        }
+      }, 100)
+    })
+
+    // Start story if no progress exists
+    if (progressEntries.value.length === 0 && story.value.status === 'INIT') {
+      await startStory(storyId)
+    }
+    // Set current options from the last progress entry
+    currentOptions.value = progressEntries.value[progressEntries.value.length - 1].options
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: error.message || 'Failed to load story',
+      variant: 'destructive',
+    })
+    router.push('/game')
+  }
+}
+
+const handleOptionSelect = async (optionId: string) => {
+  if (!story.value || isLoading.value) return
+
+  isLoading.value = true
+  try {
+    // Get the latest progress entry
+    const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+
+    // Find the selected option text from currentOptions
+    const selectedOption = currentOptions.value.find(opt => opt.option_id === optionId)
+
+    // Update the latest entry with the chosen option
+    if (latestEntry && selectedOption) {
+      latestEntry.chosen_option_text = selectedOption.option_name
+    }
+
+    // Send the selection to the server
+    await selectOption(optionId)
+
+    // Clear options after selection
+    currentOptions.value = []
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: 'Failed to select option',
+      variant: 'destructive',
+    })
+  } finally {
+    isLoading.value = false
+  }
+}
 
 onMounted(async () => {
   const storyId = Number(route.params.id)
@@ -190,112 +264,32 @@ onMounted(async () => {
   }
 
   try {
-    // Load initial story data
-    story.value = await GameService.getStory(storyId)
 
-    if (story.value?.id) {
-      // Set up interaction created handler
-      onInteractionCreated.value = (interaction: GameInteraction) => {
-        console.log('onInteractionCreated callback. interaction', interaction)
-        if (story.value) {
+    onStoryUpdate.value = (update: any) => {
+      console.log('onStoryUpdate', update)
 
-          switch (interaction.role) {
-            case 'system':
-              break
-            case 'user':
-              let userInteraction = story.value.interactions.find(i => i.client_id === interaction.client_id)
-              if (userInteraction) {
-                console.log('2 updating interaction', interaction)
-                // copy everything from interaction to userInteraction
-                Object.assign(userInteraction, interaction)
-              }
-              break
-            case 'assistant':
-                // Check if interaction already exists
-                const exists = story.value.interactions.some(i => i.id === interaction.id)
-                if (!exists) {
-                  console.log('1 pushing interaction', interaction)
-                  story.value.interactions.push(interaction)
-                  scrollToBottom()
-                }
-              break
-          }
-        }
+      // Create a new progress entry
+      if (update.content) {
+        progressEntries.value.push({
+          id: Date.now(), // Temporary ID for frontend
+          content: update.content,
+          chosen_option_text: update.chosen_option_text || '',
+          options: update.options || [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
       }
 
-      onStream.value = (id: number, content: string) => {
-        // console.log('onStream callback. id', id, 'content', content)
-        if (story.value) {
-          const index = story.value.interactions.findIndex(i => i.id === id)
-          if (index >= 0) {
-            story.value.interactions[index].content += content
-            scrollToBottom()
-          }
-        }
+      scrollToBottom()
+
+      // Update story status if provided
+      if (update.status) {
+        story.value.status = update.status
       }
 
-      // First establish the connection
-      connect(story.value.id)
-
-      // Wait for the connection to be established
-      await new Promise<void>((resolve, reject) => {
-        const checkConnection = setInterval(() => {
-          if (isConnected.value) {
-            clearInterval(checkConnection)
-            resolve()
-          }
-        }, 100)
-
-        // Add timeout after 5 seconds
-        setTimeout(() => {
-          clearInterval(checkConnection)
-          reject(new Error('WebSocket connection timeout'))
-        }, 5000)
-      })
-
-      console.log('story.value.interactions', story.value.interactions.length, story.value.interactions)
-
-      // If there are no interactions, start the story
-      if (story.value.interactions.length === 0) {
-        await startStory(story.value.id)
-      }
-
-      // // Check for any pending interactions
-      // const pendingInteraction = story.value.interactions.find(
-      //   i => i.status === 'pending'
-      // )
-
-      // if (pendingInteraction) {
-      //   pollInterval.value = setInterval(pollForUpdates, 2000)
-      // }
-
-      // Add story update handler
-      onStoryUpdate.value = (update: any) => {
-        if (story.value) {
-          // Create a new interaction for the story update
-          const newInteraction = {
-            id: Date.now(),
-            story: story.value.id,
-            role: 'assistant',
-            content: update.content,
-            status: 'completed',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }
-
-          story.value.interactions.push(newInteraction)
-          scrollToBottom()
-
-          // Update story status if provided
-          if (update.status) {
-            story.value.status = update.status
-          }
-        }
-      }
+      // Update options
+      currentOptions.value = update.options || []
     }
-
-    scrollToBottom()
-    fetchLookupHistory()
 
     // Set up explanation handlers
     onExplanationCreated.value = (explanation: TextExplanation) => {
@@ -327,7 +321,15 @@ onMounted(async () => {
         currentExplanation.value.status = status
       }
     }
+
+    // Load initial story data and establish WebSocket connection
+    await loadStory()
+
+    scrollToBottom()
+    fetchLookupHistory()
+
   } catch (error) {
+    console.error('Failed to load story', error)
     toast({
       title: 'Error',
       description: 'Failed to load story',
@@ -338,7 +340,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  onInteractionCreated.value = null
   if (pollInterval.value) {
     clearInterval(pollInterval.value)
   }
@@ -350,32 +351,6 @@ function scrollToBottom() {
       scrollRef.value.scrollTop = scrollRef.value.scrollHeight
     }
   }, 100)
-}
-
-async function sendMessage() {
-  if (!story.value || !userInput.value.trim() || isLoading.value) return
-
-  const optionId = userInput.value  // This should now be the option_id
-  userInput.value = ''
-  isLoading.value = true
-
-  try {
-    // Send the option_id to the server
-    await startInteraction(story.value.id, {
-      type: "interact",
-      option_id: optionId
-    })
-
-  } catch (error: any) {
-    toast({
-      title: 'Error',
-      description: error.message,
-      variant: 'destructive',
-    })
-    userInput.value = optionId
-  } finally {
-    isLoading.value = false
-  }
 }
 
 function formatMessage(interaction: GameInteraction) {
@@ -430,24 +405,11 @@ function stopExplanationPolling() {
           @mouseup="handleTextSelection"
         >
           <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
-            <div v-for="interaction in story.interactions" :key="interaction.id" class="space-y-2">
-              <!-- User message -->
-              <div v-if="interaction.role === 'user'" class="flex justify-end">
-                <div class="bg-primary text-primary-foreground rounded-lg px-4 py-2 max-w-[80%]">
-                  {{ interaction.content }}
-                </div>
-              </div>
-
-              <!-- System/AI message -->
-              <div v-if="interaction.role === 'assistant'" class="flex">
-                <div class="bg-muted rounded-lg px-4 py-2 max-w-[80%]">
-                  <div v-if="interaction.status === 'streaming'">
-                    {{ interaction.content }}<span class="animate-pulse">▋</span>
-                  </div>
-                  <div v-else-if="interaction.status === 'failed'" class="text-destructive">
-                    Failed to generate response. Please try again.
-                  </div>
-                  <div v-else class="prose dark:prose-invert" v-html="formatMessage(interaction)"></div>
+            <div v-for="entry in progressEntries" :key="entry.id" class="space-y-2">
+              <div class="prose dark:prose-invert">
+                <div v-html="marked(entry.content)" />
+                <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-2">
+                  You chose: {{ entry.chosen_option_text }}
                 </div>
               </div>
             </div>
@@ -462,12 +424,20 @@ function stopExplanationPolling() {
           </div>
         </div>
 
+        <!-- Story Options -->
+        <div class="px-4">
+          <StoryOptions
+            :options="currentOptions"
+            @select="handleOptionSelect"
+          />
+        </div>
+
         <!-- Update the input area to stay fixed at bottom -->
         <div class="py-4 border-t bg-background flex-shrink-0">
           <Textarea
             v-model="userInput"
             placeholder="What would you like to do?"
-            @keydown.enter.exact.prevent="sendMessage"
+            @keydown.enter.exact.prevent="handleOptionSelect"
             class="min-h-[80px]"
           />
           <div class="flex justify-end space-x-2 mt-2">
@@ -487,7 +457,7 @@ function stopExplanationPolling() {
             </Button>
             <Button
               :disabled="isLoading || !userInput.trim()"
-              @click="sendMessage"
+              @click="handleOptionSelect"
             >
               Send
             </Button>
