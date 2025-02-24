@@ -401,12 +401,12 @@ function scrollToBottom() {
 
         <!-- Update the input area to stay fixed at bottom -->
         <div class="py-4 border-t bg-background flex-shrink-0">
-          <Textarea
+          <!-- <Textarea
             v-model="userInput"
             placeholder="What would you like to do?"
             @keydown.enter.exact.prevent="handleOptionSelect"
             class="min-h-[80px]"
-          />
+          /> -->
           <div class="flex justify-end space-x-2 mt-2">
             <Button
               class="md:hidden"
@@ -422,12 +422,12 @@ function scrollToBottom() {
             >
               Exit Game
             </Button>
-            <Button
+            <!-- <Button
               :disabled="isLoading || !userInput.trim()"
               @click="handleOptionSelect"
             >
               Send
-            </Button>
+            </Button> -->
           </div>
         </div>
       </div>
