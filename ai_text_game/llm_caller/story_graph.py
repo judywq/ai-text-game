@@ -55,7 +55,7 @@ class StoryState(TypedDict):
     story_progress: list[str]
     chosen_decisions: list[str]
     cefr_level: str
-    story_raw_delta: str
+    story_text: str
     status: str
 
 
@@ -79,7 +79,6 @@ class StoryGraph:
         # Add nodes
         workflow.add_node("generate_story_delta", self.generate_story_delta)
         workflow.add_node("generate_story_ending", self.generate_story_ending)
-        workflow.add_node("check_cefr", self.check_cefr_level)
 
         # Add edges
         workflow.add_conditional_edges(
@@ -90,9 +89,10 @@ class StoryGraph:
                 "generate_story_ending": "generate_story_ending",
             },
         )
-        workflow.add_edge("generate_story_delta", "check_cefr")
-        workflow.add_edge("generate_story_ending", "check_cefr")
-        workflow.add_edge("check_cefr", END)
+        workflow.add_edge(
+            ["generate_story_delta", "generate_story_ending"],
+            END,
+        )
 
         return workflow.compile(checkpointer=InMemorySaver())
 
@@ -164,7 +164,7 @@ class StoryGraph:
             raise
         else:
             return {
-                "story_raw_delta": story_segment,
+                "story_text": story_segment,
                 "status": "IN_PROGRESS",
             }
 
@@ -193,7 +193,7 @@ class StoryGraph:
             raise
         else:
             return {
-                "story_raw_delta": ending,
+                "story_text": ending,
                 "status": "COMPLETED",
             }
 
@@ -205,7 +205,7 @@ class StoryGraph:
         )
         try:
             # Check latest story segment
-            latest_text = state["story_raw_delta"]
+            latest_text = state["story_text"]
             data = {
                 "story_text": latest_text,
             }
@@ -225,7 +225,6 @@ class StoryGraph:
 
             try:
                 chain = self.llm_models["cefr"] | self.json_parser
-                raise OutputParserException("force error to keep original result")  # noqa: EM101, TRY003, TRY301
                 result = chain.invoke(params)
             except OutputParserException:
                 logger.exception("Error checking CEFR level")
@@ -236,9 +235,7 @@ class StoryGraph:
 
             logger.info(json.dumps(result, indent=2))
 
-            story_text = result.get("story_text", latest_text)
-            state_to_update = {"story_progress": [*state["story_progress"], story_text]}
-
+            state_to_update = {}
             if has_decision_point:
                 decision_point_updated = result.get("decision_point", decision_point)
 

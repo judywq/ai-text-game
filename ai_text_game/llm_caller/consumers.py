@@ -102,10 +102,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 state["chosen_decisions"] = []
             state["chosen_decisions"].append(option_id)
 
-            logger.debug("---------------- State: ----------------")
-            logger.debug(state)
-            logger.debug("---------------- End of State ----------------")
-
             # Run the graph
             new_state = await database_sync_to_async(self.story_graph.invoke)(
                 state,
@@ -442,11 +438,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def save_story_progress(self, story, state):
         """Save story progress to database"""
-        if state.get("story_progress"):
+        if story_text := state.get("story_text"):
             # Create the progress entry
             progress = await database_sync_to_async(StoryProgress.objects.create)(
                 story=story,
-                content=state["story_progress"][-1],
+                content=story_text,
                 decision_point_id=state.get("current_decision_point"),
             )
 
@@ -473,7 +469,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             text_data=json.dumps(
                 {
                     "type": "story_update",
-                    "content": state.get("story_progress", [""])[-1],
+                    "content": state.get("story_text"),
                     "status": state.get("status"),
                     "current_decision": state.get("current_decision_point"),
                     "options": options,
