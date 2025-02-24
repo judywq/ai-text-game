@@ -18,7 +18,6 @@ from .models import StoryOption
 from .models import StoryProgress
 from .models import StorySkeleton
 from .models import TextExplanation
-from .serializers import GameInteractionSerializer
 from .story_graph import StoryGraph
 from .utils import get_llm_model
 from .utils import get_openai_client_async
@@ -209,8 +208,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         return GameStory.objects.get(id=story_id)
 
     @database_sync_to_async
-    def get_story_model_name(self, story):
-        return story.model.name
+    def get_config_model_name(self, config):
+        return config.model.name
 
     @database_sync_to_async
     def create_user_interaction(self, story, content):
@@ -236,54 +235,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             return story.interactions.get(role="system")
         except GameInteraction.DoesNotExist:
             return None
-
-    async def stream_response(self, story, interaction):
-        try:
-            if settings.FAKE_LLM_REQUEST:
-                stream = self.get_fake_stream()
-            else:
-                key = await database_sync_to_async(OpenAIKey.get_available_key)()
-                client = get_openai_client_async(key)
-                context = await database_sync_to_async(story.get_context)()
-                model_name = await self.get_story_model_name(story)
-                stream = await self.get_openai_stream(client, model_name, context)
-
-            content = ""
-            async for chunk in stream:
-                delta = ""
-                if settings.FAKE_LLM_REQUEST:
-                    delta = chunk
-                elif chunk and chunk.choices[0].delta.content:
-                    delta = chunk.choices[0].delta.content
-
-                if delta:
-                    content += delta
-                    await self.send(
-                        text_data=json.dumps(
-                            {
-                                "type": "stream",
-                                "interaction_id": interaction.id,
-                                "content": delta,
-                            },
-                        ),
-                    )
-
-            interaction.content = content
-            interaction.status = "completed"
-            await database_sync_to_async(interaction.save)()
-
-            # Send completion message
-            await self.send(
-                text_data=json.dumps(
-                    {
-                        "type": "interaction_completed",
-                        "interaction": GameInteractionSerializer(interaction).data,
-                    },
-                ),
-            )
-
-        except ValueError as e:
-            await self.send_error(json.dumps({"type": "error", "error": str(e)}))
 
     async def get_fake_stream(self):
         fake_response = "This is a test response. " * 10
@@ -340,9 +291,13 @@ class GameConsumer(AsyncWebsocketConsumer):
             if settings.FAKE_LLM_REQUEST:
                 stream = self.get_fake_explanation_stream()
             else:
+                active_config = await database_sync_to_async(
+                    LLMConfig.get_active_config,
+                )(purpose="text_explanation")
+
+                model_name = await self.get_config_model_name(active_config)
                 key = await database_sync_to_async(OpenAIKey.get_available_key)()
                 client = get_openai_client_async(key)
-                model_name = await self.get_story_model_name(story)
                 stream = await self.get_explanation_stream(
                     client,
                     model_name,

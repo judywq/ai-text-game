@@ -357,34 +357,6 @@ function formatMessage(interaction: GameInteraction) {
   return interaction.content ? marked(interaction.content) : ''
 }
 
-// Add new polling function for explanations
-async function pollExplanation(explanationId: number) {
-  try {
-    const explanation = await ExplanationService.getExplanation(story.value!.id, explanationId)
-    if (explanation.status !== 'pending') {
-      currentExplanation.value = explanation
-      stopExplanationPolling()
-      fetchLookupHistory()
-    }
-  } catch (error) {
-    console.error('Failed to poll explanation:', error)
-    stopExplanationPolling()
-  }
-}
-
-function startExplanationPolling(explanationId: number) {
-  if (explanationPollInterval.value) {
-    clearInterval(explanationPollInterval.value)
-  }
-  explanationPollInterval.value = setInterval(() => pollExplanation(explanationId), 2000)
-}
-
-function stopExplanationPolling() {
-  if (explanationPollInterval.value) {
-    clearInterval(explanationPollInterval.value)
-    explanationPollInterval.value = null
-  }
-}
 </script>
 
 <template>
