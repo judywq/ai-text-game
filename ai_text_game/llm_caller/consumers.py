@@ -3,7 +3,6 @@ import json
 import logging
 import re
 
-import anyio
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
@@ -209,7 +208,11 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_config_model_name(self, config):
-        return config.model.name
+        return {
+            "model_name": config.model.name,
+            "temperature": config.temperature,
+            "system_prompt": config.system_prompt,
+        }
 
     @database_sync_to_async
     def create_user_interaction(self, story, content):
@@ -295,12 +298,18 @@ class GameConsumer(AsyncWebsocketConsumer):
                     LLMConfig.get_active_config,
                 )(purpose="text_explanation")
 
-                model_name = await self.get_config_model_name(active_config)
+                config_data = await self.get_config_model_name(active_config)
+                model_name = config_data["model_name"]
+                temperature = config_data["temperature"]
+                system_prompt = config_data["system_prompt"]
+
                 key = await database_sync_to_async(OpenAIKey.get_available_key)()
                 client = get_openai_client_async(key)
                 stream = await self.get_explanation_stream(
                     client,
                     model_name,
+                    temperature,
+                    system_prompt,
                     explanation.selected_text,
                     explanation.context_text,
                 )
@@ -369,13 +378,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             yield word
 
     @staticmethod
-    async def get_explanation_stream(client, model_name, selected_text, context_text):
-        # TODO: Use the prompt from the LLMConfig
-        fn = "ai_text_game/llm_caller/templates/prompts/text_explanation_prompt.txt"
-        async with await anyio.open_file(fn) as f:
-            prompt_template = await f.read()
-
-        prompt = prompt_template.format(
+    async def get_explanation_stream(  # noqa: PLR0913
+        client,
+        model_name,
+        temperature,
+        system_prompt,
+        selected_text,
+        context_text,
+    ):
+        prompt = system_prompt.format(
             selected_text=selected_text,
             context_text=context_text,
         )
@@ -383,6 +394,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         return await client.chat.completions.create(
             model=model_name,
             messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
             stream=True,
         )
 
