@@ -102,20 +102,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     raw_data=skeleton_data["story_skeleton"],
                 )
 
-            # Get current story state
-            state = await database_sync_to_async(lambda: story.story_state)()
-
-            # Run the graph
-            new_state = await database_sync_to_async(self.story_graph.invoke)(
-                state,
-                self.story_thread,
-            )
-
-            # Save progress
-            await self.save_story_progress(story, new_state)
-
-            # Send response to client
-            await self.send_story_update(new_state)
+            await self.process_story_state(story)
 
         except ValueError as e:
             await self.send_error(str(e))
@@ -130,37 +117,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.send_error("option_id is required")
                 return
 
-            option_text = await database_sync_to_async(story.get_option_text)(
-                option_id,
-            )
+            option_text = await database_sync_to_async(story.get_option_text)(option_id)
             if not option_text:
                 await self.send_error("Invalid option_id")
                 return
 
-            option_text = await database_sync_to_async(story.get_option_text)(option_id)
-
             # Update the story progress with chosen option
             await self.update_story_progress(story, option_id, option_text)
 
-            # Get current story state
-            state = await database_sync_to_async(lambda: story.story_state)()
-
-            # Add the chosen decision to state
-            if "chosen_decisions" not in state:
-                state["chosen_decisions"] = []
-            state["chosen_decisions"].append(option_id)
-
-            # Run the graph
-            new_state = await database_sync_to_async(self.story_graph.invoke)(
-                state,
-                self.story_thread,
-            )
-
-            # Save progress
-            await self.save_story_progress(story, new_state)
-
-            # Send response to client
-            await self.send_story_update(new_state)
+            await self.process_story_state(story)
 
         except ValueError as e:
             await self.send_error(str(e))
@@ -498,3 +463,32 @@ class GameConsumer(AsyncWebsocketConsumer):
         if latest_progress:
             # Update with chosen option
             latest_progress.set_chosen_option(option_id, option_text)
+
+    async def process_story_state(self, story):
+        """Process the current story state and send updates."""
+        # Get current story state
+        state = await database_sync_to_async(lambda: story.story_state)()
+
+        # Add chosen decisions if they exist
+        if hasattr(story, "progress_entries"):
+            chosen_decisions = await database_sync_to_async(
+                lambda: [
+                    entry.chosen_option_id
+                    for entry in story.progress_entries.all()
+                    if entry.chosen_option_id
+                ],
+            )()
+            if chosen_decisions:
+                state["chosen_decisions"] = chosen_decisions
+
+        # Run the graph
+        new_state = await database_sync_to_async(self.story_graph.invoke)(
+            state,
+            self.story_thread,
+        )
+
+        # Save progress
+        await self.save_story_progress(story, new_state)
+
+        # Send response to client
+        await self.send_story_update(new_state)
