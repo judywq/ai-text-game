@@ -5,7 +5,7 @@ import json
 from langchain_community.chat_models.fake import FakeListChatModel
 
 
-def get_fake_llm_model(node_name, key):
+def get_fake_llm_model(node_name):
     if node_name == "skeleton":
         return FakeListChatModel(responses=[json.dumps(skeleton_json)])
     if node_name == "continuation":

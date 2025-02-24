@@ -1,11 +1,11 @@
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
 
+from .models import APIKey
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
-from .models import OpenAIKey
 from .models import QuotaConfig
 from .models import StoryProgress
 from .models import StorySkeleton
@@ -76,8 +76,8 @@ class LLMConfigAdmin(admin.ModelAdmin):
         return truncatechars(obj.system_prompt, 50)
 
 
-@admin.register(OpenAIKey)
-class OpenAIKeyAdmin(admin.ModelAdmin):
+@admin.register(APIKey)
+class APIKeyAdmin(admin.ModelAdmin):
     list_display = [
         "name",
         "masked_key",

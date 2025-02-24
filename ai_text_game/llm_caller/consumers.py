@@ -9,9 +9,9 @@ from django.conf import settings
 from langchain_core.prompts import ChatPromptTemplate
 
 from .fake_llms import get_fake_llm_model
+from .models import APIKey
 from .models import GameStory
 from .models import LLMConfig
-from .models import OpenAIKey
 from .models import StoryOption
 from .models import StoryProgress
 from .models import StorySkeleton
@@ -277,7 +277,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 temperature = config_data["temperature"]
                 system_prompt = config_data["system_prompt"]
 
-                key = await database_sync_to_async(OpenAIKey.get_available_key)()
+                key = await database_sync_to_async(
+                    APIKey.get_available_key,
+                )(model_name)
                 client = get_openai_client_async(key)
                 stream = await self.get_explanation_stream(
                     client,
@@ -374,21 +376,16 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def initialize_story_graph(self, story):
         """Initialize the story graph with the current story state"""
-        # Get API key
-        key = await database_sync_to_async(OpenAIKey.get_available_key)()
 
         # Create LLM models dictionary
-        llm_models = await self.create_story_graph_llms(key)
+        llm_models = await self.create_story_graph_llms()
 
         # Create story graph
         self.story_graph = StoryGraph(llm_models)
 
     @database_sync_to_async
-    def create_story_graph_llms(self, key):
+    def create_story_graph_llms(self):
         """Create LLM models for story graph nodes.
-
-        Args:
-            key: OpenAI API key to use for the models
 
         Returns:
             Dictionary mapping node types to configured LLM models
@@ -406,10 +403,21 @@ class GameConsumer(AsyncWebsocketConsumer):
         for node_name, purpose in node_name_to_purpose.items():
             config = LLMConfig.get_active_config(purpose=purpose)
             prompt = ChatPromptTemplate.from_template(config.system_prompt)
+            model_name = config.model.name
+            llm_type = config.model.llm_type
+            url = config.model.url
+            key = APIKey.get_available_key(model_name)
             if settings.FAKE_LLM_REQUEST:
-                llms[node_name] = prompt | get_fake_llm_model(node_name, key)
+                llms[node_name] = prompt | get_fake_llm_model(node_name)
             else:
-                llms[node_name] = prompt | get_llm_model(config.model.name, key)
+                llms[node_name] = prompt | get_llm_model(
+                    {
+                        "model_name": model_name,
+                        "llm_type": llm_type,
+                        "url": url,
+                        "key": key,
+                    },
+                )
 
         return llms
 

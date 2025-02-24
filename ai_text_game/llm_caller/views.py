@@ -12,11 +12,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import APIKey
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
-from .models import OpenAIKey
 from .models import StoryProgress
 from .models import TextExplanation
 from .negotiation import IgnoreClientContentNegotiation
@@ -210,7 +210,9 @@ class GameSceneGeneratorView(APIView):
             }
         else:
             try:
-                client = get_openai_client(OpenAIKey.get_available_key())
+                client = get_openai_client(
+                    APIKey.get_available_key(model_name=active_config.model.name),
+                )
                 response = client.chat.completions.create(
                     model=active_config.model.name,
                     messages=[{"role": "user", "content": prompt}],

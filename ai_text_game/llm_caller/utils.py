@@ -3,6 +3,7 @@ from pathlib import Path
 
 import openai
 from django.utils import timezone
+from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 
 
@@ -50,5 +51,16 @@ def read_prompt_template(template_filename):
         raise FileNotFoundError(msg) from e
 
 
-def get_llm_model(model_name, key):
-    return ChatOpenAI(model=model_name, api_key=key.key)
+def get_llm_model(config):
+    llm_type = config.get("llm_type")
+    model_name = config.get("model_name")
+    key = config.get("key")
+    url = config.get("url")
+    if llm_type == "openai":
+        return ChatOpenAI(model=model_name, api_key=key.key)
+    if llm_type == "anthropic":
+        return ChatAnthropic(model=model_name, api_key=key.key, max_tokens=8000)
+    if llm_type == "custom":
+        return ChatOpenAI(model=model_name, api_key=key.key, base_url=url)
+    msg = f"Invalid LLM type: {llm_type}"
+    raise ValueError(msg)

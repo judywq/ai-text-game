@@ -17,12 +17,14 @@ from .utils import read_prompt_template
 User = get_user_model()
 
 
+LLM_TYPE_CHOICES = [
+    ("openai", "OpenAI"),
+    ("anthropic", "Anthropic"),
+    ("custom", "Custom"),
+]
+
+
 class LLMModel(TimestampedBase):
-    LLM_TYPE_CHOICES = [
-        ("openai", "OpenAI"),
-        ("anthropic", "Anthropic"),
-        ("custom", "Custom"),
-    ]
     order = models.IntegerField(
         default=10,
         help_text="Order of the model in the UI (smaller number comes first)",
@@ -231,14 +233,28 @@ class LLMConfig(TimestampedBase):
             )
 
 
-class OpenAIKey(TimestampedBase):
+class APIKey(TimestampedBase):
     key = models.CharField(
         max_length=255,
-        help_text="OpenAI API Key (starts with 'sk-')",
+        help_text="API Key (e.g., 'sk-...')",
     )
     name = models.CharField(
         max_length=100,
         help_text="A name to identify this key (e.g., 'Primary Key', 'Backup Key')",
+    )
+    llm_model = models.ForeignKey(
+        LLMModel,
+        on_delete=models.SET_NULL,
+        related_name="api_keys",
+        help_text="The LLM model this key applies to",
+        blank=True,
+        null=True,
+    )
+    llm_type = models.CharField(
+        max_length=20,
+        choices=LLM_TYPE_CHOICES,
+        blank=True,
+        help_text="The type of LLM service to use",
     )
     is_active = models.BooleanField(
         default=True,
@@ -252,16 +268,51 @@ class OpenAIKey(TimestampedBase):
 
     class Meta:
         ordering = ["order"]
-        verbose_name = "OpenAI API Key"
-        verbose_name_plural = "OpenAI API Keys"
 
     def __str__(self):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
 
     @classmethod
-    def get_available_key(cls):
+    def get_available_key(cls, model_name: str):
         """Get the first available active key."""
-        return cls.objects.filter(is_active=True).order_by("order").first()
+        found = (
+            cls.objects.filter(
+                is_active=True,
+                llm_model__name=model_name,
+            )
+            .order_by("order")
+            .first()
+        )
+
+        if found:
+            return found
+
+        try:
+            llm_model = LLMModel.objects.get(name=model_name)
+        except LLMModel.DoesNotExist:
+            msg = f"LLM model {model_name} does not exist"
+            raise ValueError(msg) from None
+
+        return (
+            cls.objects.filter(
+                is_active=True,
+                llm_type=llm_model.llm_type,
+            )
+            .order_by("order")
+            .first()
+        )
+
+    def clean(self):
+        super().clean()
+        if self.llm_type == "custom" and not self.llm_model:
+            raise ValidationError(
+                {"llm_model": "LLM model is required for custom LLM services"},
+            )
+
+        if not self.llm_model and not self.llm_type:
+            raise ValidationError(
+                {"llm_model": "LLM model or LLM type is required"},
+            )
 
 
 class GameScenario(TimestampedBase):

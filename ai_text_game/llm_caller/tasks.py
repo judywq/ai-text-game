@@ -7,7 +7,7 @@ from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 
-from .models import OpenAIKey
+from .models import APIKey
 from .models import TextExplanation
 from .utils import get_openai_client
 
@@ -60,7 +60,7 @@ def process_text_explanation(
             selected_text=params.selected_text,
         )
 
-        key = OpenAIKey.get_available_key()
+        key = APIKey.get_available_key(model_name=params.model_name)
         client = get_openai_client(key)
         response = client.chat.completions.create(
             model=params.model_name,
