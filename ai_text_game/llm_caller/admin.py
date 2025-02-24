@@ -117,6 +117,7 @@ class GameScenarioAdmin(admin.ModelAdmin):
 @admin.register(GameStory)
 class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "title",
         "created_by",
         "genre",
