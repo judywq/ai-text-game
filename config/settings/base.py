@@ -429,6 +429,7 @@ OPENAI_JSON_SCHEMA_MODELS = [
 # ------------------------------------------------------------------------------
 INIT_LLM_MODELS = [
     {
+        "llm_type": "openai",
         "name": "gpt-3.5-turbo",
         "display_name": "GPT-3.5 Turbo",
         "is_default": True,
@@ -436,6 +437,7 @@ INIT_LLM_MODELS = [
         "order": 1,
     },
     {
+        "llm_type": "openai",
         "name": "gpt-4o",
         "display_name": "GPT-4o",
         "is_default": False,
@@ -443,6 +445,7 @@ INIT_LLM_MODELS = [
         "order": 10,
     },
     {
+        "llm_type": "openai",
         "name": "gpt-4o-mini-2024-07-18",
         "display_name": "GPT-4o Mini",
         "is_default": False,
@@ -450,6 +453,7 @@ INIT_LLM_MODELS = [
         "order": 11,
     },
     {
+        "llm_type": "openai",
         "name": "o1-2024-12-17",
         "display_name": "o1",
         "is_default": False,
@@ -457,6 +461,7 @@ INIT_LLM_MODELS = [
         "order": 20,
     },
     {
+        "llm_type": "openai",
         "name": "o1-mini-2024-09-12",
         "display_name": "o1-mini",
         "is_default": False,
@@ -464,6 +469,7 @@ INIT_LLM_MODELS = [
         "order": 21,
     },
     {
+        "llm_type": "openai",
         "name": "o3-mini-2025-01-31",
         "display_name": "o3-mini",
         "is_default": False,

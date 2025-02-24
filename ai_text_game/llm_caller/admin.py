@@ -21,8 +21,10 @@ class QuotaConfigAdmin(admin.ModelAdmin):
 @admin.register(LLMModel)
 class LLMModelAdmin(admin.ModelAdmin):
     list_display = [
-        "name",
         "display_name",
+        "name",
+        "llm_type",
+        "url",
         "order",
         "is_default",
         "is_active",
@@ -32,6 +34,29 @@ class LLMModelAdmin(admin.ModelAdmin):
     list_filter = ["is_active", "is_default"]
     search_fields = ["name", "display_name"]
     ordering = ["order"]
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "display_name",
+                    "llm_type",
+                    "url",
+                ),
+            },
+        ),
+        (
+            "Settings",
+            {
+                "fields": (
+                    "order",
+                    "is_default",
+                    "is_active",
+                ),
+            },
+        ),
+    )
 
 
 @admin.register(LLMConfig)

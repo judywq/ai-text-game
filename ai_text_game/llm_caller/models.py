@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
+from django.core.validators import URLValidator
 from django.db import models
 
 from ai_text_game.core.models import CreatableBase
@@ -17,6 +18,11 @@ User = get_user_model()
 
 
 class LLMModel(TimestampedBase):
+    LLM_TYPE_CHOICES = [
+        ("openai", "OpenAI"),
+        ("anthropic", "Anthropic"),
+        ("custom", "Custom"),
+    ]
     order = models.IntegerField(
         default=10,
         help_text="Order of the model in the UI (smaller number comes first)",
@@ -41,6 +47,22 @@ class LLMModel(TimestampedBase):
         default=True,
         help_text="Only active models will be listed in the UI",
     )
+    llm_type = models.CharField(
+        max_length=20,
+        choices=LLM_TYPE_CHOICES,
+        default="openai",
+        help_text="The type of LLM service to use",
+    )
+    url = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text=(
+            "URL for custom LLM service "
+            "(e.g., http://host.docker.internal:8080/v1). "
+            "Leave empty for OpenAI."
+        ),
+        validators=[URLValidator()],
+    )
 
     class Meta:
         ordering = ["order"]
@@ -58,6 +80,13 @@ class LLMModel(TimestampedBase):
     @classmethod
     def get_active_models(cls):
         return cls.objects.filter(is_active=True)
+
+    def clean(self):
+        super().clean()
+        if self.llm_type == "custom" and not self.url:
+            raise ValidationError(
+                {"url": "URL is required for custom LLM services"},
+            )
 
 
 class QuotaConfig(TimestampedBase):
