@@ -9,7 +9,6 @@ from django.conf import settings
 from langchain_core.prompts import ChatPromptTemplate
 
 from .fake_llms import get_fake_llm_model
-from .models import GameInteraction
 from .models import GameStory
 from .models import LLMConfig
 from .models import OpenAIKey
@@ -213,31 +212,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             "temperature": config.temperature,
             "system_prompt": config.system_prompt,
         }
-
-    @database_sync_to_async
-    def create_user_interaction(self, story, content):
-        return GameInteraction.objects.create(
-            story=story,
-            role="user",
-            content=content,
-            status="completed",
-        )
-
-    @database_sync_to_async
-    def create_assistant_interaction(self, story):
-        return GameInteraction.objects.create(
-            story=story,
-            role="assistant",
-            content="",
-            status="pending",
-        )
-
-    @database_sync_to_async
-    def get_system_interaction(self, story):
-        try:
-            return story.interactions.get(role="system")
-        except GameInteraction.DoesNotExist:
-            return None
 
     async def get_fake_stream(self):
         fake_response = "This is a test response. " * 10

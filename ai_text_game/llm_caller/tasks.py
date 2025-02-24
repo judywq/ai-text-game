@@ -7,75 +7,11 @@ from celery import shared_task
 from celery.exceptions import MaxRetriesExceededError
 from django.conf import settings
 
-from .models import GameInteraction
 from .models import OpenAIKey
 from .models import TextExplanation
 from .utils import get_openai_client
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class GameInteractionParams:
-    interaction_id: int
-    model_name: str
-    system_prompt: str
-    context: list[dict]
-    temperature: float = 0.7
-
-
-@shared_task(bind=True)
-def process_game_interaction(
-    self,
-    interaction_params_dict: dict,
-    delay_seconds=0,
-):
-    if delay_seconds > 0:
-        msg = f"Delaying game interaction by {delay_seconds} seconds"
-        logger.info(msg)
-        time.sleep(delay_seconds)
-
-    try:
-        params = GameInteractionParams(**interaction_params_dict)
-        interaction_id = params.interaction_id
-        try:
-            interaction = GameInteraction.objects.select_related("story").get(
-                id=interaction_id,
-            )
-        except GameInteraction.DoesNotExist as e:
-            try:
-                self.retry(countdown=2**self.request.retries)
-            except MaxRetriesExceededError:
-                msg = f"GameInteraction with id {interaction_id} not found"
-                logger.exception(msg)
-                raise ValueError(msg) from e
-
-        if settings.FAKE_LLM_REQUEST:
-            interaction.content = "This is a test response."
-            interaction.status = "completed"
-            interaction.save()
-            return True
-
-        key = OpenAIKey.get_available_key()
-        client = get_openai_client(key)
-        response = client.chat.completions.create(
-            model=params.model_name,
-            messages=params.context,
-            temperature=params.temperature,
-        )
-
-        content = response.choices[0].message.content
-        interaction.content = content
-        interaction.status = "completed"
-        interaction.save()
-
-    except (openai.OpenAIError, ValueError) as e:
-        interaction.status = "failed"
-        interaction.error = str(e)
-        interaction.save()
-        return False
-    else:
-        return True
 
 
 @dataclass

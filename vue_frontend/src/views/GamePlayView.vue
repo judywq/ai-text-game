@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
-import type { GameStory, GameInteraction, StoryProgress } from '@/types/game'
+import type { GameStory, StoryProgress } from '@/types/game'
 import type { TextExplanation, ExplanationStatus } from '@/types/explanation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -212,9 +212,8 @@ const loadStory = async () => {
     if (progressEntries.value.length === 0 && story.value.status === 'INIT') {
       await startStory(storyId)
     }
-    // Set current options from the last progress entry
-    currentOptions.value = progressEntries.value[progressEntries.value.length - 1].options
   } catch (error: any) {
+    console.error('Failed to load story', error)
     toast({
       title: 'Error',
       description: error.message || 'Failed to load story',
@@ -351,10 +350,6 @@ function scrollToBottom() {
       scrollRef.value.scrollTop = scrollRef.value.scrollHeight
     }
   }, 100)
-}
-
-function formatMessage(interaction: GameInteraction) {
-  return interaction.content ? marked(interaction.content) : ''
 }
 
 </script>

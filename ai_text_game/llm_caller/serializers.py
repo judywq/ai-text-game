@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMModel
@@ -43,25 +42,6 @@ class GameScenarioSerializer(serializers.ModelSerializer):
             "example",
             "order",
         ]
-
-
-class GameInteractionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GameInteraction
-        fields = [
-            "id",
-            "role",
-            "content",
-            "status",
-            "created_at",
-        ]
-
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        # For system messages, return empty content
-        if instance.role == "system":
-            data["content"] = ""
-        return data
 
 
 class GameStorySerializer(serializers.ModelSerializer):

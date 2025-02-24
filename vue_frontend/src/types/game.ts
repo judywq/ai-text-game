@@ -7,17 +7,6 @@ export interface GameScenario {
   created_at: string
 }
 
-export interface GameInteraction {
-  id: number
-  client_id: number
-  story: number
-  role: 'user' | 'system' | 'assistant'
-  content: string
-  status: 'pending' | 'streaming' | 'completed' | 'failed' | 'aborted'
-  created_at: string
-  updated_at: string
-}
-
 export interface StoryProgress {
   id: number
   content: string

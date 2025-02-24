@@ -487,55 +487,6 @@ class GameStory(CreatableBase, TimestampedBase):
         return "A1"  # Default level
 
 
-class GameInteraction(TimestampedBase):
-    story = models.ForeignKey(
-        GameStory,
-        on_delete=models.CASCADE,
-        related_name="interactions",
-    )
-    role = models.CharField(
-        max_length=10,
-        choices=[
-            ("system", "System"),
-            ("user", "User"),
-            ("assistant", "Assistant"),
-        ],
-        default="user",
-    )
-    content = models.TextField(blank=True)
-    status = models.CharField(
-        max_length=20,
-        choices=[
-            ("pending", "Pending"),
-            ("streaming", "Streaming"),
-            ("completed", "Completed"),
-            ("failed", "Failed"),
-            ("aborted", "Aborted"),
-        ],
-        default="pending",
-    )
-    error = models.TextField(blank=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"Interaction in {self.story.title} at {self.created_at}"
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # Update the parent story's updated_at timestamp
-        self.story.save(update_fields=["updated_at"])
-
-    def format_message(self):
-        """Format the message for the LLM API."""
-        return {
-            "role": self.role,
-            "content": self.content or "",
-        }
-
-
-# New model for text explanation lookups
 class TextExplanation(CreatableBase, TimestampedBase):
     STATUS_CHOICES = [
         ("pending", "Pending"),

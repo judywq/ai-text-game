@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
 
-from .models import GameInteraction
 from .models import GameScenario
 from .models import GameStory
 from .models import LLMConfig
@@ -113,23 +112,6 @@ class GameStoryAdmin(admin.ModelAdmin):
     @admin.display(description="Details", ordering="details")
     def get_details(self, obj):
         return truncatechars(obj.details, 50)
-
-
-@admin.register(GameInteraction)
-class GameInteractionAdmin(admin.ModelAdmin):
-    list_display = [
-        "story",
-        "role",
-        "created_at",
-        "get_content",
-        "status",
-    ]
-    list_filter = ["story__genre", "story__created_by"]
-    search_fields = ["content"]
-
-    @admin.display(description="Content", ordering="content")
-    def get_content(self, obj):
-        return truncatechars(obj.content, 50)
 
 
 @admin.register(TextExplanation)

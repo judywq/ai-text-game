@@ -1,5 +1,5 @@
 import { ref, onUnmounted } from 'vue'
-import type { GameInteraction, TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
+import type { TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
 // const WS_BASE_URL = 'ws://localhost:8000/ws'
@@ -8,21 +8,12 @@ console.debug('useGameWebSocket.ts initialization - WS_BASE_URL:', { WS_BASE_URL
 export function useGameWebSocket() {
   const socket = ref<WebSocket | null>(null)
   const isConnected = ref(false)
-  const onInteractionCreated = ref<((interaction: any) => void) | null>(null)
-  const onInteractionCompleted = ref<((interaction: GameInteraction) => void) | null>(null)
   const onStream = ref<((id: number, content: string) => void) | null>(null)
   const onExplanationCreated = ref<((explanation: TextExplanation) => void) | null>(null)
   const onExplanationStream = ref<((id: number, content: string) => void) | null>(null)
   const onExplanationCompleted = ref<((explanation: TextExplanation) => void) | null>(null)
   const onExplanationStatus = ref<((id: number, status: ExplanationStatus) => void) | null>(null)
   const onStoryUpdate = ref<((update: StoryUpdate) => void) | null>(null)
-
-  // Add these new refs to track promises
-  const pendingStoryPromise = ref<{
-    resolve: (value: GameInteraction) => void;
-    reject: (reason: Error) => void;
-    currentInteraction: GameInteraction | null;
-  } | null>(null)
 
   const pendingExplanationPromise = ref<{
     resolve: (value: TextExplanation) => void;
@@ -39,32 +30,6 @@ export function useGameWebSocket() {
       case 'story_update':
         if (onStoryUpdate.value) {
           onStoryUpdate.value(data as StoryUpdate)
-        }
-        break
-
-      case 'interaction_created':
-        if (pendingStoryPromise.value) {
-          pendingStoryPromise.value.currentInteraction = data.interaction
-        }
-        if (onInteractionCreated.value && data.interaction) {
-          onInteractionCreated.value(data.interaction)
-        }
-        break
-
-      case 'stream':
-        if (data.interaction_id && onStream.value) {
-          onStream.value(data.interaction_id, data.content)
-        }
-        break
-
-      case 'interaction_completed':
-        if (pendingStoryPromise.value &&
-            pendingStoryPromise.value.currentInteraction?.id === data.interaction.id) {
-          pendingStoryPromise.value.resolve(data.interaction)
-          pendingStoryPromise.value = null
-        }
-        if (onInteractionCompleted.value) {
-          onInteractionCompleted.value(data.interaction)
         }
         break
 
@@ -106,10 +71,6 @@ export function useGameWebSocket() {
 
       case 'error':
         const error = new Error(data.error)
-        if (pendingStoryPromise.value) {
-          pendingStoryPromise.value.reject(error)
-          pendingStoryPromise.value = null
-        }
         if (pendingExplanationPromise.value) {
           pendingExplanationPromise.value.reject(error)
           pendingExplanationPromise.value = null
@@ -140,22 +101,13 @@ export function useGameWebSocket() {
     }
   }
 
-  const startStory = (storyId: number): Promise<GameInteraction> => {
+  const startStory = (storyId: number) => {
     if (!socket.value || socket.value.readyState !== WebSocket.OPEN) {
       return Promise.reject(new Error('WebSocket not connected'))
     }
-
-    return new Promise((resolve, reject) => {
-      pendingStoryPromise.value = {
-        resolve,
-        reject,
-        currentInteraction: null
-      }
-
-      socket.value?.send(JSON.stringify({
-        type: 'start_story'
-      }))
-    })
+    socket.value?.send(JSON.stringify({
+      type: 'start_story'
+    }))
   }
 
   const selectOption = (optionId: string) => {
@@ -206,8 +158,6 @@ export function useGameWebSocket() {
     disconnect,
     selectOption,
     startStory,
-    onInteractionCreated,
-    onInteractionCompleted,
     onStream,
     lookupExplanation,
     onExplanationCreated,
