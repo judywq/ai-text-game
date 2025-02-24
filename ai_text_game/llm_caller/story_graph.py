@@ -121,9 +121,6 @@ class StoryGraph:
             "Generating story delta for %s",
             state.get("current_decision_point", ""),
         )
-        logger.info("---------------- State: ----------------")
-        logger.info(state)
-        logger.info("---------------- End of State ----------------")
         try:
             # Get current milestone info
             skeleton = state["story_skeleton"]
@@ -177,9 +174,6 @@ class StoryGraph:
             "Generating story ending for %s",
             state.get("current_decision_point", ""),
         )
-        logger.info("---------------- State: ----------------")
-        logger.info(state)
-        logger.info("---------------- End of State ----------------")
 
         try:
             # Format variables
@@ -209,9 +203,6 @@ class StoryGraph:
             "Checking CEFR level for %s",
             state.get("current_decision_point", ""),
         )
-        logger.info("---------------- State: ----------------")
-        logger.info(state)
-        logger.info("---------------- End of State ----------------")
         try:
             # Check latest story segment
             latest_text = state["story_raw_delta"]
