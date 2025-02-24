@@ -66,12 +66,56 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message_type = data.get("type")
 
-        if message_type == "interact":
-            await self.handle_interaction(data)
-        elif message_type == "start_story":
+        if message_type == "start_story":
             await self.handle_start_story()
+        elif message_type == "interact":
+            await self.handle_interaction(data)
         elif message_type == "explain_text":
             await self.handle_text_explanation(data)
+
+    async def handle_start_story(self):
+        try:
+            story = await self.get_story(self.story_id)
+
+            if story.status != "INIT":
+                await self.send_error("Story already started.")
+                return
+
+            initial_state = {
+                "theme": story.genre,
+                "cefr_level": story.cefr_level,
+                "scene_text": story.scene_text,
+                "details": story.details,
+            }
+
+            skeleton_data = await database_sync_to_async(
+                self.story_graph.generate_skeleton,
+            )(initial_state)
+
+            await database_sync_to_async(StorySkeleton.objects.create)(
+                story=story,
+                background=skeleton_data["story_skeleton"]["story_background"],
+                raw_data=skeleton_data["story_skeleton"],
+            )
+
+            # Get current story state
+            state = await database_sync_to_async(lambda: story.story_state)()
+
+            # Run the graph
+            new_state = await database_sync_to_async(self.story_graph.invoke)(
+                state,
+                self.story_thread,
+            )
+
+            # Save progress
+            await self.save_story_progress(story, new_state)
+
+            # Send response to client
+            await self.send_story_update(new_state)
+
+        except ValueError as e:
+            await self.send_error(str(e))
+            raise
 
     async def handle_interaction(self, data):
         try:
@@ -101,50 +145,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             if "chosen_decisions" not in state:
                 state["chosen_decisions"] = []
             state["chosen_decisions"].append(option_id)
-
-            # Run the graph
-            new_state = await database_sync_to_async(self.story_graph.invoke)(
-                state,
-                self.story_thread,
-            )
-
-            # Save progress
-            await self.save_story_progress(story, new_state)
-
-            # Send response to client
-            await self.send_story_update(new_state)
-
-        except ValueError as e:
-            await self.send_error(str(e))
-            raise
-
-    async def handle_start_story(self):
-        try:
-            story = await self.get_story(self.story_id)
-
-            if story.status != "INIT":
-                await self.send_error("Story already started.")
-                return
-
-            initial_state = {
-                "theme": story.genre,
-                "cefr_level": story.cefr_level,
-                "scene_text": story.scene_text,
-                "details": story.details,
-            }
-
-            skeleton_data = await database_sync_to_async(
-                self.story_graph.generate_skeleton,
-            )(initial_state)
-
-            await database_sync_to_async(StorySkeleton.objects.create)(
-                story=story,
-                background=skeleton_data["story_skeleton"]["story_background"],
-                raw_data=skeleton_data["story_skeleton"],
-            )
-
-            # Get current story state
-            state = await database_sync_to_async(lambda: story.story_state)()
 
             # Run the graph
             new_state = await database_sync_to_async(self.story_graph.invoke)(
