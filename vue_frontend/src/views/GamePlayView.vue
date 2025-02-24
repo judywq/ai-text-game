@@ -34,7 +34,6 @@ const progressEntries = ref<StoryProgress[]>([])
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
-const pollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
 const {
   isConnected,
@@ -61,9 +60,6 @@ const lookupHistory = ref<TextExplanation[]>([])
 
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
-
-// Add new polling interval for explanations
-const explanationPollInterval = ref<ReturnType<typeof setInterval> | null>(null)
 
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
@@ -339,9 +335,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (pollInterval.value) {
-    clearInterval(pollInterval.value)
-  }
 })
 
 function scrollToBottom() {
