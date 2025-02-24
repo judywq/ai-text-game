@@ -1,8 +1,11 @@
 Continue writing the story based on these elements:
 
-## Current milestone to address:\n{milestone}
-## Continue writing the story that leads to the Next Decision:\n{decision_point}
-## Previous decisions made by the user (take into account these consequences):\n{decisions_made}
+## Current milestone to address:
+{milestone}
+## Continue writing the story that leads to the Next Decision:
+{decision_point}
+## Previous decisions made by the user (take into account these consequences):
+{decisions_made}
 
 ## Requirements:
 - Write in CEFR level {cefr_level} English
@@ -12,5 +15,7 @@ Continue writing the story based on these elements:
 - Stop writing by asking the user to make the Next Decision
 - Generate only the new story segment, written in an engaging narrative style.
 
-## The story skeleton is:\n{skeleton}
-## The current story progress is:\n{progress}
+## The story skeleton is:
+{skeleton}
+## The current story progress is:
+{progress}
