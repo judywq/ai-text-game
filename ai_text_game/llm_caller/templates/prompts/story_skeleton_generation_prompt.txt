@@ -45,7 +45,7 @@ Requirements:
   - 3 chapters
   - 3 milestones in each chapter
   - 2~3 decision points in each milestone
-  - 2~3 options in each decision point
+  - 3 options in each decision point
   - 2~3 endings
 - The story should be engaging and have multiple meaningful choice points that affect the story's direction.
-- Format the output as a valid JSON object matching the example structure. DO NOT RETURN ANYTHING ELSE."""
+- Format the output as a valid JSON object matching the example structure. DO NOT RETURN ANYTHING ELSE.
