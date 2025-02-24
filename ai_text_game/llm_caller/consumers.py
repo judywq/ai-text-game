@@ -88,15 +88,19 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "details": story.details,
             }
 
-            skeleton_data = await database_sync_to_async(
-                self.story_graph.generate_skeleton,
-            )(initial_state)
+            # If skeleton exists, use it
+            story_skeleton = await self.try_get_skeleton(story)
+            if not story_skeleton:
+                # Generate skeleton if it doesn't exist
+                skeleton_data = await database_sync_to_async(
+                    self.story_graph.generate_skeleton,
+                )(initial_state)
 
-            await database_sync_to_async(StorySkeleton.objects.create)(
-                story=story,
-                background=skeleton_data["story_skeleton"]["story_background"],
-                raw_data=skeleton_data["story_skeleton"],
-            )
+                await database_sync_to_async(StorySkeleton.objects.create)(
+                    story=story,
+                    background=skeleton_data["story_skeleton"]["story_background"],
+                    raw_data=skeleton_data["story_skeleton"],
+                )
 
             # Get current story state
             state = await database_sync_to_async(lambda: story.story_state)()
@@ -196,6 +200,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         except (ValueError, TextExplanation.DoesNotExist) as e:
             await self.send_error(str(e))
+
+    @database_sync_to_async
+    def try_get_skeleton(self, story):
+        # Using hasattr checks if the related object exists
+        if hasattr(story, "skeleton") and story.skeleton is not None:
+            return story.skeleton
+        return None
 
     @database_sync_to_async
     def get_story(self, story_id):
