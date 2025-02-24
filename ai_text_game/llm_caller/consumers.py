@@ -224,13 +224,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             stream=True,
         )
 
-    @database_sync_to_async
-    def update_interaction(self, interaction, output, status, error=""):
-        interaction.content = output
-        interaction.status = status
-        interaction.error = error
-        interaction.save()
-
     async def send_error(self, error_message):
         await self.send(
             text_data=json.dumps(
