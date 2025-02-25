@@ -3,11 +3,13 @@ import json
 import logging
 import re
 
+from anthropic import AnthropicError
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
+from openai import OpenAIError
 
 from .fake_llms import get_fake_llm_model
 from .models import APIKey
@@ -66,12 +68,16 @@ class GameConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message_type = data.get("type")
 
-        if message_type == "start_story":
-            await self.handle_start_story()
-        elif message_type == "interact":
-            await self.handle_interaction(data)
-        elif message_type == "explain_text":
-            await self.handle_text_explanation(data)
+        try:
+            if message_type == "start_story":
+                await self.handle_start_story()
+            elif message_type == "interact":
+                await self.handle_interaction(data)
+            elif message_type == "explain_text":
+                await self.handle_text_explanation(data)
+        except (AnthropicError, OpenAIError) as e:
+            await self.send_error(str(e))
+            raise
 
     async def handle_start_story(self):
         try:
