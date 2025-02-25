@@ -6,6 +6,7 @@ import re
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
 from .fake_llms import get_fake_llm_model
@@ -18,7 +19,6 @@ from .models import StorySkeleton
 from .models import TextExplanation
 from .story_graph import StoryGraph
 from .utils import get_llm_model
-from .utils import get_openai_client_async
 
 logger = logging.getLogger(__name__)
 
@@ -245,14 +245,23 @@ class GameConsumer(AsyncWebsocketConsumer):
                 key = await database_sync_to_async(
                     APIKey.get_available_key,
                 )(model_name)
-                client = get_openai_client_async(key)
-                stream = await self.get_explanation_stream(
-                    client,
-                    model_name,
-                    temperature,
-                    system_prompt,
-                    explanation.selected_text,
-                    explanation.context_text,
+                prompt = ChatPromptTemplate.from_template(system_prompt)
+                string_parser = StrOutputParser()
+                llm = get_llm_model(
+                    {
+                        "model_name": model_name,
+                        "llm_type": active_config.model.llm_type,
+                        "url": active_config.model.url,
+                        "temperature": temperature,
+                        "key": key,
+                    },
+                )
+                chain = prompt | llm | string_parser
+                stream = chain.astream(
+                    {
+                        "selected_text": explanation.selected_text,
+                        "context_text": explanation.context_text,
+                    },
                 )
 
             # Update status to streaming when starting to process
@@ -272,20 +281,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             explanation_text = ""
             async for chunk in stream:
-                delta = ""
-                if settings.FAKE_LLM_REQUEST:
-                    delta = chunk
-                elif chunk and chunk.choices[0].delta.content:
-                    delta = chunk.choices[0].delta.content
-
-                if delta:
-                    explanation_text += delta
+                if chunk:
+                    explanation_text += chunk
                     await self.send(
                         text_data=json.dumps(
                             {
                                 "type": "explanation_stream",
                                 "explanation_id": explanation.id,
-                                "content": delta,
+                                "content": chunk,
                             },
                         ),
                     )
@@ -317,27 +320,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         for word in words:
             await asyncio.sleep(0.05)
             yield word
-
-    @staticmethod
-    async def get_explanation_stream(  # noqa: PLR0913
-        client,
-        model_name,
-        temperature,
-        system_prompt,
-        selected_text,
-        context_text,
-    ):
-        prompt = system_prompt.format(
-            selected_text=selected_text,
-            context_text=context_text,
-        )
-
-        return await client.chat.completions.create(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=temperature,
-            stream=True,
-        )
 
     async def initialize_story_graph(self, story):
         """Initialize the story graph with the current story state"""

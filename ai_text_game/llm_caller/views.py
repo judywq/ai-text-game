@@ -1,8 +1,5 @@
-from dataclasses import asdict
-
 import openai
 from django.conf import settings
-from django.db import transaction
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from rest_framework import status
@@ -26,8 +23,6 @@ from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
 from .serializers import StoryProgressSerializer
 from .serializers import TextExplanationSerializer
-from .tasks import TextExplanationParams
-from .tasks import process_text_explanation
 from .utils import get_llm_model
 
 
@@ -78,54 +73,12 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         story = self.perform_create(serializer)
         return Response(self.get_serializer(story).data, status=status.HTTP_201_CREATED)
 
-    # NEW: Nested explanations endpoint for a specific game story
-    @action(detail=True, methods=["get", "post"])
+    @action(detail=True, methods=["get"])
     def explanations(self, request, pk=None):
         story = self.get_object()
-        if request.method == "GET":
-            lookups = story.explanations.all().order_by("-created_at")
-            serializer = TextExplanationSerializer(lookups, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        selected_text = request.data.get("selected_text")
-        context_text = request.data.get("context_text")
-        if not all([selected_text, context_text]):
-            return Response(
-                {"error": "Missing required fields."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        active_config = LLMConfig.get_active_config(purpose="text_explanation")
-
-        # Create pending explanation
-        lookup = TextExplanation.objects.create(
-            created_by=request.user,
-            story=story,
-            selected_text=selected_text,
-            context_text=context_text,
-            status="pending",
-            model=active_config.model,
-        )
-
-        # Start async task
-        explanation_params = TextExplanationParams(
-            explanation_id=lookup.id,
-            model_name=active_config.model.name,
-            system_prompt=active_config.system_prompt,
-            context_text=context_text,
-            selected_text=selected_text,
-            temperature=active_config.temperature,
-        )
-
-        transaction.on_commit(
-            lambda: process_text_explanation.delay(
-                asdict(explanation_params),
-                delay_seconds=getattr(settings, "TASK_DELAY", 0),
-            ),
-        )
-
-        serializer = TextExplanationSerializer(lookup)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        lookups = story.explanations.all().order_by("-created_at")
+        serializer = TextExplanationSerializer(lookups, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
         detail=True,

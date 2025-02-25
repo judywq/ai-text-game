@@ -1,7 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
 
-import openai
 from django.utils import timezone
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
@@ -19,26 +18,6 @@ def get_today_date_range():
     today_end = today_start + timedelta(days=1)
 
     return today_start, today_end
-
-
-def get_openai_client(key):
-    if not key:
-        msg = (
-            "No active OpenAI API key found."
-            " Please add an API key in the admin interface."
-        )
-        raise ValueError(msg)
-    return openai.OpenAI(api_key=key.key)
-
-
-def get_openai_client_async(key):
-    if not key:
-        msg = (
-            "No active OpenAI API key found."
-            " Please add an API key in the admin interface."
-        )
-        raise ValueError(msg)
-    return openai.AsyncOpenAI(api_key=key.key)
 
 
 def read_prompt_template(template_filename):
