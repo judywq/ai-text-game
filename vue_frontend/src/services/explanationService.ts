@@ -1,5 +1,5 @@
 import api from '@/services/api'
-import type { TextExplanation } from '@/types/explanation' // create this type as needed
+import type { TextExplanation } from '@/types/game'
 
 export class ExplanationService {
   // Get the lookup history for a specific game story
