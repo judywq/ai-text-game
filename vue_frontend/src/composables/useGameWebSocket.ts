@@ -24,7 +24,7 @@ export function useGameWebSocket() {
 
   function handleMessage(event: MessageEvent) {
     const data = JSON.parse(event.data)
-    console.log('WebSocket message:', data)
+    // console.log('WebSocket message:', data)
 
     switch (data.type) {
       case 'story_update':

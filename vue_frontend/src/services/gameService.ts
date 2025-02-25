@@ -76,7 +76,7 @@ export class GameService {
   static async getStoryProgress(storyId: number): Promise<StoryProgress[]> {
     const response = await api.get(`/game-stories/${storyId}/progress/`)
 
-    console.log('response', response)
+    // console.log('response', response)
     return response.data
   }
 }

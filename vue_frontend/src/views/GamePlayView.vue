@@ -271,7 +271,7 @@ onMounted(async () => {
   try {
 
     onStoryUpdate.value = (update: any) => {
-      console.log('onStoryUpdate', update)
+      // console.log('onStoryUpdate', update)
 
       // Create a new progress entry
       if (update.content) {
