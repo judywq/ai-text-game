@@ -1,8 +1,11 @@
+import re
 from datetime import timedelta
 from pathlib import Path
 
+from django.conf import settings
 from django.utils import timezone
 from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import AIMessage
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
@@ -36,28 +39,58 @@ def get_llm_model(config):
     model_name = config.get("model_name")
     key = config.get("key")
     url = config.get("url")
-    temperature = config.get("temperature", 0.7)
+
+    is_reasoning_model = model_name in settings.REASONING_LLM_MODELS
+    # OpenAI reasoning models only support temperature of 1
+    temperature = 1 if is_reasoning_model else config.get("temperature", 0.7)
+
+    llm = None
     if llm_type == "openai":
-        return ChatOpenAI(model=model_name, api_key=key.key, temperature=temperature)
-    if llm_type == "anthropic":
-        return ChatAnthropic(
+        llm = ChatOpenAI(
+            model=model_name,
+            api_key=key.key,
+            temperature=temperature,
+        )
+    elif llm_type == "anthropic":
+        llm = ChatAnthropic(
             model=model_name,
             api_key=key.key,
             max_tokens=8000,
             temperature=temperature,
         )
-    if llm_type == "groq":
-        return ChatGroq(
+    elif llm_type == "groq":
+        llm = ChatGroq(
             model=model_name,
             api_key=key.key,
             temperature=temperature,
         )
-    if llm_type == "custom":
-        return ChatOpenAI(
+    elif llm_type == "custom":
+        llm = ChatOpenAI(
             model=model_name,
             api_key=key.key,
             base_url=url,
             temperature=temperature,
         )
-    msg = f"Invalid LLM type: {llm_type}"
-    raise ValueError(msg)
+
+    if llm is None:
+        msg = f"Invalid LLM type: {llm_type}"
+        raise ValueError(msg)
+
+    if is_reasoning_model:
+        # Remove the think tags from reasoning models
+        return llm | think_tag_parser
+    return llm
+
+
+def think_tag_parser(ai_message: AIMessage | str) -> str:
+    """Remove the <think> and </think> tags from the AI message."""
+    think_tag_pattern = r"<think>(.*<\/think>\s*)?"
+    if isinstance(ai_message, AIMessage):
+        ai_message.content = re.sub(
+            think_tag_pattern,
+            "",
+            ai_message.content,
+            flags=re.DOTALL,
+        )
+        return ai_message
+    return re.sub(think_tag_pattern, "", ai_message, flags=re.DOTALL)

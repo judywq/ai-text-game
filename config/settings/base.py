@@ -422,6 +422,15 @@ OPENAI_JSON_SCHEMA_MODELS = [
     "gpt-4o-2024-11-20",
 ]
 
+REASONING_LLM_MODELS = [
+    "o1",
+    "o1-2024-12-17",
+    "o1-mini-2024-09-12",
+    "o3-mini-2025-01-31",
+    "deepseek-r1-distill-llama-70b",
+]
+
+
 # Init LLM Models
 # ------------------------------------------------------------------------------
 INIT_LLM_MODELS = [
