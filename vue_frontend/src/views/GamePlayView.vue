@@ -3,8 +3,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
-import type { GameStory, StoryProgress } from '@/types/game'
-import type { TextExplanation, ExplanationStatus } from '@/types/explanation'
+import type { GameStory, StoryProgress, StoryOption, TextExplanation, ExplanationStatus } from '@/types/game'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -284,7 +283,10 @@ onMounted(async () => {
         progressEntries.value.push({
           id: Date.now(), // Temporary ID for frontend
           content: update.content,
+          decision_point_id: update.decision_point_id || '',
+          chosen_option_id: update.chosen_option_id || '',
           chosen_option_text: update.chosen_option_text || '',
+          is_end_point: update.is_end_point || false,
           options: update.options || [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -294,7 +296,7 @@ onMounted(async () => {
       scrollToBottom()
 
       // Update story status if provided
-      if (update.status) {
+      if (update.status && story.value) {
         story.value.status = update.status
       }
     }

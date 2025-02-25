@@ -65,8 +65,10 @@ export function useGameWebSocket() {
           if (onExplanationCompleted.value) {
             onExplanationCompleted.value(data.explanation)
           }
-          pendingExplanationPromise.value.resolve(data.explanation)
-          pendingExplanationPromise.value = null
+          if (pendingExplanationPromise.value) {
+            pendingExplanationPromise.value.resolve(data.explanation)
+            pendingExplanationPromise.value = null
+          }
         }
         break
 
