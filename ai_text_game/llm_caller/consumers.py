@@ -351,7 +351,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             "skeleton": "story_skeleton_generation",
             "continuation": "story_continuation",
             "ending": "story_ending",
-            "cefr": "cefr_check",
         }
 
         for node_name, purpose in node_name_to_purpose.items():

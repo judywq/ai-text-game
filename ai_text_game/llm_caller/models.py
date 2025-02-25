@@ -12,8 +12,6 @@ from django.db import models
 from ai_text_game.core.models import CreatableBase
 from ai_text_game.core.models import TimestampedBase
 
-from .utils import read_prompt_template
-
 User = get_user_model()
 
 
@@ -119,12 +117,10 @@ class QuotaConfig(TimestampedBase):
 class LLMConfig(TimestampedBase):
     PURPOSE_CHOICES = [
         ("scene_generation", "Scene Generation"),
-        ("adventure_gameplay", "Adventure Gameplay"),
         ("text_explanation", "Text Explanation"),
         ("story_skeleton_generation", "Story Skeleton Generation"),
         ("story_continuation", "Story Continuation"),
         ("story_ending", "Story Ending"),
-        ("cefr_check", "CEFR Level Check"),
     ]
 
     purpose = models.CharField(
@@ -206,37 +202,19 @@ class LLMConfig(TimestampedBase):
             "adventure_gameplay",
             "text_explanation",
             "story_skeleton_generation",
+            "story_continuation",
+            "story_ending",
         ],
     ):
         """Get the active config for the given purpose."""
         try:
             return cls.objects.get(purpose=purpose, is_active=True)
         except cls.DoesNotExist:
-            # Create a new config with default template
-            template_map = {
-                "scene_generation": "pre_game_prompt.txt",
-                "story_skeleton_generation": "story_skeleton_generation_prompt.txt",
-                "adventure_gameplay": "gameplay_prompt.txt",
-                "text_explanation": "text_explanation_prompt.txt",
-            }
-
-            template_filename = template_map.get(purpose)
-            if not template_filename:
-                msg = f"Invalid purpose: {purpose}"
-                raise ValueError(msg) from None
-
-            try:
-                system_prompt = read_prompt_template(template_filename)
-            except ValueError as e:
-                msg = f"Failed to load template {template_filename}: {e!s}"
-                raise ValueError(msg) from e
-
-            return cls.objects.create(
-                purpose=purpose,
-                system_prompt=system_prompt,
-                is_active=True,
-                temperature=0.7,
+            msg = (
+                f"No active config found for purpose: {purpose}."
+                f"Please create one in the admin panel."
             )
+            raise ValueError(msg) from None
 
 
 class APIKey(TimestampedBase):
