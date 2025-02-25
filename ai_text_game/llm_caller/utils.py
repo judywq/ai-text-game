@@ -56,11 +56,22 @@ def get_llm_model(config):
     model_name = config.get("model_name")
     key = config.get("key")
     url = config.get("url")
+    temperature = config.get("temperature", 0.7)
     if llm_type == "openai":
-        return ChatOpenAI(model=model_name, api_key=key.key)
+        return ChatOpenAI(model=model_name, api_key=key.key, temperature=temperature)
     if llm_type == "anthropic":
-        return ChatAnthropic(model=model_name, api_key=key.key, max_tokens=8000)
+        return ChatAnthropic(
+            model=model_name,
+            api_key=key.key,
+            max_tokens=8000,
+            temperature=temperature,
+        )
     if llm_type == "custom":
-        return ChatOpenAI(model=model_name, api_key=key.key, base_url=url)
+        return ChatOpenAI(
+            model=model_name,
+            api_key=key.key,
+            base_url=url,
+            temperature=temperature,
+        )
     msg = f"Invalid LLM type: {llm_type}"
     raise ValueError(msg)

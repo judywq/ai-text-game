@@ -1,9 +1,10 @@
-import json
 from dataclasses import asdict
 
 import openai
 from django.conf import settings
 from django.db import transaction
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -27,7 +28,7 @@ from .serializers import StoryProgressSerializer
 from .serializers import TextExplanationSerializer
 from .tasks import TextExplanationParams
 from .tasks import process_text_explanation
-from .utils import get_openai_client
+from .utils import get_llm_model
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -210,16 +211,28 @@ class GameSceneGeneratorView(APIView):
             }
         else:
             try:
-                client = get_openai_client(
-                    APIKey.get_available_key(model_name=active_config.model.name),
+                active_config = LLMConfig.get_active_config(purpose="scene_generation")
+                key = APIKey.get_available_key(model_name=active_config.model.name)
+                prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
+                json_parser = JsonOutputParser()
+
+                llm = get_llm_model(
+                    {
+                        "model_name": active_config.model.name,
+                        "llm_type": active_config.model.llm_type,
+                        "url": active_config.model.url,
+                        "temperature": active_config.temperature,
+                        "key": key,
+                    },
                 )
-                response = client.chat.completions.create(
-                    model=active_config.model.name,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=active_config.temperature,
-                    response_format={"type": "json_object"},
+                chain = prompt | llm | json_parser
+                response = chain.invoke(
+                    {
+                        "genre": genre,
+                        "details_prompt": details_prompt,
+                    },
                 )
-                scenes = json.loads(response.choices[0].message.content)
+                scenes = response
             except (openai.OpenAIError, ValueError) as e:
                 return Response(
                     {"error": str(e)},

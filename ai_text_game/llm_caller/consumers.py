@@ -369,8 +369,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             config = LLMConfig.get_active_config(purpose=purpose)
             prompt = ChatPromptTemplate.from_template(config.system_prompt)
             model_name = config.model.name
-            llm_type = config.model.llm_type
-            url = config.model.url
             key = APIKey.get_available_key(model_name)
             if settings.FAKE_LLM_REQUEST:
                 llms[node_name] = prompt | get_fake_llm_model(node_name)
@@ -378,8 +376,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 llms[node_name] = prompt | get_llm_model(
                     {
                         "model_name": model_name,
-                        "llm_type": llm_type,
-                        "url": url,
+                        "llm_type": config.model.llm_type,
+                        "url": config.model.url,
+                        "temperature": config.temperature,
                         "key": key,
                     },
                 )
