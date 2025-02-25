@@ -32,7 +32,6 @@ const story = ref<GameStory | null>(null)
 const progressEntries = ref<StoryProgress[]>([])
 const userInput = ref('')
 const isLoading = ref(false)
-const isInitializing = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 
 const {
@@ -41,7 +40,6 @@ const {
   selectOption,
   startStory,
   lookupExplanation,
-  onStream,
   onStoryUpdate,
   onExplanationCreated,
   onExplanationStream,
@@ -196,7 +194,6 @@ async function fetchLookupHistory() {
 
 const loadStory = async () => {
   try {
-    isInitializing.value = true
     const storyId = parseInt(route.params.id as string)
     story.value = await GameService.getStory(storyId)
     progressEntries.value = await GameService.getStoryProgress(storyId)
@@ -231,8 +228,6 @@ const loadStory = async () => {
       variant: 'destructive',
     })
     router.push('/game')
-  } finally {
-    isInitializing.value = false
   }
 }
 
@@ -381,7 +376,7 @@ function scrollToBottom() {
         >
           <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
             <!-- Add loading state -->
-            <div v-if="isInitializing && progressEntries.length === 0" class="flex flex-col items-center justify-center h-[200px] space-y-4">
+            <div v-if="progressEntries.length === 0" class="flex flex-col items-center justify-center h-[200px] space-y-4">
               <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
               <p class="text-muted-foreground">Initializing your story...</p>
             </div>
