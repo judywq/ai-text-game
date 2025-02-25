@@ -73,14 +73,17 @@ class Command(BaseCommand):
                     self.stderr.write(self.style.WARNING(msg))
 
                 system_prompt = read_prompt_template(config["template"])
-                _, created = LLMConfig.objects.get_or_create(
+                found = LLMConfig.objects.filter(
                     purpose=purpose,
-                    system_prompt=system_prompt,
-                    model=model,
-                    temperature=config["temperature"],
-                    is_active=True,
-                )
-                if created:
+                ).exists()
+                if not found:
+                    LLMConfig.objects.create(
+                        purpose=purpose,
+                        system_prompt=system_prompt,
+                        model=model,
+                        temperature=config["temperature"],
+                        is_active=True,
+                    )
                     msg = f"Created LLM config for: {purpose}"
                     self.stdout.write(self.style.SUCCESS(msg))
                 else:
