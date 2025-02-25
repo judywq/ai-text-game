@@ -422,14 +422,23 @@ OPENAI_JSON_SCHEMA_MODELS = [
     "gpt-4o-2024-11-20",
 ]
 
+# Reasoning models, we might need to remove the <think> tags from the response
 REASONING_LLM_MODELS = [
     "o1",
     "o1-2024-12-17",
     "o1-mini-2024-09-12",
     "o3-mini-2025-01-31",
     "deepseek-r1-distill-llama-70b",
+    "deepseek-reasoner",
 ]
 
+# OpenAI reasoning models only support temperature of 1
+FIXED_TEMPERATURE_LLM_MODELS = [
+    "o1",
+    "o1-2024-12-17",
+    "o1-mini-2024-09-12",
+    "o3-mini-2025-01-31",
+]
 
 # Init LLM Models
 # ------------------------------------------------------------------------------
@@ -521,6 +530,22 @@ INIT_LLM_MODELS = [
         "is_default": False,
         "is_active": True,
         "order": 120,
+    },
+    {
+        "llm_type": "deepseek",
+        "name": "deepseek-chat",
+        "display_name": "DeepSeek Chat",
+        "is_default": False,
+        "is_active": True,
+        "order": 150,
+    },
+    {
+        "llm_type": "deepseek",
+        "name": "deepseek-reasoner",
+        "display_name": "DeepSeek Reasoner",
+        "is_default": False,
+        "is_active": True,
+        "order": 160,
     },
 ]
 

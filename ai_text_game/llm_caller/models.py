@@ -19,6 +19,7 @@ LLM_TYPE_CHOICES = [
     ("openai", "OpenAI"),
     ("anthropic", "Anthropic"),
     ("groq", "Groq"),
+    ("deepseek", "DeepSeek"),
     ("custom", "Custom"),
 ]
 
@@ -37,7 +38,9 @@ class LLMModel(TimestampedBase):
             " <a href='https://docs.anthropic.com/en/docs/about-claude/models'"
             " target='_blank'>Anthropic</a>, "
             " <a href='https://console.groq.com/docs/models'"
-            " target='_blank'>Groq</a> "
+            " target='_blank'>Groq</a>, "
+            " <a href='https://api-docs.deepseek.com/quick_start/pricing'"
+            " target='_blank'>DeepSeek</a> "
             " for model list."
         ),
     )

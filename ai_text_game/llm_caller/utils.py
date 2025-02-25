@@ -6,6 +6,7 @@ from django.conf import settings
 from django.utils import timezone
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
+from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
@@ -40,9 +41,9 @@ def get_llm_model(config):
     key = config.get("key")
     url = config.get("url")
 
-    is_reasoning_model = model_name in settings.REASONING_LLM_MODELS
+    is_fixed_temperature = model_name in settings.FIXED_TEMPERATURE_LLM_MODELS
     # OpenAI reasoning models only support temperature of 1
-    temperature = 1 if is_reasoning_model else config.get("temperature", 0.7)
+    temperature = 1 if is_fixed_temperature else config.get("temperature", 0.7)
 
     llm = None
     if llm_type == "openai":
@@ -64,6 +65,12 @@ def get_llm_model(config):
             api_key=key.key,
             temperature=temperature,
         )
+    elif llm_type == "deepseek":
+        llm = ChatDeepSeek(
+            model=model_name,
+            api_key=key.key,
+            temperature=temperature,
+        )
     elif llm_type == "custom":
         llm = ChatOpenAI(
             model=model_name,
@@ -76,7 +83,7 @@ def get_llm_model(config):
         msg = f"Invalid LLM type: {llm_type}"
         raise ValueError(msg)
 
-    if is_reasoning_model:
+    if model_name in settings.REASONING_LLM_MODELS:
         # Remove the think tags from reasoning models
         return llm | think_tag_parser
     return llm
