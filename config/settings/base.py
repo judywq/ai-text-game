@@ -494,10 +494,18 @@ INIT_LLM_MODELS = [
     {
         "llm_type": "anthropic",
         "name": "claude-3-5-sonnet-20241022",
-        "display_name": "Claude 3.5 Sonnet",
+        "display_name": "Claude 3.5 Sonnet v2",
         "is_default": False,
         "is_active": True,
         "order": 60,
+    },
+    {
+        "llm_type": "anthropic",
+        "name": "claude-3-7-sonnet-20250219",
+        "display_name": "Claude 3.7 Sonnet",
+        "is_default": False,
+        "is_active": True,
+        "order": 70,
     },
     {
         "llm_type": "anthropic",
@@ -505,7 +513,7 @@ INIT_LLM_MODELS = [
         "display_name": "Claude 3 Haiku",
         "is_default": False,
         "is_active": True,
-        "order": 70,
+        "order": 80,
     },
     {
         "llm_type": "groq",
