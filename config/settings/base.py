@@ -410,9 +410,6 @@ VUE_FRONTEND_STATIC_DIR = "vue"
 VUE_FRONTEND_USE_TYPESCRIPT = False
 # Your stuff...
 # ------------------------------------------------------------------------------
-FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
-# FAKE_LLM_REQUEST = False
-# FAKE_LLM_REQUEST = True
 
 # https://platform.openai.com/docs/guides/structured-outputs#supported-models
 OPENAI_JSON_SCHEMA_MODELS = [
@@ -689,3 +686,7 @@ INIT_GAME_GENRE = [
         "example": "The Handmaid's Tale, 1984, The Hunger Games",
     },
 ]
+
+FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
+# FAKE_LLM_REQUEST = False
+# FAKE_LLM_REQUEST = True
