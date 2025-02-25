@@ -33,6 +33,7 @@ const story = ref<GameStory | null>(null)
 const progressEntries = ref<StoryProgress[]>([])
 const userInput = ref('')
 const isLoading = ref(false)
+const isInitializing = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 
 const {
@@ -196,6 +197,7 @@ async function fetchLookupHistory() {
 
 const loadStory = async () => {
   try {
+    isInitializing.value = true
     const storyId = parseInt(route.params.id as string)
     story.value = await GameService.getStory(storyId)
     progressEntries.value = await GameService.getStoryProgress(storyId)
@@ -230,6 +232,8 @@ const loadStory = async () => {
       variant: 'destructive',
     })
     router.push('/game')
+  } finally {
+    isInitializing.value = false
   }
 }
 
@@ -374,7 +378,14 @@ function scrollToBottom() {
           @mouseup="handleTextSelection"
         >
           <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
-            <div v-for="entry in progressEntries" :key="entry.id" class="space-y-2">
+            <!-- Add loading state -->
+            <div v-if="isInitializing && progressEntries.length === 0" class="flex flex-col items-center justify-center h-[200px] space-y-4">
+              <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+              <p class="text-muted-foreground">Initializing your story...</p>
+            </div>
+
+            <!-- Existing progress entries display -->
+            <div v-else v-for="entry in progressEntries" :key="entry.id" class="space-y-2">
               <div class="prose dark:prose-invert">
                 <div v-html="marked(entry.content)" />
                 <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-2">
