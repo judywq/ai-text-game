@@ -3,7 +3,7 @@ import type { AxiosResponse } from 'axios'
 
 interface LoginResponse {
   user: any
-  token?: string
+  key: string
 }
 
 export class AuthService {
@@ -12,11 +12,15 @@ export class AuthService {
       email,
       password,
     })
+    // Store token in localStorage
+    localStorage.setItem('auth_token', response.data.key)
     return response.data
   }
 
   public static async logout(): Promise<void> {
     await api.post('/dj-rest-auth/logout/')
+    // Clear token from localStorage
+    localStorage.removeItem('auth_token')
   }
 
   public static async signup(email: string, password: string): Promise<void> {

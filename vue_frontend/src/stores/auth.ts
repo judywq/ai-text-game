@@ -4,15 +4,13 @@ import { AuthService } from '@/services/authService';
 import type { AuthState } from '@/types/auth';
 
 export const useAuthStore = defineStore('auth', {
-  state: (): AuthState => {
-    const storedState = localStorage.getItem('authState');
-    return storedState ? JSON.parse(storedState) : {
-      user: null,
-      isAuthenticated: false,
-      loading: false,
-      error: null
-    };
-  },
+  state: (): AuthState => ({
+    user: null,
+    isAuthenticated: false,
+    loading: false,
+    error: null,
+    token: null,
+  }),
 
   getters: {
     isLoggedIn: (state) => state.isAuthenticated && state.user !== null,
@@ -35,15 +33,14 @@ export const useAuthStore = defineStore('auth', {
       this.setError(null);
 
       try {
-        const data = await AuthService.login(email, password);
-        if (data.user) {
-          this.user = data.user;
-          this.isAuthenticated = true;
-          this.saveState();
+        const response = await AuthService.login(email, password);
+        this.user = response.user;
+        this.token = response.key;
+        this.isAuthenticated = true;
+        this.saveState();
 
-          if (router) {
-            await router.push({ name: "home" });
-          }
+        if (router) {
+          await router.push({ name: "home" });
         }
       } catch (error: any) {
         this.isAuthenticated = false;
@@ -122,6 +119,10 @@ export const useAuthStore = defineStore('auth', {
         this.user = user;
         this.isAuthenticated = true;
         this.saveState();
+
+        // Get token from localStorage or cookie if needed
+        const token = localStorage.getItem('auth_token');
+        this.token = token;
       } catch (error: any) {
         this.clearState();
         this.setError(error.message || 'Failed to fetch user data');
@@ -136,7 +137,8 @@ export const useAuthStore = defineStore('auth', {
         user: this.user,
         isAuthenticated: this.isAuthenticated,
         loading: false,
-        error: null
+        error: null,
+        token: this.token
       }));
     },
 
@@ -144,6 +146,7 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       this.isAuthenticated = false;
       this.error = null;
+      this.token = null;
       localStorage.removeItem('authState');
     },
 

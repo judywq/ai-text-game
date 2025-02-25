@@ -6,6 +6,7 @@ import re
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from langchain_core.prompts import ChatPromptTemplate
 
 from .fake_llms import get_fake_llm_model
@@ -32,8 +33,26 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         logger.debug("WebSocket connect attempt with scope: %s", self.scope)
         try:
+            # Check authentication
+            if isinstance(self.scope["user"], AnonymousUser):
+                logger.warning("Unauthenticated WebSocket connection attempt")
+                await self.close(code=4001)
+                return
+
             # Get story_id from URL route
             self.story_id = self.scope["url_route"]["kwargs"]["story_id"]
+
+            # Verify story access permission
+            story = await self.get_story(self.story_id)
+            if story.created_by_id != self.scope["user"].id:
+                logger.warning(
+                    "Unauthorized WebSocket connection attempt to story %s by user %s",
+                    self.story_id,
+                    self.scope["user"].id,
+                )
+                await self.close(code=4003)
+                return
+
             self.room_group_name = f"game_{self.story_id}"
             self.story_thread = {"configurable": {"thread_id": self.story_id}}
 
@@ -52,7 +71,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             logger.debug("WebSocket connection accepted")
         except (KeyError, TypeError, ValueError):
             logger.exception("WebSocket connection error")
-            raise
+            await self.close(code=4002)
+            return
 
     async def disconnect(self, close_code):
         logger.debug("WebSocket disconnected with code: %s", close_code)

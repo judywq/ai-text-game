@@ -24,14 +24,19 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Add a request interceptor to dynamically set the CSRF token
+// Add a request interceptor to include the token
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    const csrfToken = Cookies.get(csrf_key);
-    if (csrfToken) {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
       if (config.headers) {
-        config.headers['X-CSRFToken'] = csrfToken;
+        config.headers['Authorization'] = `Token ${token}`;
       }
+    }
+    // Keep existing CSRF token logic
+    const csrfToken = Cookies.get(csrf_key);
+    if (csrfToken && config.headers) {
+      config.headers['X-CSRFToken'] = csrfToken;
     }
     return config;
   },

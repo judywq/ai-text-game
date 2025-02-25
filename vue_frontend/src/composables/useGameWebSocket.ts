@@ -1,5 +1,6 @@
 import { ref, onUnmounted } from 'vue'
 import type { TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
+import { useAuthStore } from '@/stores/auth'
 
 const WS_BASE_URL = import.meta.env.VITE_WS_BASE_URL
 // const WS_BASE_URL = 'ws://localhost:8000/ws'
@@ -81,14 +82,32 @@ export function useGameWebSocket() {
   }
 
   const connect = (storyId: number) => {
-    socket.value = new WebSocket(`${WS_BASE_URL}/game/${storyId}/`)
+    const authStore = useAuthStore()
+    const token = authStore.token
+
+    if (!token) {
+      console.error('No authentication token available')
+      throw new Error('Authentication required')
+    }
+
+    socket.value = new WebSocket(
+      `${WS_BASE_URL}/game/${storyId}/?token=${token}`
+    )
 
     socket.value.onopen = () => {
       isConnected.value = true
     }
 
-    socket.value.onclose = () => {
+    socket.value.onclose = (event) => {
       isConnected.value = false
+
+      if (event.code === 4001) {
+        console.error('WebSocket authentication failed')
+      } else if (event.code === 4003) {
+        console.error('WebSocket authorization failed - no access to story')
+      } else if (!token) {
+        console.error('No authentication token available')
+      }
     }
 
     socket.value.onmessage = handleMessage
