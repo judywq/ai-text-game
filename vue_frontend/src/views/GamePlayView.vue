@@ -61,6 +61,21 @@ const lookupHistory = ref<TextExplanation[]>([])
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
 
+// Add this watch after the ref declarations
+watch(progressEntries, (entries) => {
+  if (entries.length > 0) {
+    const lastEntry = entries[entries.length - 1]
+    // Only show options if there's no chosen option yet
+    if (!lastEntry.chosen_option_text) {
+      currentOptions.value = lastEntry.options || []
+    } else {
+      currentOptions.value = []
+    }
+  } else {
+    currentOptions.value = []
+  }
+}, { deep: true })
+
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
   // Get the text node in which the selection exists.
@@ -179,7 +194,6 @@ async function fetchLookupHistory() {
   }
 }
 
-// Load story and progress
 const loadStory = async () => {
   try {
     const storyId = parseInt(route.params.id as string)
@@ -238,8 +252,6 @@ const handleOptionSelect = async (optionId: string) => {
     // Send the selection to the server
     await selectOption(optionId)
 
-    // Clear options after selection
-    currentOptions.value = []
   } catch (error: any) {
     toast({
       title: 'Error',
@@ -281,9 +293,6 @@ onMounted(async () => {
       if (update.status) {
         story.value.status = update.status
       }
-
-      // Update options
-      currentOptions.value = update.options || []
     }
 
     // Set up explanation handlers
