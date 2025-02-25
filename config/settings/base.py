@@ -547,11 +547,6 @@ INIT_GAME_GENRE = [
     },
     {
         "category": "Genre",
-        "name": "Historical Fiction",
-        "example": "Gladiator, The Last Samurai",
-    },
-    {
-        "category": "Genre",
         "name": "Mystery",
         "example": "Sherlock Holmes, Knives Out",
     },
@@ -564,6 +559,11 @@ INIT_GAME_GENRE = [
         "category": "Genre",
         "name": "Superhero",
         "example": "Marvel Cinematic Universe, DC Extended Universe",
+    },
+    {
+        "category": "Genre",
+        "name": "Historical Fiction",
+        "example": "Gladiator, The Last Samurai",
     },
     {
         "category": "Genre",
