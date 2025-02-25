@@ -7,6 +7,7 @@ from anthropic import AnthropicError
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.conf import settings
+from groq import GroqError
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAIError
@@ -75,7 +76,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 await self.handle_interaction(data)
             elif message_type == "explain_text":
                 await self.handle_text_explanation(data)
-        except (AnthropicError, OpenAIError) as e:
+        except (AnthropicError, OpenAIError, GroqError) as e:
             await self.send_error(str(e))
             raise
 

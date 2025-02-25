@@ -20,6 +20,7 @@ User = get_user_model()
 LLM_TYPE_CHOICES = [
     ("openai", "OpenAI"),
     ("anthropic", "Anthropic"),
+    ("groq", "Groq"),
     ("custom", "Custom"),
 ]
 
@@ -34,7 +35,12 @@ class LLMModel(TimestampedBase):
         help_text=(
             "The model name for calling the LLM API (e.g., gpt-4o-2024-11-20)."
             " Check <a href='https://platform.openai.com/docs/models#current-model-aliases'"
-            " target='_blank'>OpenAI model list</a>."
+            " target='_blank'>OpenAI</a>, "
+            " <a href='https://docs.anthropic.com/en/docs/about-claude/models'"
+            " target='_blank'>Anthropic</a>, "
+            " <a href='https://console.groq.com/docs/models'"
+            " target='_blank'>Groq</a> "
+            " for model list."
         ),
     )
     display_name = models.CharField(

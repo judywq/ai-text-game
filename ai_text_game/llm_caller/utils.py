@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.utils import timezone
 from langchain_anthropic import ChatAnthropic
+from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
 
@@ -43,6 +44,12 @@ def get_llm_model(config):
             model=model_name,
             api_key=key.key,
             max_tokens=8000,
+            temperature=temperature,
+        )
+    if llm_type == "groq":
+        return ChatGroq(
+            model=model_name,
+            api_key=key.key,
             temperature=temperature,
         )
     if llm_type == "custom":

@@ -489,6 +489,30 @@ INIT_LLM_MODELS = [
         "is_active": True,
         "order": 70,
     },
+    {
+        "llm_type": "groq",
+        "name": "llama-3.3-70b-versatile",
+        "display_name": "Llama 3.3 70B Versatile 128k",
+        "is_default": False,
+        "is_active": True,
+        "order": 100,
+    },
+    {
+        "llm_type": "groq",
+        "name": "deepseek-r1-distill-llama-70b",
+        "display_name": "DeepSeek R1 Distill Llama 70B",
+        "is_default": False,
+        "is_active": True,
+        "order": 110,
+    },
+    {
+        "llm_type": "groq",
+        "name": "qwen-2.5-32b",
+        "display_name": "Qwen 2.5 32B",
+        "is_default": False,
+        "is_active": True,
+        "order": 120,
+    },
 ]
 
 
