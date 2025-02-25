@@ -1,19 +1,34 @@
 # ruff: noqa: E501
 
 import json
+import time
 
+from django.conf import settings
 from langchain_community.chat_models.fake import FakeListChatModel
+
+
+class MyFakeListChatModel(FakeListChatModel):
+    delay: int = 0
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.delay = kwargs.get("delay", settings.FAKE_LLM_DELAY)
+
+    def _call(self, *args, **kwargs):
+        if self.delay > 0:
+            time.sleep(self.delay)
+        return super()._call(*args, **kwargs)
 
 
 def get_fake_llm_model(node_name):
     if node_name == "skeleton":
-        return FakeListChatModel(responses=[json.dumps(skeleton_json)])
+        return MyFakeListChatModel(responses=[json.dumps(skeleton_json)])
     if node_name == "continuation":
-        return FakeListChatModel(responses=["This is a continuation of the story."])
+        return MyFakeListChatModel(responses=["This is a continuation of the story."])
     if node_name == "ending":
-        return FakeListChatModel(responses=["This is the ending of the story."])
+        return MyFakeListChatModel(responses=["This is the ending of the story."])
     if node_name == "cefr":
-        return FakeListChatModel(
+        return MyFakeListChatModel(
             responses=[
                 json.dumps(
                     {
