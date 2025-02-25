@@ -29,6 +29,16 @@ stop-%:
 restart-%:
 	docker compose -f docker-compose.$*.yml restart
 
+
+# Restart traefik containers
+rt:
+	docker compose -f docker-compose.staging.yml down traefik
+	docker compose -f docker-compose.staging.yml up -d traefik
+# Restart django containers
+rd:
+	docker compose -f docker-compose.local.yml down django
+	docker compose -f docker-compose.local.yml up -d django
+
 # Full restart containers
 frestart-%:
 	$(MAKE) stop-$*
