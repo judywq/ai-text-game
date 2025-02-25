@@ -70,10 +70,59 @@ class LLMConfigAdmin(admin.ModelAdmin):
         "updated_at",
     ]
     list_filter = ["model"]
+    actions = ["change_llm_model"]
 
     @admin.display(description="System Prompt", ordering="system_prompt")
     def get_system_prompt(self, obj):
         return truncatechars(obj.system_prompt, 50)
+
+    @admin.action(description="Change LLM model for selected configs")
+    def change_llm_model(self, request, queryset):
+        from django import forms
+        from django.contrib import messages
+        from django.http import HttpResponseRedirect
+        from django.template.response import TemplateResponse
+
+        class ModelChangeForm(forms.Form):
+            _selected_action = forms.CharField(widget=forms.MultipleHiddenInput)
+            model = forms.ModelChoiceField(
+                queryset=LLMModel.objects.filter(is_active=True),
+            )
+
+        # Step 1: Initialize form with selected items
+        form = ModelChangeForm(
+            request.POST or None,
+            initial={"_selected_action": request.POST.getlist("_selected")},
+        )
+
+        # Step 2: If this is a POST request with the apply button
+        if request.POST and "apply" in request.POST:
+            if form.is_valid():
+                try:
+                    model = form.cleaned_data["model"]
+                    count = 0
+                    for config in queryset:
+                        config.model = model
+                        config.save()
+                        count += 1
+                    msg = (
+                        f"Successfully updated {count} configs "
+                        f"to use: {model.display_name}"
+                    )
+                    messages.success(request, msg)
+                    return HttpResponseRedirect(request.get_full_path())
+                except (ValueError, KeyError) as e:
+                    messages.error(request, f"Error updating models: {e!s}")
+            else:
+                messages.error(request, f"Form validation failed: {form.errors}")
+
+        # Step 3: Show the form
+        context = {
+            "title": "Change LLM Model",
+            "objects": queryset,
+            "form": form,
+        }
+        return TemplateResponse(request, "admin/llm_config_change_model.html", context)
 
 
 @admin.register(APIKey)
