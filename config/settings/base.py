@@ -756,5 +756,4 @@ INIT_GAME_GENRE = [
 FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
 # FAKE_LLM_REQUEST = False
 # FAKE_LLM_REQUEST = True
-FAKE_LLM_DELAY = env.int("FAKE_LLM_DELAY", default=0)
-# FAKE_LLM_DELAY = 3
+FAKE_LLM_DELAY = env.int("FAKE_LLM_DELAY", default=1)

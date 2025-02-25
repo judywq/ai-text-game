@@ -12,7 +12,6 @@ from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAIError
 
-from .fake_llms import get_fake_llm_model
 from .models import APIKey
 from .models import GameStory
 from .models import LLMConfig
@@ -237,39 +236,38 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def process_explanation(self, story, explanation):
         try:
-            if settings.FAKE_LLM_REQUEST:
-                stream = self.get_fake_explanation_stream()
-            else:
-                active_config = await database_sync_to_async(
-                    LLMConfig.get_active_config,
-                )(purpose="text_explanation")
+            active_config = await database_sync_to_async(
+                LLMConfig.get_active_config,
+            )(purpose="text_explanation")
 
-                config_data = await self.get_config_model_name(active_config)
-                model_name = config_data["model_name"]
-                temperature = config_data["temperature"]
-                system_prompt = config_data["system_prompt"]
+            config_data = await self.get_config_model_name(active_config)
+            model_name = config_data["model_name"]
+            temperature = config_data["temperature"]
+            system_prompt = config_data["system_prompt"]
 
-                key = await database_sync_to_async(
-                    APIKey.get_available_key,
-                )(model_name)
-                prompt = ChatPromptTemplate.from_template(system_prompt)
-                string_parser = StrOutputParser()
-                llm = get_llm_model(
-                    {
-                        "model_name": model_name,
-                        "llm_type": active_config.model.llm_type,
-                        "url": active_config.model.url,
-                        "temperature": temperature,
-                        "key": key,
-                    },
-                )
-                chain = prompt | llm | string_parser
-                stream = chain.astream(
-                    {
-                        "selected_text": explanation.selected_text,
-                        "context_text": explanation.context_text,
-                    },
-                )
+            key = await database_sync_to_async(
+                APIKey.get_available_key,
+            )(model_name)
+            prompt = ChatPromptTemplate.from_template(system_prompt)
+            string_parser = StrOutputParser()
+            llm = get_llm_model(
+                {
+                    "model_name": model_name,
+                    "llm_type": active_config.model.llm_type,
+                    "url": active_config.model.url,
+                    "temperature": temperature,
+                    "key": key,
+                },
+                fake=settings.FAKE_LLM_REQUEST,
+                name="text_explanation",
+            )
+            chain = prompt | llm | string_parser
+            stream = chain.astream(
+                {
+                    "selected_text": explanation.selected_text,
+                    "context_text": explanation.context_text,
+                },
+            )
 
             # Update status to streaming when starting to process
             explanation.status = "streaming"
@@ -321,13 +319,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             await database_sync_to_async(explanation.save)()
             await self.send_error(str(e))
 
-    async def get_fake_explanation_stream(self):
-        fake_response = "This is a fake explanation of the selected text. " * 3
-        words = re.split(r"(?<= )", fake_response)
-        for word in words:
-            await asyncio.sleep(0.05)
-            yield word
-
     async def initialize_story_graph(self, story):
         """Initialize the story graph with the current story state"""
 
@@ -347,29 +338,29 @@ class GameConsumer(AsyncWebsocketConsumer):
         llms = {}
 
         # Get configs for each purpose
-        node_name_to_purpose = {
+        name_to_purpose = {
             "skeleton": "story_skeleton_generation",
             "continuation": "story_continuation",
             "ending": "story_ending",
         }
 
-        for node_name, purpose in node_name_to_purpose.items():
+        for name, purpose in name_to_purpose.items():
             config = LLMConfig.get_active_config(purpose=purpose)
             prompt = ChatPromptTemplate.from_template(config.system_prompt)
             model_name = config.model.name
             key = APIKey.get_available_key(model_name)
-            if settings.FAKE_LLM_REQUEST:
-                llms[node_name] = prompt | get_fake_llm_model(node_name)
-            else:
-                llms[node_name] = prompt | get_llm_model(
-                    {
-                        "model_name": model_name,
-                        "llm_type": config.model.llm_type,
-                        "url": config.model.url,
-                        "temperature": config.temperature,
-                        "key": key,
-                    },
-                )
+
+            llms[name] = prompt | get_llm_model(
+                {
+                    "model_name": model_name,
+                    "llm_type": config.model.llm_type,
+                    "url": config.model.url,
+                    "temperature": config.temperature,
+                    "key": key,
+                },
+                fake=settings.FAKE_LLM_REQUEST,
+                name=name,
+            )
 
         return llms
 

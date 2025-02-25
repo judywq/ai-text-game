@@ -10,6 +10,8 @@ from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
+from .fake_llms import get_fake_llm_model
+
 
 def get_today_date_range():
     """
@@ -35,7 +37,10 @@ def read_prompt_template(template_filename):
         raise FileNotFoundError(msg) from e
 
 
-def get_llm_model(config):
+def get_llm_model(config, fake=False, name=None):  # noqa: FBT002
+    if fake:
+        return get_fake_llm_model(name)
+
     llm_type = config.get("llm_type")
     model_name = config.get("model_name")
     key = config.get("key")

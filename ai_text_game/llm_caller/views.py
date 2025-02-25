@@ -132,64 +132,35 @@ class GameSceneGeneratorView(APIView):
             details_prompt=details_prompt,
         )
 
-        if settings.FAKE_LLM_REQUEST:
-            # Return fake data for testing
-            scenes = {
-                "scenes": [
-                    {
-                        "level": "A1",
-                        "text": "A test scene in A1",
-                    },
-                    {
-                        "level": "A2",
-                        "text": "A test scene in A2",
-                    },
-                    {
-                        "level": "B1",
-                        "text": "A test scene in B1",
-                    },
-                    {
-                        "level": "B2",
-                        "text": "A test scene in B2",
-                    },
-                    {
-                        "level": "C1",
-                        "text": "A test scene in C1",
-                    },
-                    {
-                        "level": "C2",
-                        "text": "A test scene in C2",
-                    },
-                ],
-            }
-        else:
-            try:
-                active_config = LLMConfig.get_active_config(purpose="scene_generation")
-                key = APIKey.get_available_key(model_name=active_config.model.name)
-                prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
-                json_parser = JsonOutputParser()
+        try:
+            active_config = LLMConfig.get_active_config(purpose="scene_generation")
+            key = APIKey.get_available_key(model_name=active_config.model.name)
+            prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
+            json_parser = JsonOutputParser()
 
-                llm = get_llm_model(
-                    {
-                        "model_name": active_config.model.name,
-                        "llm_type": active_config.model.llm_type,
-                        "url": active_config.model.url,
-                        "temperature": active_config.temperature,
-                        "key": key,
-                    },
-                )
-                chain = prompt | llm | json_parser
-                response = chain.invoke(
-                    {
-                        "genre": genre,
-                        "details_prompt": details_prompt,
-                    },
-                )
-                scenes = response
-            except (openai.OpenAIError, ValueError) as e:
-                return Response(
-                    {"error": str(e)},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
+            llm = get_llm_model(
+                {
+                    "model_name": active_config.model.name,
+                    "llm_type": active_config.model.llm_type,
+                    "url": active_config.model.url,
+                    "temperature": active_config.temperature,
+                    "key": key,
+                },
+                fake=settings.FAKE_LLM_REQUEST,
+                name="scene_generation",
+            )
+            chain = prompt | llm | json_parser
+            response = chain.invoke(
+                {
+                    "genre": genre,
+                    "details_prompt": details_prompt,
+                },
+            )
+            scenes = response
+        except (openai.OpenAIError, ValueError) as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(scenes)

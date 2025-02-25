@@ -1,5 +1,6 @@
 # ruff: noqa: E501
 
+import asyncio
 import json
 import time
 
@@ -19,42 +20,55 @@ class MyFakeListChatModel(FakeListChatModel):
             time.sleep(self.delay)
         return super()._call(*args, **kwargs)
 
+    async def _astream(self, *args, **kwargs):
+        if self.delay > 0:
+            await asyncio.sleep(self.delay)
+        async for chunk in super()._astream(*args, **kwargs):
+            yield chunk
 
-def get_fake_llm_model(node_name):
-    if node_name == "skeleton":
+
+def get_fake_llm_model(name):
+    if name == "skeleton":
         return MyFakeListChatModel(responses=[json.dumps(skeleton_json)])
-    if node_name == "continuation":
+    if name == "continuation":
         return MyFakeListChatModel(responses=["This is a continuation of the story."])
-    if node_name == "ending":
+    if name == "ending":
         return MyFakeListChatModel(responses=["This is the ending of the story."])
-    if node_name == "cefr":
-        return MyFakeListChatModel(
-            responses=[
-                json.dumps(
-                    {
-                        "story_text": "This is the CEFR-adjusted story text.",
-                        "decision_point": {
-                            "decision_point_id": "C1.M1.D1",
-                            "description": "What do you do next?",
-                            "options": [
-                                {
-                                    "option_id": "C1.M1.D1.O1",
-                                    "option_name": "Option 1",
-                                    "consequence": "Consequence 1",
-                                },
-                                {
-                                    "option_id": "C1.M1.D1.O2",
-                                    "option_name": "Option 2",
-                                    "consequence": "Consequence 2",
-                                },
-                            ],
-                        },
-                    },
-                ),
-            ],
-        )
+    if name == "text_explanation":
+        return MyFakeListChatModel(responses=["This is the explanation of the text."])
+    if name == "scene_generation":
+        return MyFakeListChatModel(responses=[json.dumps(scenes_json)])
     return None
 
+
+scenes_json = {
+    "scenes": [
+        {
+            "level": "A1",
+            "text": "A test scene in A1",
+        },
+        {
+            "level": "A2",
+            "text": "A test scene in A2",
+        },
+        {
+            "level": "B1",
+            "text": "A test scene in B1",
+        },
+        {
+            "level": "B2",
+            "text": "A test scene in B2",
+        },
+        {
+            "level": "C1",
+            "text": "A test scene in C1",
+        },
+        {
+            "level": "C2",
+            "text": "A test scene in C2",
+        },
+    ],
+}
 
 skeleton_json = {
     "story_background": "A mysterious series of events unfolds in the small coastal town of Seabreeze, where a once-peaceful community becomes embroiled in secrets, betrayal, and the quest for truth after a local fisherman disappears under suspicious circumstances.",
