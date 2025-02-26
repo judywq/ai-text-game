@@ -44,7 +44,8 @@ const {
   onExplanationCreated,
   onExplanationStream,
   onExplanationStatus,
-  onExplanationCompleted
+  onExplanationCompleted,
+  onError
 } = useGameWebSocket()
 
 const currentOptions = ref<StoryOption[]>([])
@@ -219,6 +220,15 @@ const loadStory = async () => {
     // Start story if no progress exists
     if (progressEntries.value.length === 0 && story.value.status === 'INIT') {
       await startStory(storyId)
+    }
+
+    // Add error handler
+    onError.value = (error: Error) => {
+      toast({
+        title: 'WebSocket Error',
+        description: error.message,
+        variant: 'destructive',
+      })
     }
   } catch (error: any) {
     console.error('Failed to load story', error)

@@ -14,6 +14,7 @@ export function useGameWebSocket() {
   const onExplanationCompleted = ref<((explanation: TextExplanation) => void) | null>(null)
   const onExplanationStatus = ref<((id: number, status: ExplanationStatus) => void) | null>(null)
   const onStoryUpdate = ref<((update: StoryUpdate) => void) | null>(null)
+  const onError = ref<((error: Error) => void) | null>(null)
 
   const pendingExplanationPromise = ref<{
     resolve: (value: TextExplanation) => void;
@@ -76,6 +77,9 @@ export function useGameWebSocket() {
         if (pendingExplanationPromise.value) {
           pendingExplanationPromise.value.reject(error)
           pendingExplanationPromise.value = null
+        }
+        if (onError.value) {
+          onError.value(error)
         }
         console.error('WebSocket error:', error)
         break
@@ -166,6 +170,7 @@ export function useGameWebSocket() {
     onExplanationStream,
     onExplanationCompleted,
     onExplanationStatus,
-    onStoryUpdate
+    onStoryUpdate,
+    onError,
   }
 }
