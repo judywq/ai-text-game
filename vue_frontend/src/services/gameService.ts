@@ -55,7 +55,7 @@ export class GameService {
       genre,
       details
     }, {
-      timeout: 30000 // 30 second timeout
+      timeout: 5 * 60 * 1000 // 5 minutes timeout
     });
     return response.data;
   }
