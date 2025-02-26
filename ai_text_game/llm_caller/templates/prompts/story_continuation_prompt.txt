@@ -1,6 +1,6 @@
 Continue writing the story based on these elements:
 
-## Current milestone to address:
+## The story development and decisions will ultimately lead to the following milestone:
 {milestone}
 ## Continue writing the story that leads to the Next Decision:
 {decision_point}
@@ -13,6 +13,7 @@ Continue writing the story based on these elements:
 - Write approximately 150-200 words
 - (If any previous decisions were made) Start by mentioning the previous decisions made by the user naturally
 - Stop writing by asking the user to make the Next Decision
+- Do not tell the users the consequences of their decisions
 - Generate only the new story segment, written in an engaging narrative style.
 
 ## The story skeleton is:

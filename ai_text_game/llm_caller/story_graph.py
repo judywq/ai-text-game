@@ -33,11 +33,6 @@ class Milestone(TypedDict):
     decision_points: list[DecisionPoint]
 
 
-class Chapter(TypedDict):
-    chapter_id: str
-    milestones: list[Milestone]
-
-
 class Ending(TypedDict):
     ending_id: str
     description: str
@@ -45,7 +40,7 @@ class Ending(TypedDict):
 
 class StorySkeleton(TypedDict):
     story_background: str
-    chapters: list[Chapter]
+    milestones: list[Milestone]
     endings: list[Ending]
 
 
@@ -112,7 +107,7 @@ class StoryGraph:
         else:
             return {
                 "story_skeleton": skeleton,
-                "current_decision_point": "C1.M1.D1",
+                "current_decision_point": "M1.D1",
             }
 
     def generate_story_delta(self, state: StoryState) -> StoryState:
@@ -124,14 +119,11 @@ class StoryGraph:
         try:
             # Get current milestone info
             skeleton = state["story_skeleton"]
-            chapter_id, milestone_id, decision_point_id = get_c_m_d_id(
+            milestone_id, decision_point_id = get_m_d_id(
                 state["current_decision_point"],
             )
-            chapter = next(
-                c for c in skeleton["chapters"] if c["chapter_id"] == chapter_id
-            )
             milestone = next(
-                m for m in chapter["milestones"] if m["milestone_id"] == milestone_id
+                m for m in skeleton["milestones"] if m["milestone_id"] == milestone_id
             )
             decision_point = next(
                 d
@@ -241,21 +233,19 @@ class StoryGraph:
 
                 # Update the decision point in the skeleton
                 skeleton = state["story_skeleton"]
-                for chapter_idx, chapter in enumerate(skeleton["chapters"]):
-                    for milestone_idx, milestone in enumerate(chapter["milestones"]):
-                        for decision_point_idx, decision_point in enumerate(
-                            milestone["decision_points"],
+                for milestone_idx, milestone in enumerate(skeleton["milestones"]):
+                    for decision_point_idx, decision_point in enumerate(
+                        milestone["decision_points"],
+                    ):
+                        if (
+                            decision_point["decision_point_id"]
+                            == state["current_decision_point"]
                         ):
-                            if (
-                                decision_point["decision_point_id"]
-                                == state["current_decision_point"]
-                            ):
-                                skeleton["chapters"][chapter_idx]["milestones"][
-                                    milestone_idx
-                                ]["decision_points"][
-                                    decision_point_idx
-                                ] = decision_point_updated
-                                break
+                            skeleton["milestones"][milestone_idx]
+                            ["decision_points"][decision_point_idx] = (
+                                decision_point_updated
+                            )
+                            break
                 state_to_update["story_skeleton"] = skeleton
 
         except ValueError:
@@ -277,10 +267,10 @@ class StoryGraph:
 
 
 # Helper functions
-def get_c_m_d_id(decision_point_id: str) -> tuple[str, str, str]:
-    """Get chapter, milestone, and decision IDs from a decision point ID."""
-    c, m, d = decision_point_id.split(".")
-    return c, f"{c}.{m}", f"{c}.{m}.{d}"
+def get_m_d_id(decision_point_id: str) -> tuple[str, str]:
+    """Get milestone, and decision IDs from a decision point ID."""
+    m, d = decision_point_id.split(".")
+    return f"{m}", f"{m}.{d}"
 
 
 def get_decision_point(
@@ -288,23 +278,21 @@ def get_decision_point(
     decision_point_id: str,
 ) -> DecisionPoint:
     """Get a decision point from the story skeleton."""
-    for chapter in skeleton["chapters"]:
-        for milestone in chapter["milestones"]:
-            for decision_point in milestone["decision_points"]:
-                if decision_point["decision_point_id"] == decision_point_id:
-                    return decision_point
+    for milestone in skeleton["milestones"]:
+        for decision_point in milestone["decision_points"]:
+            if decision_point["decision_point_id"] == decision_point_id:
+                return decision_point
     msg = f"Decision point {decision_point_id} not found"
     raise ValueError(msg)
 
 
 def get_decision_option(skeleton: StorySkeleton, option_id: str) -> DecisionOption:
     """Get a decision option from the story skeleton."""
-    for chapter in skeleton["chapters"]:
-        for milestone in chapter["milestones"]:
-            for decision_point in milestone["decision_points"]:
-                for option in decision_point["options"]:
-                    if option["option_id"] == option_id:
-                        return option
+    for milestone in skeleton["milestones"]:
+        for decision_point in milestone["decision_points"]:
+            for option in decision_point["options"]:
+                if option["option_id"] == option_id:
+                    return option
     msg = f"Decision option {option_id} not found"
     raise ValueError(msg)
 
@@ -363,34 +351,28 @@ def format_decision_point(decision_point: DecisionPoint) -> str:
 
 def format_story_skeleton(skeleton: StorySkeleton) -> str:
     formatted_parts = []
-
     # Format story background
     formatted_parts.append(f"### Story Background: {skeleton['story_background']}\n")
 
-    # Format chapters
-    for chapter in skeleton["chapters"]:
-        formatted_parts.append(f"### Chapter [{chapter['chapter_id']}]")
-
-        # Format milestones
-        for milestone in chapter["milestones"]:
+    # Format milestones
+    formatted_parts.append("### Milestones")
+    for milestone in skeleton["milestones"]:
+        formatted_parts.append(
+            f"- Milestone [{milestone['milestone_id']}]: {milestone['description']}",
+        )
+        # Format decision points
+        for decision in milestone["decision_points"]:
             formatted_parts.append(
-                f"- Milestone [{milestone['milestone_id']}]: {milestone['description']}",
+                (
+                    f"  - DecisionPoint [{decision['decision_point_id']}]:"
+                    f" {decision['description']}"
+                ),
             )
-
-            # Format decision points
-            for decision in milestone["decision_points"]:
+            # Format options
+            for option in decision["options"]:
                 formatted_parts.append(
-                    (
-                        f"  - DecisionPoint [{decision['decision_point_id']}]:"
-                        f" {decision['description']}"
-                    ),
+                    f"    - {option['option_name']}",
                 )
-
-                # Format options
-                for option in decision["options"]:
-                    formatted_parts.append(
-                        f"    - {option['option_name']}",
-                    )
 
     # Format endings
     formatted_parts.append("\n### Possible Endings:")

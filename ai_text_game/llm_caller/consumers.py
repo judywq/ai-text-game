@@ -372,15 +372,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             options = []
 
             # Find the current decision point and its options
-            for chapter in skeleton["chapters"]:
-                for milestone in chapter["milestones"]:
-                    for decision_point in milestone["decision_points"]:
-                        if (
-                            decision_point["decision_point_id"]
-                            == current_decision_point_id
-                        ):
-                            options = decision_point["options"]
-                            break
+            for milestone in skeleton["milestones"]:
+                for decision_point in milestone["decision_points"]:
+                    if decision_point["decision_point_id"] == current_decision_point_id:
+                        options = decision_point["options"]
+                        break
         return options
 
     async def save_story_progress(self, story, state):

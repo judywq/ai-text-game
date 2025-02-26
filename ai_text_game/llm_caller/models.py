@@ -78,7 +78,10 @@ class LLMModel(TimestampedBase):
         get_latest_by = "created_at"
 
     def __str__(self):
-        return f"{self.display_name} ({'Active' if self.is_active else 'Inactive'})"
+        return (
+            f"{self.llm_type}: {self.display_name} "
+            f"({'Active' if self.is_active else 'Inactive'})"
+        )
 
     def save(self, *args, **kwargs):
         # If this model is being set as default, reset all others
@@ -345,10 +348,6 @@ class StorySkeleton(TimestampedBase):
     background = models.TextField()
     raw_data = models.JSONField()  # Stores the complete skeleton structure
 
-    def get_current_decision_point(self):
-        """Get the current decision point from raw_data based on story progress"""
-        # Implementation depends on story progress tracking
-
 
 class StoryProgress(TimestampedBase):
     story = models.ForeignKey(
@@ -472,31 +471,28 @@ class GameStory(CreatableBase, TimestampedBase):
         if not hasattr(self, "skeleton"):
             return None
         skeleton = self.skeleton.raw_data
-        for chapter in skeleton["chapters"]:
-            for milestone in chapter["milestones"]:
-                for decision_point in milestone["decision_points"]:
-                    if (
-                        decision_point["decision_point_id"]
-                        == self.get_current_decision_point()
-                    ):
-                        for option in decision_point["options"]:
-                            if option["option_id"] == option_id:
-                                return option["option_name"]
+        for milestone in skeleton["milestones"]:
+            for decision_point in milestone["decision_points"]:
+                if (
+                    decision_point["decision_point_id"]
+                    == self.get_current_decision_point()
+                ):
+                    for option in decision_point["options"]:
+                        if option["option_id"] == option_id:
+                            return option["option_name"]
         return None
 
     def get_next_decision_point(self):
         # Flatten the story skeleton into a single list of decision points
         decision_points = []
-        for chapter in self.skeleton.raw_data["chapters"]:
-            for milestone in chapter["milestones"]:
-                for decision_point in milestone["decision_points"]:
-                    decision_points.append(
-                        (
-                            decision_point["decision_point_id"],
-                            milestone["milestone_id"],
-                            chapter["chapter_id"],
-                        ),
-                    )
+        for milestone in self.skeleton.raw_data["milestones"]:
+            for decision_point in milestone["decision_points"]:
+                decision_points.append(
+                    (
+                        decision_point["decision_point_id"],
+                        milestone["milestone_id"],
+                    ),
+                )
 
         # Sort decision points by decision id
         decision_points.sort(key=lambda x: x[0])
@@ -534,7 +530,7 @@ class GameStory(CreatableBase, TimestampedBase):
     def get_current_decision_point(self):
         """Get the current decision point ID"""
         if self.progress_entries.count() == 0:
-            return "C1.M1.D1"
+            return "M1.D1"
         latest_progress = self.progress_entries.last()
         if latest_progress.is_fulfilled:
             # Get the next decision point
@@ -544,7 +540,7 @@ class GameStory(CreatableBase, TimestampedBase):
     def _get_last_decision_point(self):
         """Get the last decision point ID"""
         if self.progress_entries.count() == 0:
-            return "C1.M1.D1"
+            return "M1.D1"
         latest_progress = self.progress_entries.last()
         return latest_progress.decision_point_id
 
