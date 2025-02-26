@@ -527,7 +527,7 @@ class GameStory(CreatableBase, TimestampedBase):
                 for entry in progress_entries
                 if entry.chosen_option_id
             ],
-            "cefr_level": self.get_cefr_level(),
+            "cefr_level": self.cefr_level,
             "status": self.status,
         }
 
@@ -547,11 +547,6 @@ class GameStory(CreatableBase, TimestampedBase):
             return "C1.M1.D1"
         latest_progress = self.progress_entries.last()
         return latest_progress.decision_point_id
-
-    def get_cefr_level(self):
-        """Get the CEFR level for this story"""
-        # Implementation depends on where you store CEFR level
-        return "A1"  # Default level
 
 
 class TextExplanation(CreatableBase, TimestampedBase):

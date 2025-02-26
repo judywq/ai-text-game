@@ -47,7 +47,6 @@ class GameScenarioSerializer(serializers.ModelSerializer):
 class GameStorySerializer(serializers.ModelSerializer):
     progress = serializers.SerializerMethodField()
     scene_text = serializers.CharField(write_only=True, required=False)
-    cefr_level = serializers.CharField(write_only=True, required=False)
 
     def get_progress(self, obj):
         return StoryProgressSerializer(obj.progress_entries, many=True).data
