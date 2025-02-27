@@ -6,7 +6,7 @@
       <p>Last updated: {{ new Date().toLocaleDateString() }}</p>
 
       <h2>1. Introduction</h2>
-      <p>Welcome to ATG. By accessing our service, you agree to these terms...</p>
+      <p>Welcome to GenQuest. By accessing our service, you agree to these terms...</p>
 
       <h2>2. Use of Service</h2>
       <p>Our service is provided "as is" and is subject to the following terms...</p>

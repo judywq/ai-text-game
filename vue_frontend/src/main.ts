@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/auth'
 
 // Add version from package.json
 const version = __APP_VERSION__
-console.log(`ATG Version: ${version}`)
+console.log(`GenQuest Version: ${version}`)
 
 const app = createApp(App)
 

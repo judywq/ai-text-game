@@ -22,7 +22,7 @@ onMounted(() => {
       <div class="container mx-auto px-4">
         <router-link :to="{ name: 'home' }" class="flex items-center justify-center">
           <!-- Replace with your actual logo -->
-          <span class="text-2xl font-bold text-primary">ATG</span>
+          <span class="text-2xl font-bold text-primary">GenQuest</span>
         </router-link>
       </div>
     </nav>
