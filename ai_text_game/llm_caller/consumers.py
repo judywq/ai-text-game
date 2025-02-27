@@ -1,7 +1,5 @@
-import asyncio
 import json
 import logging
-import re
 
 from anthropic import AnthropicError
 from channels.db import database_sync_to_async
@@ -190,21 +188,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             "temperature": config.temperature,
             "system_prompt": config.system_prompt,
         }
-
-    async def get_fake_stream(self):
-        fake_response = "This is a test response. " * 10
-        words = re.split(r"(?<= )", fake_response)
-        for word in words:
-            await asyncio.sleep(0.05)
-            yield word
-
-    @staticmethod
-    async def get_openai_stream(client, model_name, context):
-        return await client.chat.completions.create(
-            model=model_name,
-            messages=context,
-            stream=True,
-        )
 
     async def send_error(self, error_message):
         await self.send(
