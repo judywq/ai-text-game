@@ -1,9 +1,7 @@
 # ruff: noqa: E501, PERF401
-import json
 import logging
 from typing import TypedDict
 
-from langchain_core.exceptions import OutputParserException
 from langchain_core.output_parsers.json import JsonOutputParser
 from langchain_core.runnables import Runnable
 from langgraph.checkpoint.memory import InMemorySaver
@@ -169,71 +167,6 @@ class StoryGraph:
                 "story_text": ending,
                 "status": "COMPLETED",
             }
-
-    def check_cefr_level(self, state: StoryState) -> StoryState:
-        """Check and adjust text to match target CEFR level."""
-        logger.info(
-            "Checking CEFR level for %s",
-            state.get("current_decision_point", ""),
-        )
-        try:
-            # Check latest story segment
-            latest_text = state["story_text"]
-            data = {
-                "story_text": latest_text,
-            }
-
-            has_decision_point = state.get("current_decision_point", "")
-            decision_point = None
-            if has_decision_point != "":
-                decision_point = get_decision_point(
-                    state["story_skeleton"],
-                    state["current_decision_point"],
-                )
-                data["decision_point"] = decision_point
-            params = {
-                "level": state["cefr_level"],
-                "data": json.dumps(data),
-            }
-
-            try:
-                chain = self.llm_models["cefr"] | self.json_parser
-                result = chain.invoke(params)
-            except OutputParserException:
-                logger.exception("Error checking CEFR level")
-                result = {
-                    "story_text": latest_text,
-                    "decision_point": decision_point,
-                }
-
-            logger.info(json.dumps(result, indent=2))
-
-            state_to_update = {}
-            if has_decision_point:
-                decision_point_updated = result.get("decision_point", decision_point)
-
-                # Update the decision point in the skeleton
-                skeleton = state["story_skeleton"]
-                for milestone_idx, milestone in enumerate(skeleton["milestones"]):
-                    for decision_point_idx, decision_point in enumerate(
-                        milestone["decision_points"],
-                    ):
-                        if (
-                            decision_point["decision_point_id"]
-                            == state["current_decision_point"]
-                        ):
-                            skeleton["milestones"][milestone_idx]
-                            ["decision_points"][decision_point_idx] = (
-                                decision_point_updated
-                            )
-                            break
-                state_to_update["story_skeleton"] = skeleton
-
-        except ValueError:
-            logger.exception("Error checking CEFR level")
-            raise
-        else:
-            return state_to_update
 
     @staticmethod
     def decide_continue_or_end(state: StoryState) -> str:
