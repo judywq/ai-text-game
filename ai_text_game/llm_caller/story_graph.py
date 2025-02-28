@@ -354,33 +354,40 @@ def format_story_skeleton(skeleton: StorySkeleton) -> str:
     # Format story background
     formatted_parts.append(f"### Story Background: {skeleton['story_background']}\n")
 
-    # Format milestones
-    formatted_parts.append("### Milestones")
-    for milestone in skeleton["milestones"]:
-        formatted_parts.append(
-            f"- Milestone [{milestone['milestone_id']}]: {milestone['description']}",
+    if endings := skeleton.get("endings", []):
+        # Format endings
+        formatted_parts.append("\n### Possible Endings:")
+        formatted_parts.extend(
+            [
+                f"- Ending [{ending['ending_id']}]: {ending['description']}"
+                for ending in endings
+            ],
         )
-        # Format decision points
-        for decision in milestone["decision_points"]:
-            formatted_parts.append(
-                (
-                    f"  - DecisionPoint [{decision['decision_point_id']}]:"
-                    f" {decision['description']}"
-                ),
-            )
-            # Format options
-            for option in decision["options"]:
-                formatted_parts.append(
-                    f"    - {option['option_name']}",
-                )
 
-    # Format endings
-    formatted_parts.append("\n### Possible Endings:")
-    formatted_parts.extend(
-        [
-            f"- Ending [{ending['ending_id']}]: {ending['description']}"
-            for ending in skeleton["endings"]
-        ],
-    )
+    if milestones := skeleton.get("milestones", []):
+        # Format milestones
+        formatted_parts.append("### Milestones")
+        for milestone in milestones:
+            if not milestone:
+                # An empty milestone, might be the in-progress skeleton
+                continue
+            formatted_parts.append(
+                f"- Milestone [{milestone['milestone_id']}]: {milestone['description']}",
+            )
+            # Format decision points
+            for decision in milestone["decision_points"]:
+                formatted_parts.append(
+                    (
+                        f"  - DecisionPoint [{decision['decision_point_id']}]:"
+                        f" {decision['description']}"
+                    ),
+                )
+                # Format options
+                for option in decision["options"]:
+                    formatted_parts.append(
+                        f"    - {option['option_name']}",
+                    )
+    else:
+        logger.error("No milestones found in skeleton")
 
     return "\n".join(formatted_parts)

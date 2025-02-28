@@ -8,6 +8,7 @@ from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
 from django.core.validators import URLValidator
 from django.db import models
+from langchain_core.prompts import ChatPromptTemplate
 
 from ai_text_game.core.models import CreatableBase
 from ai_text_game.core.models import TimestampedBase
@@ -222,6 +223,10 @@ class LLMConfig(TimestampedBase):
             )
             raise ValueError(msg) from None
 
+    def get_prompt_template(self):
+        """Get a ChatPromptTemplate for this config."""
+        return ChatPromptTemplate.from_template(self.system_prompt)
+
 
 class APIKey(TimestampedBase):
     key = models.CharField(
@@ -345,8 +350,27 @@ class StorySkeleton(TimestampedBase):
         on_delete=models.CASCADE,
         related_name="skeleton",
     )
-    background = models.TextField()
-    raw_data = models.JSONField()  # Stores the complete skeleton structure
+    background = models.TextField(blank=True)
+    raw_data = models.JSONField(blank=True, default=dict)
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ("INIT", "Init"),
+            ("GENERATING", "Generating"),
+            ("COMPLETED", "Completed"),
+            ("FAILED", "Failed"),
+        ],
+        default="INIT",
+    )
+
+    def has_milestones(self) -> bool:
+        """Check if the skeleton has milestones"""
+        return self.count_milestones() > 0
+
+    @staticmethod
+    def count_milestones(raw_data: dict) -> int:
+        """Count the number of milestones in the raw data"""
+        return len(raw_data.get("milestones", []))
 
 
 class StoryProgress(TimestampedBase):

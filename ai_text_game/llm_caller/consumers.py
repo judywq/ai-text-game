@@ -15,15 +15,17 @@ from .models import GameStory
 from .models import LLMConfig
 from .models import StoryOption
 from .models import StoryProgress
-from .models import StorySkeleton
 from .models import TextExplanation
 from .story_graph import StoryGraph
+from .tasks import generate_story_skeleton
 from .utils import get_llm_model
 
 logger = logging.getLogger(__name__)
 
 
 class GameConsumer(AsyncWebsocketConsumer):
+    START_GAME_SINCE_MILESTONE = 2
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.story_graph = None
@@ -94,19 +96,30 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # If skeleton exists, use it
             story_skeleton = await self.try_get_skeleton(story)
-            if not story_skeleton:
-                # Generate skeleton if it doesn't exist
-                skeleton_data = await database_sync_to_async(
-                    self.story_graph.generate_skeleton,
-                )(initial_state)
-
-                await database_sync_to_async(StorySkeleton.objects.create)(
-                    story=story,
-                    background=skeleton_data["story_skeleton"]["story_background"],
-                    raw_data=skeleton_data["story_skeleton"],
+            if not story_skeleton or story_skeleton.status == "FAILED":
+                # Start background skeleton generation
+                await database_sync_to_async(generate_story_skeleton.delay)(
+                    story.id,
+                    initial_state,
                 )
 
-            await self.process_story_state(story)
+                # Send status update to client
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "type": "skeleton_generation_started",
+                            "message": "Story skeleton generation has started...",
+                        },
+                    ),
+                )
+                return
+            if story_skeleton.status == "GENERATING":
+                await self.send_error(
+                    "Story skeleton is still generating, please retry later.",
+                )
+                return
+            # If skeleton exists, continue with story processing
+            await self.update_story_progress(story)
 
         except ValueError as e:
             await self.send_error(str(e))
@@ -127,9 +140,9 @@ class GameConsumer(AsyncWebsocketConsumer):
                 return
 
             # Update the story progress with chosen option
-            await self.update_story_progress(story, option_id, option_text)
+            await self.handle_user_selection(story, option_id, option_text)
 
-            await self.process_story_state(story)
+            await self.update_story_progress(story)
 
         except ValueError as e:
             await self.send_error(str(e))
@@ -347,21 +360,6 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return llms
 
-    def get_options(self, state):
-        options = []
-        current_decision_point_id = state.get("current_decision_point")
-        if current_decision_point_id:
-            skeleton = state["story_skeleton"]
-            options = []
-
-            # Find the current decision point and its options
-            for milestone in skeleton["milestones"]:
-                for decision_point in milestone["decision_points"]:
-                    if decision_point["decision_point_id"] == current_decision_point_id:
-                        options = decision_point["options"]
-                        break
-        return options
-
     async def save_story_progress(self, story, state):
         """Save story progress to database"""
         if story_text := state.get("story_text"):
@@ -373,7 +371,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
             options = self.get_options(state)
-
             if options:
                 # Create option objects
                 for option in options:
@@ -385,6 +382,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             story.status = state["status"]
             await database_sync_to_async(story.save)()
+
+    def get_options(self, state):
+        options = []
+        current_decision_point_id = state.get("current_decision_point")
+        if current_decision_point_id:
+            skeleton = state["story_skeleton"]
+            options = []
+
+            # Find the current decision point and its options
+            for milestone in skeleton["milestones"]:
+                for decision_point in milestone.get("decision_points", []):
+                    if decision_point["decision_point_id"] == current_decision_point_id:
+                        return decision_point["options"]
+        return options
 
     async def send_story_update(self, state):
         """Send story update to client"""
@@ -404,7 +415,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     @database_sync_to_async
-    def update_story_progress(self, story, option_id, option_text):
+    def handle_user_selection(self, story, option_id, option_text):
         """Update the story progress with the chosen option"""
         from .models import StoryProgress
 
@@ -421,8 +432,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Update with chosen option
             latest_progress.set_chosen_option(option_id, option_text)
 
-    async def process_story_state(self, story):
-        """Process the current story state and send updates."""
+    async def update_story_progress(self, story):
+        """Create the next progress entry."""
         # Get current story state
         state = await database_sync_to_async(lambda: story.story_state)()
 
@@ -449,3 +460,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         # Send response to client
         await self.send_story_update(new_state)
+
+    async def skeleton_generation_progress(self, event):
+        """Handle skeleton generation progress."""
+        story_id = event["story_id"]
+        story = await self.get_story(story_id)
+        if event["n_milestones"] == self.START_GAME_SINCE_MILESTONE:
+            # Start generating story when first milestone is generated
+            logger.debug("Start generating the first story progress")
+            await self.update_story_progress(story)
+
+    async def skeleton_generation_completed(self, event):
+        """Handle skeleton generation completion."""
+        # No need to do anythin
+
+    async def skeleton_generation_failed(self, event):
+        """Handle skeleton generation failure."""
+        await self.send_error(event["error"])
