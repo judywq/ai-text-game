@@ -91,25 +91,6 @@ class StoryGraph:
 
         return workflow.compile(checkpointer=InMemorySaver())
 
-    def generate_skeleton(self, params: dict) -> dict:
-        """Generate initial story skeleton."""
-        logger.info("Generating story skeleton for %s", params)
-        try:
-            # Create chain
-            chain = self.llm_models["skeleton"] | self.json_parser
-
-            # Generate skeleton
-            skeleton = chain.invoke(params)
-
-        except Exception:
-            logger.exception("Error generating story skeleton")
-            raise
-        else:
-            return {
-                "story_skeleton": skeleton,
-                "current_decision_point": "M1.D1",
-            }
-
     def generate_story_delta(self, state: StoryState) -> StoryState:
         """Generate the next story segment."""
         logger.info(
