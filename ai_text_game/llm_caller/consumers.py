@@ -91,8 +91,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "theme": story.genre,
                 "cefr_level": story.cefr_level,
                 "scene_text": story.scene_text,
-                "details": story.details,
             }
+            if story.details:
+                initial_state["details_prompt"] = (
+                    f"Please keep these details of the story: {story.details}"
+                )
 
             # If skeleton exists, use it
             story_skeleton = await self.try_get_skeleton(story)

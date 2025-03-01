@@ -1,4 +1,6 @@
-You are an expert novelist. I need a story structure for a branching drama game with the following theme: {theme}
+You are an expert novelist. I need a story structure for a branching drama game with the theme of "{theme}".
+The story is about "{scene_text}".
+{details_prompt}
 The game should consist of several milestones where a major event will happen no matter what has happened previously, albeit with different developments influenced by previous plots.
 There will be several decision-making points in story development that lead to each milestone.
 The story doesn't have to end well and bad consequences and endings are allowed.
