@@ -93,7 +93,7 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
 
         # Save the final skeleton to database
         if skeleton_data:
-            logger.info("Skeleton generation completed for story %s", story_id)
+            logger.info("Completed skeleton generation for story %s", story_id)
             skeleton.background = skeleton_data["story_background"]
             skeleton.raw_data = skeleton_data
             skeleton.status = "COMPLETED"

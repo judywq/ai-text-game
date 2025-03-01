@@ -495,22 +495,48 @@ class GameStory(CreatableBase, TimestampedBase):
         if not hasattr(self, "skeleton"):
             return None
         skeleton = self.skeleton.raw_data
-        for milestone in skeleton["milestones"]:
-            for decision_point in milestone["decision_points"]:
+        for milestone in skeleton.get("milestones", []):
+            for decision_point in milestone.get("decision_points", []):
                 if (
                     decision_point["decision_point_id"]
                     == self.get_current_decision_point()
                 ):
-                    for option in decision_point["options"]:
+                    for option in decision_point.get("options", []):
                         if option["option_id"] == option_id:
                             return option["option_name"]
         return None
 
-    def get_next_decision_point(self):
+    def is_option_id_in_current_decision_point(self, option_id: str) -> bool:
+        """Check if the option ID is in the current decision point
+        Example: option_id = "M1.D1.O1"
+        The current decision point is "M1.D1"
+        The option ID is valid because it starts with "M1.D1"
+        """
+        if not hasattr(self, "skeleton"):
+            return False
+        current_decision_point = self.get_current_decision_point()
+        return option_id.startswith(current_decision_point)
+
+    @property
+    def can_proceed(self):
+        """Check if the story can proceed"""
+        if self.skeleton.status == "GENERATING":
+            return bool(self._get_next_decision_point())
+        if self.skeleton.status == "COMPLETED":
+            # We can proceed as long as the last decision point is not fulfilled
+            latest_progress = self.progress_entries.last()
+            return not latest_progress.is_fulfilled
+        return False
+
+    def _get_next_decision_point(self):
+        # TODO: if the user clicks very quickly,  after the last decision point,
+        # the next decision may not be available yet, since the skeleton is still
+        # being generated. We need to wait in this case.
+
         # Flatten the story skeleton into a single list of decision points
         decision_points = []
-        for milestone in self.skeleton.raw_data["milestones"]:
-            for decision_point in milestone["decision_points"]:
+        for milestone in self.skeleton.raw_data.get("milestones", []):
+            for decision_point in milestone.get("decision_points", []):
                 decision_points.append(
                     (
                         decision_point["decision_point_id"],
@@ -552,13 +578,17 @@ class GameStory(CreatableBase, TimestampedBase):
         }
 
     def get_current_decision_point(self):
-        """Get the current decision point ID"""
+        """Get the current decision point ID
+        If there are no progress entries, return the first decision point
+        If the last progress entry is fulfilled, get the next decision point
+        Otherwise, return the last progress entry's decision point ID
+        """
         if self.progress_entries.count() == 0:
             return "M1.D1"
         latest_progress = self.progress_entries.last()
         if latest_progress.is_fulfilled:
             # Get the next decision point
-            return self.get_next_decision_point()
+            return self._get_next_decision_point()
         return latest_progress.decision_point_id
 
     def _get_last_decision_point(self):

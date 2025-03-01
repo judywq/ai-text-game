@@ -136,7 +136,20 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             option_text = await database_sync_to_async(story.get_option_text)(option_id)
             if not option_text:
-                await self.send_error("Invalid option_id")
+                await self.send_error(f"Invalid option_id: {option_id}")
+                return
+
+            is_valid_option = await database_sync_to_async(
+                story.is_option_id_in_current_decision_point,
+            )(option_id)
+            if not is_valid_option:
+                await self.send_error(f"Decision already made: {option_id}")
+                return
+
+            if not await self.can_proceed(story):
+                await self.send_error(
+                    "Skeleton is still generating, please retry later.",
+                )
                 return
 
             # Update the story progress with chosen option
@@ -147,6 +160,10 @@ class GameConsumer(AsyncWebsocketConsumer):
         except ValueError as e:
             await self.send_error(str(e))
             raise
+
+    @database_sync_to_async
+    def can_proceed(self, story):
+        return story.can_proceed
 
     async def handle_text_explanation(self, data):
         try:
