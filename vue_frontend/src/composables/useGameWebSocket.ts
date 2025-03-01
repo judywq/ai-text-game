@@ -14,6 +14,7 @@ export function useGameWebSocket() {
   const onExplanationCompleted = ref<((explanation: TextExplanation) => void) | null>(null)
   const onExplanationStatus = ref<((id: number, status: ExplanationStatus) => void) | null>(null)
   const onStoryUpdate = ref<((update: StoryUpdate) => void) | null>(null)
+  const onStoryStream = ref<((content: string) => void) | null>(null)
   const onError = ref<((error: Error) => void) | null>(null)
 
   const pendingExplanationPromise = ref<{
@@ -29,8 +30,22 @@ export function useGameWebSocket() {
 
     switch (data.type) {
       case 'story_update':
+        // Handle streaming story content
+        if (onStoryStream.value) {
+          onStoryStream.value(data.content)
+        }
+        break
+
+      case 'send_decision_point':
+        // This is the final update with options after story generation is complete
         if (onStoryUpdate.value) {
-          onStoryUpdate.value(data as StoryUpdate)
+          onStoryUpdate.value({
+            type: 'story_update',
+            content: '',  // Content already streamed
+            status: 'IN_PROGRESS',
+            current_decision: data.current_decision,
+            options: data.options
+          })
         }
         break
 
@@ -171,6 +186,7 @@ export function useGameWebSocket() {
     onExplanationCompleted,
     onExplanationStatus,
     onStoryUpdate,
+    onStoryStream,
     onError,
   }
 }

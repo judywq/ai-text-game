@@ -41,6 +41,7 @@ const {
   startStory,
   lookupExplanation,
   onStoryUpdate,
+  onStoryStream,
   onExplanationCreated,
   onExplanationStream,
   onExplanationStatus,
@@ -59,6 +60,9 @@ const lookupHistory = ref<TextExplanation[]>([])
 
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
+
+// Add a new ref for the current streaming content
+const currentStreamingContent = ref('')
 
 // Add this watch after the ref declarations
 watch(progressEntries, (entries) => {
@@ -279,31 +283,58 @@ onMounted(async () => {
   }
 
   try {
-
-    onStoryUpdate.value = (update: any) => {
-      // console.log('onStoryUpdate', update)
-
-      // Create a new progress entry
-      if (update.content) {
+    // Add handler for story streaming
+    onStoryStream.value = (content: string) => {
+      // Create a new progress entry if this is the first chunk
+      if (!currentStreamingContent.value) {
         progressEntries.value.push({
           id: Date.now(), // Temporary ID for frontend
-          content: update.content,
-          decision_point_id: update.decision_point_id || '',
-          chosen_option_id: update.chosen_option_id || '',
-          chosen_option_text: update.chosen_option_text || '',
-          is_end_point: update.is_end_point || false,
-          options: update.options || [],
+          content: '',
+          decision_point_id: '',
+          chosen_option_id: '',
+          chosen_option_text: '',
+          is_end_point: false,
+          options: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
       }
 
+      // Append the new content to the current streaming entry
+      currentStreamingContent.value += content
+
+      // Update the latest progress entry with the streamed content
+      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+      if (latestEntry) {
+        latestEntry.content = currentStreamingContent.value
+      }
+
       scrollToBottom()
+    }
+
+    // Modify the existing story update handler to handle the final state
+    onStoryUpdate.value = (update: any) => {
+      // Reset the streaming content for the next story segment
+      currentStreamingContent.value = ''
+
+      // Get the latest progress entry that was being updated with streaming content
+      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+
+      if (latestEntry) {
+        // Update the decision point and options
+        latestEntry.decision_point_id = update.current_decision || ''
+        latestEntry.options = update.options || []
+
+        // Update current options for the UI
+        currentOptions.value = update.options || []
+      }
 
       // Update story status if provided
       if (update.status && story.value) {
         story.value.status = update.status
       }
+
+      scrollToBottom()
     }
 
     // Set up explanation handlers

@@ -14,6 +14,7 @@ class MyFakeListChatModel(FakeListChatModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.delay = kwargs.get("delay", settings.FAKE_LLM_DELAY)
+        self.sleep = 0.02
 
     def _call(self, *args, **kwargs):
         if self.delay > 0:

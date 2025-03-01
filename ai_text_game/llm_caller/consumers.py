@@ -397,17 +397,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                         return decision_point["options"]
         return options
 
-    async def send_story_update(self, state):
-        """Send story update to client"""
+    async def send_decision_point(self, state):
+        """Send decision point to client"""
         # TODO: remove the consequence from the options (or use a unified interface)
         options = self.get_options(state)
 
         await self.send(
             text_data=json.dumps(
                 {
-                    "type": "story_update",
-                    "content": state.get("story_text"),
-                    "status": state.get("status"),
+                    "type": "send_decision_point",
                     "current_decision": state.get("current_decision_point"),
                     "options": options,
                 },
@@ -450,16 +448,26 @@ class GameConsumer(AsyncWebsocketConsumer):
                 state["chosen_decisions"] = chosen_decisions
 
         # Run the graph
-        new_state = await database_sync_to_async(self.story_graph.invoke)(
+        async for mode, chunk in self.story_graph.astream(
             state,
             self.story_thread,
-        )
+            stream_mode=["messages", "values"],
+        ):
+            if mode == "messages":
+                msg, metadata = chunk
+                await self.send(
+                    text_data=json.dumps(
+                        {"type": "story_update", "content": msg.content},
+                    ),
+                )
+            elif mode == "values":
+                new_state = chunk
 
         # Save progress
         await self.save_story_progress(story, new_state)
 
         # Send response to client
-        await self.send_story_update(new_state)
+        await self.send_decision_point(new_state)
 
     async def skeleton_generation_progress(self, event):
         """Handle skeleton generation progress."""

@@ -1,8 +1,10 @@
 # ruff: noqa: E501, PERF401
 import logging
+from collections.abc import AsyncIterator
 from typing import TypedDict
 
 from langchain_core.output_parsers.json import JsonOutputParser
+from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.runnables import Runnable
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END
@@ -64,6 +66,7 @@ class StoryGraph:
         self.llm_models = llm_models
         self.graph = self._build_graph()
         self.json_parser = JsonOutputParser()
+        self.string_parser = StrOutputParser()
 
     def _build_graph(self) -> StateGraph:
         """Build the story generation graph."""
@@ -89,7 +92,7 @@ class StoryGraph:
 
         return workflow.compile(checkpointer=InMemorySaver())
 
-    def generate_story_delta(self, state: StoryState) -> StoryState:
+    async def generate_story_delta(self, state: StoryState) -> StoryState:
         """Generate the next story segment."""
         logger.info(
             "Generating story delta for %s",
@@ -127,8 +130,8 @@ class StoryGraph:
             }
 
             # Generate continuation
-            chain = self.llm_models["continuation"]
-            story_segment = chain.invoke(params).content
+            chain = self.llm_models["continuation"] | self.string_parser
+            story_segment = await chain.ainvoke(params)
 
         except Exception:
             logger.exception("Error generating story delta")
@@ -139,7 +142,7 @@ class StoryGraph:
                 "status": "IN_PROGRESS",
             }
 
-    def generate_story_ending(self, state: StoryState) -> StoryState:
+    async def generate_story_ending(self, state: StoryState) -> StoryState:
         """Generate the story ending."""
         logger.info(
             "Generating story ending for %s",
@@ -156,8 +159,8 @@ class StoryGraph:
             }
 
             # Generate ending
-            chain = self.llm_models["ending"]
-            ending = chain.invoke(variables).content
+            chain = self.llm_models["ending"] | self.string_parser
+            ending = await chain.ainvoke(variables)
 
         except Exception:
             logger.exception("Error generating story ending")
@@ -178,6 +181,14 @@ class StoryGraph:
     def invoke(self, state: StoryState, config: dict | None = None) -> StoryState:
         """Run the story graph with the given state."""
         return self.graph.invoke(state, config)
+
+    def astream(
+        self,
+        *args,
+        **kwargs,
+    ) -> AsyncIterator[tuple[str, StoryState]]:
+        """Run the story graph with the given state."""
+        return self.graph.astream(*args, **kwargs)
 
 
 # Helper functions
