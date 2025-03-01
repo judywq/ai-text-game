@@ -139,9 +139,45 @@ async function generateScenes() {
   }
 
   isGeneratingScenes.value = true
+  scenes.value = [] // Clear existing scenes
+
   try {
-    const response = await GameService.generateScenes(genreToUse, details.value)
-    scenes.value = response.scenes
+    const eventSource = await GameService.generateScenesStream(genreToUse, details.value)
+
+    // Handle individual scene events
+    eventSource.addEventListener('scene', (event) => {
+      const sceneData = JSON.parse(event.data)
+      scenes.value = sceneData.scenes || []
+    })
+
+    // Handle completion event
+    eventSource.addEventListener('complete', (event) => {
+      const completeData = JSON.parse(event.data)
+      // Ensure we have all scenes (in case any were missed in individual events)
+      scenes.value = completeData.scenes || []
+      isGeneratingScenes.value = false
+      eventSource.close()
+    })
+
+    // Handle errors
+    eventSource.addEventListener('error', (event) => {
+      console.error('Error in scene generation stream:', event)
+      toast({
+        title: 'Error',
+        description: 'Failed to generate scenes',
+        variant: 'destructive',
+      })
+      isGeneratingScenes.value = false
+      eventSource.close()
+    })
+
+    // Handle connection close
+    eventSource.addEventListener('close', () => {
+      isGeneratingScenes.value = false
+    })
+
+    eventSource.connect();
+
   } catch (error) {
     console.error('Error generating scenes:', error)
     toast({
@@ -149,7 +185,6 @@ async function generateScenes() {
       description: 'Failed to generate scenes',
       variant: 'destructive',
     })
-  } finally {
     isGeneratingScenes.value = false
   }
 }
@@ -289,7 +324,7 @@ const handleGameClick = (story: GameStory) => {
       </div>
 
       <!-- Generated Scenes Section -->
-      <div v-if="scenes.length > 0" class="mt-8">
+      <div v-if="scenes?.length > 0" class="mt-8">
         <Separator />
         <div class="text-sm text-muted-foreground text-center mt-4">
           Please select a difficulty that you are comfortable with.

@@ -1,5 +1,10 @@
+import json
+
 import openai
 from django.conf import settings
+from django.http import StreamingHttpResponse
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from rest_framework import status
@@ -164,3 +169,75 @@ class GameSceneGeneratorView(APIView):
             )
 
         return Response(scenes)
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class GameSceneGeneratorStreamView(APIView):
+    permission_classes = [IsAuthenticated]
+    content_negotiation_class = IgnoreClientContentNegotiation
+
+    def get(self, request):
+        genre = request.GET.get("genre")
+        details = request.GET.get("details")
+
+        if not genre:
+            return Response(
+                {"error": "Genre is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Format the details prompt
+        details_prompt = (
+            f"\n* Additional details of the story: {details}" if details else ""
+        )
+
+        active_config = LLMConfig.get_active_config(purpose="scene_generation")
+        key = APIKey.get_available_key(model_name=active_config.model.name)
+        prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
+        json_parser = JsonOutputParser()
+
+        llm = get_llm_model(
+            {
+                "model_name": active_config.model.name,
+                "llm_type": active_config.model.llm_type,
+                "url": active_config.model.url,
+                "temperature": active_config.temperature,
+                "key": key,
+            },
+            fake=settings.FAKE_LLM_REQUEST,
+            name="scene_generation",
+        )
+        # Create the chain
+        chain = prompt | llm | json_parser
+
+        # Set up the response for SSE
+        response = StreamingHttpResponse(
+            self.generate_scenes_stream(genre, details_prompt, chain),
+            content_type="text/event-stream",
+        )
+        response["Cache-Control"] = "no-cache"
+        response["X-Accel-Buffering"] = "no"
+        return response
+
+    async def generate_scenes_stream(self, genre, details_prompt, chain):
+        try:
+            # Send initial event
+            yield f"event: start\ndata: Starting scene generation for {genre}\n\n"
+
+            chunk = {}
+            async for chunk in chain.astream(
+                {
+                    "genre": genre,
+                    "details_prompt": details_prompt,
+                },
+            ):
+                yield f"event: scene\ndata: {json.dumps(chunk)}\n\n"
+
+            # Send complete event with all scenes
+            yield f"event: complete\ndata: {json.dumps(chunk)}\n\n"
+
+        except Exception as e:
+            # Send error event
+            error_data = {"error": str(e)}
+            yield f"event: error\ndata: {json.dumps(error_data)}\n\n"
+            raise

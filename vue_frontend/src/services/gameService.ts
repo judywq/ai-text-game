@@ -1,5 +1,8 @@
 import api from '@/services/api'
 import type { GameScenario, GameStory, GameStoryListResponse, StoryProgress } from '@/types/game'
+import { EnhancedEventSource } from '@/services/sse'
+
+const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
 
 export class GameService {
   public static async getScenarios(): Promise<GameScenario[]> {
@@ -58,6 +61,21 @@ export class GameService {
       timeout: 5 * 60 * 1000 // 5 minutes timeout
     });
     return response.data;
+  }
+
+  public static async generateScenesStream(genre: string, details?: string): Promise<EnhancedEventSource> {
+    // Create URL with query parameters
+    const params = new URLSearchParams();
+    params.append('genre', genre);
+    if (details) {
+      params.append('details', details);
+    }
+
+    console.log('params', params.toString())
+
+    // Create and return EventSource for SSE
+    const eventSource = new EnhancedEventSource(`/generate-scenes-stream/?${params.toString()}`);
+    return eventSource;
   }
 
   public static async getRecentStories(

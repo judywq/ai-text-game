@@ -4,6 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import ActiveModelsView
 from .views import GameScenarioViewSet
+from .views import GameSceneGeneratorStreamView
 from .views import GameSceneGeneratorView
 from .views import GameStoryViewSet
 
@@ -15,4 +16,9 @@ urlpatterns = [
     path("", include(router.urls)),
     path("llm-models/", ActiveModelsView.as_view(), name="active-models"),
     path("generate-scenes/", GameSceneGeneratorView.as_view(), name="generate-scenes"),
+    path(
+        "generate-scenes-stream/",
+        GameSceneGeneratorStreamView.as_view(),
+        name="generate-scenes-stream",
+    ),
 ]
