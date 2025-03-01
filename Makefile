@@ -39,6 +39,11 @@ rd:
 	docker compose -f docker-compose.local.yml down django
 	docker compose -f docker-compose.local.yml up -d django
 
+# Restart celery containers
+rc:
+	docker compose -f docker-compose.local.yml down celeryworker
+	docker compose -f docker-compose.local.yml up -d celeryworker
+
 # Full restart containers
 frestart-%:
 	$(MAKE) stop-$*
