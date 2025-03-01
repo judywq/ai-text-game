@@ -145,22 +145,22 @@ async function generateScenes() {
     const eventSource = await GameService.generateScenesStream(genreToUse, details.value)
 
     // Handle individual scene events
-    eventSource.addEventListener('scene', (event) => {
+    eventSource.addEventListener('scene', ((event: MessageEvent) => {
       const sceneData = JSON.parse(event.data)
       scenes.value = sceneData.scenes || []
-    })
+    }) as EventListener)
 
     // Handle completion event
-    eventSource.addEventListener('complete', (event) => {
+    eventSource.addEventListener('complete', ((event: MessageEvent) => {
       const completeData = JSON.parse(event.data)
       // Ensure we have all scenes (in case any were missed in individual events)
       scenes.value = completeData.scenes || []
       isGeneratingScenes.value = false
       eventSource.close()
-    })
+    }) as EventListener)
 
     // Handle errors
-    eventSource.addEventListener('error', (event) => {
+    eventSource.addEventListener('error', ((event: Event) => {
       console.error('Error in scene generation stream:', event)
       toast({
         title: 'Error',
@@ -169,7 +169,7 @@ async function generateScenes() {
       })
       isGeneratingScenes.value = false
       eventSource.close()
-    })
+    }) as EventListener)
 
     // Handle connection close
     eventSource.addEventListener('close', () => {
