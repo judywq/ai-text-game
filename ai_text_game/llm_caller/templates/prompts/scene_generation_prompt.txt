@@ -2,6 +2,7 @@ You are an excellent storyteller. Your task is to create a story that is engagin
 * The story is set in the style/genre/universe of {genre}.{details_prompt}
 * Please plot a story and phrase the exact same scene into different levels of CEFR, each with around 50 words.
 * These CEFR levels are: A1, A2, B1, B2, C1 and C2.
+* Please respond with a valid JSON object, and NOTHING ELSE
 * Please provide your response in the following JSON format:
 {{
     "scenes": [

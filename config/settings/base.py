@@ -566,7 +566,7 @@ INIT_LLM_MODELS = [
 INIT_LLM_CONFIGS = {
     "scene_generation": {
         "model": "gpt-4o-mini-2024-07-18",
-        "template": "pre_game_prompt.txt",
+        "template": "scene_generation_prompt.txt",
         "temperature": 0.7,
     },
     # "adventure_gameplay": {
