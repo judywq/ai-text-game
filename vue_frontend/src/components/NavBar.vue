@@ -48,6 +48,13 @@ const isSheetOpen = ref(false)
       >
         <span>{{ item.label }}</span>
       </router-link>
+      <a
+        href="/admin"
+        target="_blank"
+        class="text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <span>Admin</span>
+      </a>
     </nav>
     <Sheet v-model:open="isSheetOpen">
       <SheetTrigger as-child>
@@ -74,6 +81,13 @@ const isSheetOpen = ref(false)
           >
             <span>{{ item.label }}</span>
           </router-link>
+          <a
+            href="/admin"
+            target="_blank"
+            class="text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <span>Admin</span>
+          </a>
         </nav>
       </SheetContent>
     </Sheet>
