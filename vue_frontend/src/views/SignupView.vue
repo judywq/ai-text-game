@@ -28,6 +28,7 @@ const generalError = ref<string | null>(null)
 const form = useForm({
   validationSchema: toTypedSchema(signupFormSchema),
   initialValues: {
+    name: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -37,7 +38,7 @@ const form = useForm({
 const onSubmit = form.handleSubmit(async (values) => {
   try {
     generalError.value = null
-    await authStore.signup(values.email, values.password, router)
+    await authStore.signup(values.email, values.password, values.name, router)
   } catch (err: any) {
     if (err.fieldErrors) {
       form.setErrors(err.fieldErrors)
@@ -57,6 +58,24 @@ const onSubmit = form.handleSubmit(async (values) => {
     </CardHeader>
     <CardContent>
       <form @submit="onSubmit" class="grid gap-4">
+        <FormField
+          v-slot="{ componentField }"
+          name="name"
+        >
+          <FormItem>
+            <FormLabel>Name</FormLabel>
+            <FormControl>
+              <Input
+                v-bind="componentField"
+                type="text"
+                placeholder="Your name"
+                :disabled="loading"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
+
         <FormField
           v-slot="{ componentField }"
           name="email"

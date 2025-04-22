@@ -11,6 +11,10 @@ export const passwordSchema = z.string()
   .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
   .regex(/\d/, 'Password must contain at least one number')
 
+export const nameSchema = z.string()
+  .min(1, 'Name is required')
+  .max(255, 'Name cannot exceed 255 characters')
+
 // Common form schemas
 export const loginFormSchema = z.object({
   email: emailSchema,
@@ -19,6 +23,7 @@ export const loginFormSchema = z.object({
 })
 
 export const signupFormSchema = z.object({
+  name: nameSchema,
   email: emailSchema,
   password: passwordSchema,
   confirmPassword: z.string().min(1, 'Please confirm your password'),
