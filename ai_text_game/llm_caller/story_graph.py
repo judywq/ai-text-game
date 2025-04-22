@@ -275,6 +275,18 @@ def format_decision_point(decision_point: DecisionPoint) -> str:
 
 
 def format_story_skeleton(skeleton: StorySkeleton) -> str:
+    """Format the story skeleton for prompt context."""
+
+    def is_milestone_broken(milestone: Milestone) -> bool:
+        """Return true if a milestone is broken."""
+        return (
+            not milestone
+            or not isinstance(milestone, dict)
+            or not milestone.get("milestone_id", None)
+            or not milestone.get("description", None)
+            or not milestone.get("decision_points", None)
+        )
+
     formatted_parts = []
     # Format story background
     formatted_parts.append(f"### Story Background: {skeleton['story_background']}\n")
@@ -293,9 +305,10 @@ def format_story_skeleton(skeleton: StorySkeleton) -> str:
         # Format milestones
         formatted_parts.append("### Milestones")
         for milestone in milestones:
-            if not milestone:
+            if is_milestone_broken(milestone):
                 # An empty milestone, might be the in-progress skeleton
                 continue
+
             formatted_parts.append(
                 f"- Milestone [{milestone['milestone_id']}]: {milestone['description']}",
             )
