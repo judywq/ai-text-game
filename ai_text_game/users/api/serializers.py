@@ -1,4 +1,5 @@
 from dj_rest_auth.models import TokenModel
+from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import LoginSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
@@ -48,3 +49,18 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = TokenModel
         fields = ["key", "created", "user"]
+
+
+class CustomRegisterSerializer(RegisterSerializer):
+    name = serializers.CharField(required=True)
+
+    def get_cleaned_data(self):
+        data = super().get_cleaned_data()
+        data["name"] = self.validated_data.get("name", "")
+        return data
+
+    def save(self, request):
+        user = super().save(request)
+        user.name = self.cleaned_data.get("name")
+        user.save()
+        return user
