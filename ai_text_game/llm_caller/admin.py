@@ -14,13 +14,14 @@ from .models import TextExplanation
 
 @admin.register(QuotaConfig)
 class QuotaConfigAdmin(admin.ModelAdmin):
-    list_display = ["model", "daily_limit", "created_at", "updated_at"]
+    list_display = ["id", "model", "daily_limit", "created_at", "updated_at"]
     list_filter = ["model"]
 
 
 @admin.register(LLMModel)
 class LLMModelAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "display_name",
         "name",
         "llm_type",
@@ -62,6 +63,7 @@ class LLMModelAdmin(admin.ModelAdmin):
 @admin.register(LLMConfig)
 class LLMConfigAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "purpose",
         "model",
         "get_system_prompt",
@@ -128,6 +130,7 @@ class LLMConfigAdmin(admin.ModelAdmin):
 @admin.register(APIKey)
 class APIKeyAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "name",
         "masked_key",
         "order",
@@ -150,6 +153,7 @@ class APIKeyAdmin(admin.ModelAdmin):
 @admin.register(GameScenario)
 class GameScenarioAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "category",
         "name",
         "example",
@@ -192,6 +196,7 @@ class GameStoryAdmin(admin.ModelAdmin):
 @admin.register(TextExplanation)
 class TextExplanationAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "created_by",
         "story",
         "model",
@@ -207,16 +212,23 @@ class TextExplanationAdmin(admin.ModelAdmin):
 @admin.register(StorySkeleton)
 class StorySkeletonAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "story",
+        "get_created_by",
         "background",
         "created_at",
         "updated_at",
     ]
 
+    @admin.display(description="Created By")
+    def get_created_by(self, obj):
+        return obj.story.created_by
+
 
 @admin.register(StoryProgress)
 class StoryProgressAdmin(admin.ModelAdmin):
     list_display = [
+        "id",
         "story",
         "get_content",
         "decision_point_id",

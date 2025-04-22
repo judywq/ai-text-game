@@ -482,7 +482,7 @@ class GameStory(CreatableBase, TimestampedBase):
         verbose_name_plural = "Game stories"
 
     def __str__(self):
-        return f"{self.id}: {self.title} ({self.created_by})"
+        return f"{self.id}: {self.title}"
 
     def get_context(self):
         return [
