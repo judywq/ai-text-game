@@ -756,6 +756,29 @@ INIT_GAME_GENRE = [
     },
 ]
 
+INIT_API_KEYS = [
+    {
+        "name": "OpenAI",
+        "llm_type": "openai",
+        "key": env.str("OPENAI_API_KEY", default=""),
+    },
+    {
+        "name": "Anthropic",
+        "llm_type": "anthropic",
+        "key": env.str("ANTHROPIC_API_KEY", default=""),
+    },
+    {
+        "name": "Groq",
+        "llm_type": "groq",
+        "key": env.str("GROQ_API_KEY", default=""),
+    },
+    {
+        "name": "DeepSeek",
+        "llm_type": "deepseek",
+        "key": env.str("DEEPSEEK_API_KEY", default=""),
+    },
+]
+
 FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
 # FAKE_LLM_REQUEST = False
 # FAKE_LLM_REQUEST = True

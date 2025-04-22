@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from ai_text_game.llm_caller.models import APIKey
 from ai_text_game.llm_caller.models import GameScenario
 from ai_text_game.llm_caller.models import LLMConfig
 from ai_text_game.llm_caller.models import LLMModel
@@ -93,6 +94,24 @@ class Command(BaseCommand):
                 msg = f"Failed to create config for {purpose}: {e!s}"
                 self.stderr.write(self.style.ERROR(msg))
 
+    def init_llm_api_keys(self, force=False):  # noqa: FBT002
+        if force:
+            APIKey.objects.all().delete()
+            self.stdout.write(self.style.WARNING("Cleared existing LLM API keys"))
+
+        for key in settings.INIT_API_KEYS:
+            try:
+                _, created = APIKey.objects.get_or_create(**key)
+                if created:
+                    msg = f"Created API key: {key['name']}"
+                    self.stdout.write(self.style.SUCCESS(msg))
+                else:
+                    msg = f"API key already exists: {key['name']}"
+                    self.stdout.write(self.style.WARNING(msg))
+            except (ValueError, TypeError) as e:
+                msg = f"Failed to create API key: {e!s}"
+                self.stderr.write(self.style.ERROR(msg))
+
     @transaction.atomic
     def handle(self, *args, **kwargs):
         force = kwargs.get("force", False)
@@ -103,6 +122,7 @@ class Command(BaseCommand):
             self.init_game_scenarios(force)
             self.init_llm_models(force)
             self.init_llm_configs(force)
+            self.init_llm_api_keys(force)
             msg = "Successfully initialized game data"
             self.stdout.write(self.style.SUCCESS(msg))
         except (ValueError, TypeError) as e:
