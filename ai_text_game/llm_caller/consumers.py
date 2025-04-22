@@ -243,6 +243,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             context_text=context_text,
             status="pending",
             model=active_config.model,
+            created_by=self.scope["user"],
         )
 
     @database_sync_to_async
