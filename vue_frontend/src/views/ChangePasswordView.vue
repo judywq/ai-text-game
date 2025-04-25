@@ -8,7 +8,7 @@
       <form @submit="handleSubmit" class="grid gap-4">
         <FormField
           v-slot="{ componentField }"
-          name="currentPassword"
+          name="old_password"
         >
           <FormItem>
             <FormLabel>Current Password</FormLabel>
@@ -26,7 +26,7 @@
 
         <FormField
           v-slot="{ componentField }"
-          name="newPassword"
+          name="new_password1"
         >
           <FormItem>
             <FormLabel>New Password</FormLabel>
@@ -44,7 +44,7 @@
 
         <FormField
           v-slot="{ componentField }"
-          name="confirmPassword"
+          name="new_password2"
         >
           <FormItem>
             <FormLabel>Confirm New Password</FormLabel>
@@ -110,9 +110,9 @@ const authStore = useAuthStore()
 const form = useForm({
   validationSchema: toTypedSchema(changePasswordFormSchema),
   initialValues: {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    old_password: '',
+    new_password1: '',
+    new_password2: '',
   },
 })
 
@@ -121,7 +121,7 @@ const handleSubmit = form.handleSubmit(async (values) => {
   generalError.value = null
 
   try {
-    await AuthService.changePassword(values.currentPassword, values.newPassword)
+    await AuthService.changePassword(values.old_password, values.new_password1, values.new_password2)
     success.value = true
     authStore.setMustChangePasswordFalse()
     toast({

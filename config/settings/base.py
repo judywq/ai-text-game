@@ -379,6 +379,7 @@ REST_AUTH = {
     "USER_DETAILS_SERIALIZER": "ai_text_game.users.api.serializers.CustomUserDetailsSerializer",
     # Fix dj-rest-auth weird issue https://github.com/iMerica/dj-rest-auth/issues/494#issuecomment-2058652960
     "PASSWORD_RESET_USE_SITES_DOMAIN": True,
+    "OLD_PASSWORD_FIELD_ENABLED": True,
 }
 
 # django-rest-framework

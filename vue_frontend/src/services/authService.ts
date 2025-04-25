@@ -48,11 +48,11 @@ export class AuthService {
     return response.data
   }
 
-  public static async changePassword(oldPassword: string, newPassword: string): Promise<AxiosResponse> {
+  public static async changePassword(old_password: string, new_password1: string, new_password2: string): Promise<AxiosResponse> {
     const response = await api.post('/dj-rest-auth/password/change/', {
-      old_password: oldPassword,
-      new_password1: newPassword,
-      new_password2: newPassword,
+      old_password: old_password,
+      new_password1: new_password1,
+      new_password2: new_password2,
     })
     return response
   }
