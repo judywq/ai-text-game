@@ -105,7 +105,7 @@ class UserAdmin(auth_admin.UserAdmin):
                                 username=row_dict.get("username") or row_dict["email"],
                                 name=row_dict.get("name") or "",
                             )
-                            user.set_password(row_dict["password"])
+                            user.set_password(str(row_dict["password"]))
                             user.save()
 
                             # Create verified email address

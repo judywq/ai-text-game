@@ -80,7 +80,7 @@ class AdminUserRegistrationForm(forms.ModelForm):
 
     def save(self, commit=True):  # noqa: FBT002
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data["password"])
+        user.set_password(str(self.cleaned_data["password"]))
 
         if commit:
             with transaction.atomic():
