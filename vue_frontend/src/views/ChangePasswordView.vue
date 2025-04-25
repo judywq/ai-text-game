@@ -73,7 +73,7 @@
         </Button>
 
         <p v-if="success" class="text-success-foreground text-sm text-center">
-          Password changed successfully!
+          Password changed successfully! Redirecting...
         </p>
       </form>
     </CardContent>
@@ -100,12 +100,14 @@ import {
 import { useToast } from '@/components/ui/toast/use-toast'
 import { changePasswordFormSchema } from '@/lib/validations'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from 'vue-router'
 
 const isSubmitting = ref(false)
 const generalError = ref<string | null>(null)
 const success = ref(false)
 const { toast } = useToast()
 const authStore = useAuthStore()
+const router = useRouter()
 
 const form = useForm({
   validationSchema: toTypedSchema(changePasswordFormSchema),
@@ -128,6 +130,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
       title: 'Success',
       description: 'Your password has been changed successfully.',
     })
+    setTimeout(() => {
+      router.push({ name: 'game-scenarios' })
+    }, 3000)
   } catch (err: any) {
     if (err.fieldErrors) {
       form.setErrors(err.fieldErrors)
