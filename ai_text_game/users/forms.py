@@ -99,6 +99,11 @@ class UserBatchUploadForm(forms.Form):
     """Form for uploading Excel file containing user data."""
 
     file = forms.FileField()
+    must_change_password = forms.BooleanField(
+        label="Require users to change password on first login",
+        required=False,
+        initial=True,
+    )
 
     def clean_file(self):
         file = self.cleaned_data["file"]

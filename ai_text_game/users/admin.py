@@ -93,6 +93,10 @@ class UserAdmin(auth_admin.UserAdmin):
             form = UserBatchUploadForm(request.POST, request.FILES)
             if form.is_valid():
                 file = request.FILES["file"]
+                must_change_password = form.cleaned_data.get(
+                    "must_change_password",
+                    True,
+                )
                 df_data = pd.read_excel(file, keep_default_na=False)
                 success_count = 0
                 errors = []
@@ -111,7 +115,9 @@ class UserAdmin(auth_admin.UserAdmin):
 
                             # Set must_change_password for batch users
                             if hasattr(user, "userprofile"):
-                                user.userprofile.must_change_password = True
+                                user.userprofile.must_change_password = (
+                                    must_change_password
+                                )
                                 user.userprofile.save()
 
                             # Create verified email address
