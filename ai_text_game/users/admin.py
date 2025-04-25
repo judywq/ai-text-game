@@ -18,6 +18,7 @@ from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
 from .forms import UserBatchUploadForm
 from .models import User
+from .models import UserProfile
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
@@ -108,6 +109,11 @@ class UserAdmin(auth_admin.UserAdmin):
                             user.set_password(str(row_dict["password"]))
                             user.save()
 
+                            # Set must_change_password for batch users
+                            if hasattr(user, "userprofile"):
+                                user.userprofile.must_change_password = True
+                                user.userprofile.save()
+
                             # Create verified email address
                             EmailAddress.objects.create(
                                 user=user,
@@ -143,3 +149,9 @@ class UserAdmin(auth_admin.UserAdmin):
         extra_context["show_register_button"] = True
         extra_context["show_batch_upload_button"] = True
         return super().changelist_view(request, extra_context=extra_context)
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ["id", "user", "must_change_password"]
+    search_fields = ["user__name", "user__email"]

@@ -131,6 +131,17 @@ router.beforeEach(async (to, from) => {
       name: 'game-scenarios',
     }
   }
+
+  // --- NEW LOGIC: Force password change if required ---
+  // Only check for authenticated users
+  if (
+    authStore.isAuthenticated &&
+    authStore.user?.must_change_password && // <-- Make sure this is set in your store
+    to.name !== 'change-password'
+  ) {
+    // Allow only navigation to change-password page
+    return { name: 'change-password' }
+  }
 })
 
 export default router

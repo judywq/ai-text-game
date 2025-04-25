@@ -1,6 +1,7 @@
 from dj_rest_auth.models import TokenModel
 from dj_rest_auth.registration.serializers import RegisterSerializer
 from dj_rest_auth.serializers import LoginSerializer
+from dj_rest_auth.serializers import PasswordChangeSerializer
 from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
@@ -24,6 +25,8 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     User model w/o password
     """
 
+    must_change_password = serializers.SerializerMethodField()
+
     class Meta:
         extra_fields = []
         # see https://github.com/iMerica/dj-rest-auth/issues/181
@@ -39,8 +42,14 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         if hasattr(UserModel, "last_name"):
             extra_fields.append("last_name")
         model = UserModel
-        fields = ("pk", *extra_fields)
+        fields = ("pk", *extra_fields, "must_change_password")
         read_only_fields = ("email",)
+
+    def get_must_change_password(self, obj):
+        # Return False if no profile exists (shouldn't happen)
+        if hasattr(obj, "userprofile"):
+            return obj.userprofile.must_change_password
+        return False
 
 
 class TokenSerializer(serializers.ModelSerializer):
@@ -64,3 +73,11 @@ class CustomRegisterSerializer(RegisterSerializer):
         user.name = self.cleaned_data.get("name")
         user.save()
         return user
+
+
+class CustomPasswordChangeSerializer(PasswordChangeSerializer):
+    def save(self):
+        if hasattr(self.user, "userprofile"):
+            self.user.userprofile.must_change_password = False
+            self.user.userprofile.save()
+        return super().save()

@@ -99,11 +99,13 @@ import {
 } from '@/components/ui/form'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { changePasswordFormSchema } from '@/lib/validations'
+import { useAuthStore } from '@/stores/auth'
 
 const isSubmitting = ref(false)
 const generalError = ref<string | null>(null)
 const success = ref(false)
 const { toast } = useToast()
+const authStore = useAuthStore()
 
 const form = useForm({
   validationSchema: toTypedSchema(changePasswordFormSchema),
@@ -121,6 +123,7 @@ const handleSubmit = form.handleSubmit(async (values) => {
   try {
     await AuthService.changePassword(values.currentPassword, values.newPassword)
     success.value = true
+    authStore.setMustChangePasswordFalse()
     toast({
       title: 'Success',
       description: 'Your password has been changed successfully.',

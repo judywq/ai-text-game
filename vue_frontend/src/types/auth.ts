@@ -4,6 +4,7 @@ export interface User {
   email: string;
   first_name: string | null;
   last_name: string | null;
+  must_change_password: boolean;
 }
 
 export interface AuthState {

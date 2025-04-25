@@ -131,6 +131,14 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // Call this after a successful password change
+    setMustChangePasswordFalse() {
+      if (this.user) {
+        this.user.must_change_password = false;
+        this.saveState();
+      }
+    },
+
     saveState() {
       localStorage.setItem('authState', JSON.stringify({
         user: this.user,
