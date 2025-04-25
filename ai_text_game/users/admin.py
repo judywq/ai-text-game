@@ -47,8 +47,8 @@ class UserAdmin(auth_admin.UserAdmin):
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["username", "name", "is_superuser"]
-    search_fields = ["name"]
+    list_display = ["id", "username", "email", "name", "is_superuser", "date_joined"]
+    search_fields = ["name", "email"]
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Disable the default add user button"""
