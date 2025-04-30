@@ -385,9 +385,6 @@ class StoryProgress(TimestampedBase):
     chosen_option_text = models.TextField(blank=True)
     is_end_point = models.BooleanField(default=False)
 
-    class Meta:
-        ordering = ["created_at"]
-
     @property
     def is_fulfilled(self):
         """Check if the progress entry is fulfilled (has a chosen option)"""
@@ -427,9 +424,6 @@ class StoryOption(TimestampedBase):
     )
     option_id = models.CharField(max_length=50)
     option_name = models.TextField()
-
-    class Meta:
-        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.option_id}: {self.option_name}"
@@ -478,7 +472,6 @@ class GameStory(CreatableBase, TimestampedBase):
     )
 
     class Meta:
-        ordering = ["-updated_at"]
         verbose_name_plural = "Game stories"
 
     def __str__(self):
