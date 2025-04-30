@@ -14,14 +14,22 @@ class MyFakeListChatModel(FakeListChatModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.delay = kwargs.get("delay", settings.FAKE_LLM_DELAY)
-        self.sleep = 0.02
+        self.sleep = 0.002
 
     def _call(self, *args, **kwargs):
+        response = self.responses[self.i]
+        if "error" in response:
+            msg = "Fake error"
+            raise ValueError(msg)
         if self.delay > 0:
             time.sleep(self.delay)
         return super()._call(*args, **kwargs)
 
     async def _astream(self, *args, **kwargs):
+        response = self.responses[self.i]
+        if "error" in response:
+            msg = "Fake error"
+            raise ValueError(msg)
         if self.delay > 0:
             await asyncio.sleep(self.delay)
         async for chunk in super()._astream(*args, **kwargs):
@@ -32,7 +40,8 @@ def get_fake_llm_model(name):
     if name == "skeleton":
         return MyFakeListChatModel(responses=[json.dumps(skeleton_json)])
     if name == "continuation":
-        return MyFakeListChatModel(responses=["This is a continuation of the story."])
+        # Add "error" in the response to test the error handling
+        return MyFakeListChatModel(responses=["This is a continuation of the story"])
     if name == "ending":
         return MyFakeListChatModel(responses=["This is the ending of the story."])
     if name == "text_explanation":

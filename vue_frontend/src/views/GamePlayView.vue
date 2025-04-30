@@ -197,11 +197,16 @@ async function fetchLookupHistory() {
   }
 }
 
+async function fetchStoryAndProgress() {
+  const storyId = parseInt(route.params.id as string)
+  story.value = await GameService.getStory(storyId)
+  progressEntries.value = await GameService.getStoryProgress(storyId)
+}
+
 const loadStory = async () => {
   try {
     const storyId = parseInt(route.params.id as string)
-    story.value = await GameService.getStory(storyId)
-    progressEntries.value = await GameService.getStoryProgress(storyId)
+    await fetchStoryAndProgress()
 
     // Connect WebSocket and wait for connection
     await connect(storyId)
@@ -222,12 +227,14 @@ const loadStory = async () => {
     })
 
     // Start story if no progress exists
-    if (progressEntries.value.length === 0 && story.value.status === 'INIT') {
+    if (progressEntries.value.length === 0 && story.value?.status === 'INIT') {
       await startStory(storyId)
     }
 
     // Add error handler
-    onError.value = (error: Error) => {
+    onError.value = async (error: Error) => {
+      await fetchStoryAndProgress()
+
       toast({
         title: 'WebSocket Error',
         description: error.message,
@@ -267,7 +274,7 @@ const handleOptionSelect = async (optionId: string) => {
   } catch (error: any) {
     toast({
       title: 'Error',
-      description: 'Failed to select option',
+      description: error.message || 'Failed to select option',
       variant: 'destructive',
     })
   } finally {

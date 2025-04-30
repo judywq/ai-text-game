@@ -454,42 +454,77 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def update_story_progress(self, story):
         """Create the next progress entry."""
-        # Get current story state
-        state = await database_sync_to_async(lambda: story.story_state)()
+        try:
+            # Get current story state
+            state = await database_sync_to_async(lambda: story.story_state)()
 
-        # Add chosen decisions if they exist
-        if hasattr(story, "progress_entries"):
-            chosen_decisions = await database_sync_to_async(
-                lambda: [
-                    entry.chosen_option_id
-                    for entry in story.progress_entries.all()
-                    if entry.chosen_option_id
-                ],
-            )()
-            if chosen_decisions:
-                state["chosen_decisions"] = chosen_decisions
+            # Add chosen decisions if they exist
+            if hasattr(story, "progress_entries"):
+                chosen_decisions = await database_sync_to_async(
+                    lambda: [
+                        entry.chosen_option_id
+                        for entry in story.progress_entries.all()
+                        if entry.chosen_option_id
+                    ],
+                )()
+                if chosen_decisions:
+                    state["chosen_decisions"] = chosen_decisions
 
-        # Run the graph
-        async for mode, chunk in self.story_graph.astream(
-            state,
-            self.story_thread,
-            stream_mode=["messages", "values"],
-        ):
-            if mode == "messages":
-                msg, metadata = chunk
-                await self.send(
-                    text_data=json.dumps(
-                        {"type": "story_update", "content": msg.content},
-                    ),
-                )
-            elif mode == "values":
-                new_state = chunk
+            # Run the graph
+            new_state = None
 
-        # Save progress
-        await self.save_story_progress(story, new_state)
+            async for mode, chunk in self.story_graph.astream(
+                state,
+                self.story_thread,
+                stream_mode=["messages", "values"],
+            ):
+                if mode == "messages":
+                    msg, metadata = chunk
+                    await self.send(
+                        text_data=json.dumps(
+                            {"type": "story_update", "content": msg.content},
+                        ),
+                    )
+                elif mode == "values":
+                    new_state = chunk
 
-        # Send response to client
-        await self.send_decision_point(new_state)
+            if new_state is None:
+                msg = "Failed to generate story content, please try again later"
+                raise ValueError(msg)  # noqa: TRY301
+
+            # Save progress
+            await self.save_story_progress(story, new_state)
+
+            # Send response to client
+            await self.send_decision_point(new_state)
+
+        except Exception as e:
+            await self.revert_user_choice(story)
+            logger.exception("Error in update_story_progress")
+            await self.send_error(
+                "Failed to generate story content, please try again later: %s",
+                e,
+            )
+
+    @database_sync_to_async
+    def revert_user_choice(self, story):
+        """Revert the user's choice when story generation fails"""
+        from .models import StoryProgress
+
+        # Get the latest progress
+        latest_progress = (
+            StoryProgress.objects.filter(
+                story=story,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+        if latest_progress:
+            # Clear the chosen option
+            latest_progress.chosen_option_id = ""
+            latest_progress.chosen_option_text = ""
+            latest_progress.save()
 
     async def skeleton_generation_progress(self, event):
         """Handle skeleton generation progress."""
