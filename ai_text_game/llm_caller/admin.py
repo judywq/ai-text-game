@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.template.defaultfilters import truncatechars
+from django.utils.html import format_html
 
 from .models import APIKey
 from .models import GameScenario
@@ -171,7 +172,7 @@ class GameScenarioAdmin(admin.ModelAdmin):
 class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "title",
+        "title_link",
         "created_by",
         "genre",
         "cefr_level",
@@ -183,6 +184,11 @@ class GameStoryAdmin(admin.ModelAdmin):
     ]
     list_filter = ["status", "genre", "created_by"]
     search_fields = ["title", "created_by__username"]
+
+    @admin.display(description="Title", ordering="title")
+    def title_link(self, obj):
+        url = f"/game/{obj.id}/"
+        return format_html('<a href="{}" target="_blank">{}</a>', url, obj.title)
 
     @admin.display(description="Scene Text", ordering="scene_text")
     def get_scene_text(self, obj):

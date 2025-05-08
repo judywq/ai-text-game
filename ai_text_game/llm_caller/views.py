@@ -66,7 +66,14 @@ class GameStoryViewSet(viewsets.ModelViewSet):
     content_negotiation_class = IgnoreClientContentNegotiation
 
     def get_queryset(self):
-        queryset = GameStory.objects.filter(created_by=self.request.user)
+        user = self.request.user
+        if user.is_staff or user.is_superuser:
+            # TODO: This is a temporary solution to allow admin to view all stories
+            # The admin will be able to view all stories in recent stories list and
+            # cannot distinguish between their own and others' stories
+            queryset = GameStory.objects.all()
+        else:
+            queryset = GameStory.objects.filter(created_by=user)
         return queryset.order_by("-created_at")
 
     def perform_create(self, serializer):
