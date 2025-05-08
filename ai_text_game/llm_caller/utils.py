@@ -1,14 +1,18 @@
 import re
 from datetime import timedelta
+from io import BytesIO
 from pathlib import Path
 
+import pandas as pd
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils import timezone
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
 from langchain_deepseek import ChatDeepSeek
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from .fake_llms import get_fake_llm_model
 
@@ -106,3 +110,38 @@ def think_tag_parser(ai_message: AIMessage | str) -> str:
         )
         return ai_message
     return re.sub(think_tag_pattern, "", ai_message, flags=re.DOTALL)
+
+
+def format_datetime(datetime_obj: timezone.datetime) -> str:
+    """
+    Formats a datetime object to a string in the local timezone.
+    """
+    return timezone.localtime(datetime_obj).strftime("%Y-%m-%d %H:%M:%S %Z")
+
+
+def illegal_char_remover(data):
+    """Remove ILLEGAL CHARACTER."""
+    if isinstance(data, str):
+        return ILLEGAL_CHARACTERS_RE.sub("", data)
+    return data
+
+
+def generate_excel_response(rows, filename):
+    """
+    Generate an Excel response from a list of rows.
+    """
+    df_data = pd.DataFrame(rows)
+    df_data = df_data.applymap(illegal_char_remover)
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df_data.to_excel(writer, index=False)
+
+    now = timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    filename = f"{filename}_{now}.xlsx"
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response

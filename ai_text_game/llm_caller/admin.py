@@ -11,6 +11,8 @@ from .models import QuotaConfig
 from .models import StoryProgress
 from .models import StorySkeleton
 from .models import TextExplanation
+from .utils import format_datetime
+from .utils import generate_excel_response
 
 
 @admin.register(QuotaConfig)
@@ -213,6 +215,53 @@ class TextExplanationAdmin(admin.ModelAdmin):
     ]
     list_filter = ["created_by", "story", "model"]
     search_fields = ["selected_text", "explanation"]
+
+    actions = ["export_as_excel"]
+
+    # Define field mapping for export
+    export_field_mapping = [
+        ("id", "Explanation ID"),
+        ("created_by__username", "Username"),
+        ("created_by__email", "Email"),
+        ("created_by__name", "Name"),
+        ("selected_text", "Selected Text"),
+        ("context_text", "Context Text"),
+        ("explanation", "Explanation"),
+        ("created_at", "Created At"),
+        ("error", "Error"),
+        ("model__name", "LLM Model for Explanation"),
+        ("story__id", "Story ID"),
+        ("story__status", "Story Status"),
+        ("story__title", "Story Title"),
+        ("story__genre", "Story Genre"),
+        ("story__cefr_level", "Story CEFR Level"),
+        ("story__scene_text", "Story Scene Text"),
+        ("story__details", "Story Details"),
+    ]
+
+    @admin.action(description="Export selected requests as Excel")
+    def export_as_excel(self, request, queryset):
+        rows = []
+        # Write data rows
+        for obj in queryset:
+            row = {}
+            for field, header in self.export_field_mapping:
+                value = obj
+                for attr in field.split("__"):
+                    value = getattr(value, attr, None)
+                    if value is None:
+                        break
+
+                # Format the value if it's a datetime field
+                if (
+                    field in ["created_at", "started_at", "ended_at"]
+                    and value is not None
+                ):
+                    value = format_datetime(value)
+
+                row.update({header: value})
+            rows.append(row)
+        return generate_excel_response(rows, "TextExplanations")
 
 
 @admin.register(StorySkeleton)
