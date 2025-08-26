@@ -588,6 +588,11 @@ INIT_LLM_CONFIGS = {
         "template": "story_skeleton_generation_prompt.txt",
         "temperature": 0.7,
     },
+    "story_skeleton_generation_demo": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "template": "story_skeleton_generation_prompt_demo.txt",
+        "temperature": 0.7,
+    },
     "story_continuation": {
         "model": "gpt-4o-mini-2024-07-18",
         "template": "story_continuation_prompt.txt",

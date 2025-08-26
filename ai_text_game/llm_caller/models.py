@@ -124,10 +124,15 @@ class QuotaConfig(TimestampedBase):
 class LLMConfig(TimestampedBase):
     PURPOSE_CHOICES = [
         ("scene_generation", "Scene Generation"),
+        ("scene_generation_demo", "Scene Generation (Demo)"),
         ("text_explanation", "Text Explanation"),
+        ("text_explanation_demo", "Text Explanation (Demo)"),
         ("story_skeleton_generation", "Story Skeleton Generation"),
+        ("story_skeleton_generation_demo", "Story Skeleton Generation (Demo)"),
         ("story_continuation", "Story Continuation"),
+        ("story_continuation_demo", "Story Continuation (Demo)"),
         ("story_ending", "Story Ending"),
+        ("story_ending_demo", "Story Ending (Demo)"),
     ]
 
     purpose = models.CharField(
@@ -222,6 +227,36 @@ class LLMConfig(TimestampedBase):
                 f"Please create one in the admin panel."
             )
             raise ValueError(msg) from None
+
+    @classmethod
+    def get_active_config_with_demo_fallback(
+        cls,
+        purpose: Literal[
+            "scene_generation",
+            "adventure_gameplay",
+            "text_explanation",
+            "story_skeleton_generation",
+            "story_continuation",
+            "story_ending",
+        ],
+        is_demo: bool = False,  # noqa: FBT001, FBT002
+    ):
+        """Get the active config for the given purpose, with demo fallback.
+
+        If is_demo is True, tries to get a demo config first, then falls back to normal.
+        If is_demo is False, gets the normal config.
+        """
+        if is_demo:
+            # Try to get demo config first
+            try:
+                demo_purpose = f"{purpose}_demo"
+                return cls.objects.get(purpose=demo_purpose, is_active=True)
+            except cls.DoesNotExist:
+                # Fall back to normal config
+                pass
+
+        # Get normal config
+        return cls.get_active_config(purpose=purpose)
 
     def get_prompt_template(self):
         """Get a ChatPromptTemplate for this config."""

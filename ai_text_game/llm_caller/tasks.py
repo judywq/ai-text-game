@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True)
-def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  # noqa: PLR0915
+def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  # noqa: C901, PLR0915
     """Generate story skeleton in background."""
     skeleton = None
     try:
@@ -44,8 +44,16 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
                 status="GENERATING",
             )
 
+        # Check if user is demo account
+        is_demo = False
+        if story.created_by and hasattr(story.created_by, "userprofile"):
+            is_demo = story.created_by.userprofile.is_demo_account
+
         # Get LLM config and model
-        config = LLMConfig.get_active_config(purpose="story_skeleton_generation")
+        config = LLMConfig.get_active_config_with_demo_fallback(
+            purpose="story_skeleton_generation",
+            is_demo=is_demo,
+        )
         key = APIKey.get_available_key(model_name=config.model.name)
 
         # Create chain

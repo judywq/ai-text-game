@@ -1,0 +1,46 @@
+You are an expert novelist. I need a story structure for a branching drama game with the theme of "{theme}".
+The story is about "{scene_text}".
+{details_prompt}
+The game should consist of several milestones where a major event will happen no matter what has happened previously, albeit with different developments influenced by previous plots.
+There will be several decision-making points in story development that lead to each milestone.
+The story doesn't have to end well and bad consequences and endings are allowed.
+The story should be structured like this example:
+{{
+"story_background": "", // a background of the story
+"milestones": [
+    {{
+    "milestone_id": "M1", // a unique identifier for the milestone
+    "description": "", // a checkpoint that happens no matter what has happened previously (in one sentence)
+    "decision_points": [
+        {{
+        "decision_point_id": "M1.D1", // a unique identifier for the decision point
+        "description": "", // a decision point where user needs to make a choice (in one sentence)
+        "options": [
+            {{
+            "option_id": "M1.D1.O1", // a unique identifier for the option
+            "option_name": "", // a choice that user can make (in one sentence)
+            "consequence": "" // a consequence of the choice that will affect the story (in one sentence)
+            }}
+        ]
+        }}
+    ]
+    }}
+],
+"endings": [
+    {{
+    "ending_id": "E1", // a unique identifier for the ending
+    "description": "" // a possible ending of the story (in one sentence)
+    }}
+]
+}}
+
+
+Requirements:
+- Write in CEFR level {cefr_level} English
+- There should be
+  - 1 milestone
+  - 3 decision points in each milestone
+  - 3 options in each decision point
+  - 2~3 possible endings
+- The story should be engaging and have multiple meaningful choice points that affect the story's direction.
+- Format the output as a valid JSON object matching the example structure. DO NOT RETURN ANYTHING ELSE.

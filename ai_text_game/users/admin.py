@@ -48,8 +48,26 @@ class UserAdmin(auth_admin.UserAdmin):
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
-    list_display = ["id", "username", "email", "name", "is_superuser", "date_joined"]
+    list_display = [
+        "id",
+        "username",
+        "email",
+        "name",
+        "is_superuser",
+        "is_demo_account",
+        "date_joined",
+    ]
     search_fields = ["name", "email"]
+
+    @admin.display(
+        description="Demo Account",
+        boolean=True,
+    )
+    def is_demo_account(self, obj):
+        """Show whether the user is a demo account"""
+        if hasattr(obj, "userprofile"):
+            return obj.userprofile.is_demo_account
+        return False
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Disable the default add user button"""
@@ -159,5 +177,7 @@ class UserAdmin(auth_admin.UserAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ["id", "user", "must_change_password"]
+    list_display = ["id", "user", "must_change_password", "is_demo_account"]
+    list_filter = ["is_demo_account", "must_change_password"]
     search_fields = ["user__name", "user__email"]
+    fields = ["user", "must_change_password", "is_demo_account"]

@@ -235,7 +235,15 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def create_text_explanation(self, story, selected_text, context_text):
-        active_config = LLMConfig.get_active_config(purpose="text_explanation")
+        # Check if user is demo account
+        is_demo = False
+        if story.created_by and hasattr(story.created_by, "userprofile"):
+            is_demo = story.created_by.userprofile.is_demo_account
+
+        active_config = LLMConfig.get_active_config_with_demo_fallback(
+            purpose="text_explanation",
+            is_demo=is_demo,
+        )
 
         return TextExplanation.objects.create(
             story=story,
@@ -254,9 +262,14 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def process_explanation(self, story, explanation):
         try:
+            # Check if user is demo account
+            is_demo = False
+            if story.created_by and hasattr(story.created_by, "userprofile"):
+                is_demo = story.created_by.userprofile.is_demo_account
+
             active_config = await database_sync_to_async(
-                LLMConfig.get_active_config,
-            )(purpose="text_explanation")
+                LLMConfig.get_active_config_with_demo_fallback,
+            )(purpose="text_explanation", is_demo=is_demo)
 
             config_data = await self.get_config_model_name(active_config)
             model_name = config_data["model_name"]
@@ -362,8 +375,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             "ending": "story_ending",
         }
 
+        # Check if user is demo account
+        is_demo = False
+        if hasattr(self, "story_id"):
+            try:
+                story = GameStory.objects.get(id=self.story_id)
+                if story.created_by and hasattr(story.created_by, "userprofile"):
+                    is_demo = story.created_by.userprofile.is_demo_account
+            except (GameStory.DoesNotExist, AttributeError):
+                pass
+
         for name, purpose in name_to_purpose.items():
-            config = LLMConfig.get_active_config(purpose=purpose)
+            config = LLMConfig.get_active_config_with_demo_fallback(
+                purpose=purpose,
+                is_demo=is_demo,
+            )
             prompt = ChatPromptTemplate.from_template(config.system_prompt)
             model_name = config.model.name
             key = APIKey.get_available_key(model_name)

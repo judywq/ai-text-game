@@ -131,7 +131,15 @@ class GameSceneGeneratorView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        active_config = LLMConfig.get_active_config(purpose="scene_generation")
+        # Check if user is demo account
+        is_demo = False
+        if hasattr(request.user, "userprofile"):
+            is_demo = request.user.userprofile.is_demo_account
+
+        active_config = LLMConfig.get_active_config_with_demo_fallback(
+            purpose="scene_generation",
+            is_demo=is_demo,
+        )
 
         # Format the details prompt
         details_prompt = (
@@ -198,7 +206,15 @@ class GameSceneGeneratorStreamView(APIView):
             f"\n* Additional details of the story: {details}" if details else ""
         )
 
-        active_config = LLMConfig.get_active_config(purpose="scene_generation")
+        # Check if user is demo account
+        is_demo = False
+        if hasattr(request.user, "userprofile"):
+            is_demo = request.user.userprofile.is_demo_account
+
+        active_config = LLMConfig.get_active_config_with_demo_fallback(
+            purpose="scene_generation",
+            is_demo=is_demo,
+        )
         key = APIKey.get_available_key(model_name=active_config.model.name)
         prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
         json_parser = JsonOutputParser()

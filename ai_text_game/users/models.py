@@ -23,6 +23,10 @@ class User(AbstractUser):
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     must_change_password = models.BooleanField(default=False)
+    is_demo_account = models.BooleanField(
+        default=False,
+        help_text="Whether this is a demo account that should use demo prompts",
+    )
 
     def __str__(self) -> str:
         return f"{self.user.name} ({self.user.email})"
