@@ -38,4 +38,4 @@ channels-redis==4.2.1  # https://github.com/django/channels_redis/
 
 # Debug
 # ------------------------------------------------------------------------------
-debugpy==1.8.11  # https://github.com/microsoft/debugpy
+debugpy==1.8.17  # https://github.com/microsoft/debugpy
