@@ -603,6 +603,11 @@ INIT_LLM_CONFIGS = {
         "template": "story_ending_prompt.txt",
         "temperature": 0.7,
     },
+    "story_summary": {
+        "model": "claude-3-7-sonnet-20250219",
+        "template": "story_summary_prompt.txt",
+        "temperature": 0.3,
+    },
     # "cefr_check": {
     #     "model": "gpt-4o-mini-2024-07-18",
     #     "template": "cefr_check_prompt.txt",

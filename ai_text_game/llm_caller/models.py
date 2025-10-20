@@ -133,6 +133,7 @@ class LLMConfig(TimestampedBase):
         ("story_continuation_demo", "Story Continuation (Demo)"),
         ("story_ending", "Story Ending"),
         ("story_ending_demo", "Story Ending (Demo)"),
+        ("story_summary", "Story Summary"),
     ]
 
     purpose = models.CharField(
@@ -415,6 +416,7 @@ class StoryProgress(TimestampedBase):
         related_name="progress_entries",
     )
     content = models.TextField()
+    summary = models.TextField(blank=True)
     decision_point_id = models.CharField(max_length=50, blank=True)
     chosen_option_id = models.CharField(max_length=50, blank=True)
     chosen_option_text = models.TextField(blank=True)
@@ -595,7 +597,10 @@ class GameStory(CreatableBase, TimestampedBase):
             if hasattr(self, "skeleton")
             else None,
             "current_decision_point": self.get_current_decision_point(),
-            "story_progress": [entry.content for entry in progress_entries],
+            "story_progress": [
+                {"content": entry.content, "summary": entry.summary}
+                for entry in progress_entries
+            ],
             "chosen_decisions": [
                 entry.chosen_option_id
                 for entry in progress_entries

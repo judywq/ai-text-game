@@ -171,6 +171,39 @@ class StoryGraph:
                 "status": "COMPLETED",
             }
 
+    async def summarize_segment(
+        self,
+        story_segment: str,
+        player_decision: str,
+        cefr_level: str,
+    ) -> str:
+        """Summarize a story segment and player decision.
+
+        Args:
+            story_segment: The story text to summarize
+            player_decision: The player's choice text
+            cefr_level: The CEFR level of the story
+
+        Returns:
+            A condensed summary of the segment and decision
+        """
+        logger.info("Summarizing story segment")
+        try:
+            params = {
+                "story_segment": story_segment,
+                "player_decision": player_decision,
+                "cefr_level": cefr_level,
+            }
+
+            chain = self.llm_models["summary"] | self.string_parser
+            summary = await chain.ainvoke(params)
+
+        except Exception:
+            logger.exception("Error summarizing story segment")
+            raise
+        else:
+            return summary
+
     @staticmethod
     def decide_continue_or_end(state: StoryState) -> str:
         """Decide whether to continue the story or generate an ending."""
@@ -230,7 +263,10 @@ def format_decision_option(decision_option: DecisionOption) -> str:
 
 
 def format_progress_with_decisions(state: dict) -> str:
-    """Format story progress with decisions for prompt context."""
+    """Format story progress with decisions for prompt context.
+
+    Uses summaries if available, otherwise falls back to full content.
+    """
     story_progress = state["story_progress"]
     if len(story_progress) <= 0:
         return ""
@@ -238,7 +274,14 @@ def format_progress_with_decisions(state: dict) -> str:
     decisions = state["chosen_decisions"]
     formatted_progress = ""
     for i, progress in enumerate(story_progress):
-        formatted_progress += f"{progress}\n"
+        # Use summary if available, otherwise use full content
+        if progress.get("summary"):
+            text = progress["summary"]
+        else:
+            text = progress["content"]
+            logger.info(f"Using full content for progress entry {i} (summary not available)")
+
+        formatted_progress += f"{text}\n"
 
         if i < len(decisions):
             decision = decisions[i]
