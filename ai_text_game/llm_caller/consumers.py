@@ -159,6 +159,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Update the story progress with chosen option
             await self.handle_user_selection(story, option_id, option_text)
 
+            # Summarize the segment and decision
+            await self.summarize_latest_progress(story)
+
             await self.update_story_progress(story)
 
         except ValueError as e:
@@ -373,6 +376,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             "skeleton": "story_skeleton_generation",
             "continuation": "story_continuation",
             "ending": "story_ending",
+            "summary": "story_summary",
         }
 
         # Check if user is demo account
@@ -477,6 +481,34 @@ class GameConsumer(AsyncWebsocketConsumer):
         if latest_progress:
             # Update with chosen option
             latest_progress.set_chosen_option(option_id, option_text)
+
+    async def summarize_latest_progress(self, story):
+        """Generate and store summary of the latest progress entry."""
+        from .models import StoryProgress
+
+        # Get the latest progress entry
+        latest_progress = await database_sync_to_async(
+            lambda: StoryProgress.objects.filter(story=story)
+            .order_by("-created_at")
+            .first()
+        )()
+
+        if not latest_progress or not latest_progress.chosen_option_text:
+            return
+
+        # Generate summary using the story graph
+        summary = await self.story_graph.summarize_segment(
+            story_segment=latest_progress.content,
+            player_decision=latest_progress.chosen_option_text,
+            cefr_level=story.cefr_level,
+        )
+
+        # Store the summary
+        await database_sync_to_async(
+            lambda: StoryProgress.objects.filter(id=latest_progress.id).update(
+                summary=summary
+            )
+        )()
 
     async def update_story_progress(self, story):
         """Create the next progress entry."""
