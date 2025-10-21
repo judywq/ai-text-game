@@ -279,7 +279,10 @@ def format_progress_with_decisions(state: dict) -> str:
             text = progress["summary"]
         else:
             text = progress["content"]
-            logger.info(f"Using full content for progress entry {i} (summary not available)")
+            logger.info(
+                "Using full content for progress entry %s (summary not available)",
+                i,
+            )
 
         formatted_progress += f"{text}\n"
 

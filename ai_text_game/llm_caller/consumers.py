@@ -490,7 +490,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         latest_progress = await database_sync_to_async(
             lambda: StoryProgress.objects.filter(story=story)
             .order_by("-created_at")
-            .first()
+            .first(),
         )()
 
         if not latest_progress or not latest_progress.chosen_option_text:
@@ -506,8 +506,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         # Store the summary
         await database_sync_to_async(
             lambda: StoryProgress.objects.filter(id=latest_progress.id).update(
-                summary=summary
-            )
+                summary=summary,
+            ),
         )()
 
     async def update_story_progress(self, story):
