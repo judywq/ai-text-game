@@ -1,4 +1,4 @@
-FROM docker.io/traefik:3.2.1
+FROM docker.io/traefik:3.5.4
 
 # Get the IS_STAGING environment variable in the docker compose file
 ARG IS_STAGING="false"
