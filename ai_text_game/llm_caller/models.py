@@ -21,6 +21,7 @@ LLM_TYPE_CHOICES = [
     ("anthropic", "Anthropic"),
     ("groq", "Groq"),
     ("deepseek", "DeepSeek"),
+    ("gemini", "Gemini"),
     ("custom", "Custom"),
 ]
 
@@ -134,6 +135,8 @@ class LLMConfig(TimestampedBase):
         ("story_ending", "Story Ending"),
         ("story_ending_demo", "Story Ending (Demo)"),
         ("story_summary", "Story Summary"),
+        ("image_generation", "Image Generation"),
+        ("image_generation_demo", "Image Generation (Demo)"),
     ]
 
     purpose = models.CharField(
@@ -388,6 +391,7 @@ class StorySkeleton(TimestampedBase):
     )
     background = models.TextField(blank=True)
     raw_data = models.JSONField(blank=True, default=dict)
+    stock_images = models.JSONField(blank=True, default=list)
     status = models.CharField(
         max_length=20,
         choices=[
@@ -417,6 +421,7 @@ class StoryProgress(TimestampedBase):
     )
     content = models.TextField()
     summary = models.TextField(blank=True)
+    image_url = models.CharField(max_length=500, blank=True)
     decision_point_id = models.CharField(max_length=50, blank=True)
     chosen_option_id = models.CharField(max_length=50, blank=True)
     chosen_option_text = models.TextField(blank=True)

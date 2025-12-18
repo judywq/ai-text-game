@@ -64,18 +64,77 @@ const showHistoryPanel = ref(false)
 // Add a new ref for the current streaming content
 const currentStreamingContent = ref('')
 
-// Add this watch after the ref declarations
+// Track which entries are ready to display (after refetch completes)
+const isContentReady = ref<{ [entryIndex: number]: boolean }>({})
+
+// Track paragraph index by entry ID
+const currentParagraphIndex = ref<{ [entryId: number]: number }>({})
+
+// Split content into paragraphs
+function splitIntoParagraphs(content: string): string[] {
+  console.log('=== RAW CONTENT BEFORE SPLITTING ===')
+  console.log(content)
+  console.log('=== CONTENT WITH VISIBLE NEWLINES ===')
+  console.log(JSON.stringify(content))
+
+  const paragraphs = content.split(/\n\n+/).filter(p => p.trim().length > 0)
+
+  console.log('=== SPLIT PARAGRAPHS ===')
+  paragraphs.forEach((p, i) => {
+    console.log(`Paragraph ${i}:`, JSON.stringify(p))
+  })
+
+  return paragraphs
+}
+
+// Handle proceeding to next paragraph
+function proceedToNextParagraph(entryId: number) {
+  const currentIndex = currentParagraphIndex.value[entryId] || 0
+  currentParagraphIndex.value[entryId] = currentIndex + 1
+  // Scroll smoothly to show the newly revealed paragraph
+  setTimeout(() => {
+    if (scrollRef.value) {
+      const newParagraph = scrollRef.value.querySelector(`[data-entry-id="${entryId}"]`)?.lastElementChild
+      if (newParagraph) {
+        newParagraph.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    }
+  }, 100)
+}
+
+// Check if all paragraphs are displayed for an entry
+function allParagraphsDisplayed(entry: StoryProgress): boolean {
+  const paragraphs = splitIntoParagraphs(entry.content)
+  const currentIndex = currentParagraphIndex.value[entry.id] || 0
+  return currentIndex >= paragraphs.length - 1
+}
+
+// Watch progressEntries to update options visibility
 watch(progressEntries, (entries) => {
   if (entries.length > 0) {
     const lastEntry = entries[entries.length - 1]
-    // Only show options if there's no chosen option yet
-    if (!lastEntry.chosen_option_text) {
+    const lastEntryIndex = entries.length - 1
+    // Only show options if content is ready, no chosen option, and all paragraphs displayed
+    if (isContentReady.value[lastEntryIndex] && !lastEntry.chosen_option_text && allParagraphsDisplayed(lastEntry)) {
       currentOptions.value = lastEntry.options || []
     } else {
       currentOptions.value = []
     }
   } else {
     currentOptions.value = []
+  }
+}, { deep: true })
+
+// Watch currentParagraphIndex to update options visibility
+watch(currentParagraphIndex, () => {
+  if (progressEntries.value.length > 0) {
+    const lastEntry = progressEntries.value[progressEntries.value.length - 1]
+    const lastEntryIndex = progressEntries.value.length - 1
+    if (isContentReady.value[lastEntryIndex] && !lastEntry.chosen_option_text && allParagraphsDisplayed(lastEntry)) {
+      currentOptions.value = lastEntry.options || []
+    } else {
+      currentOptions.value = []
+    }
   }
 }, { deep: true })
 
@@ -201,6 +260,11 @@ async function fetchStoryAndProgress() {
   const storyId = parseInt(route.params.id as string)
   story.value = await GameService.getStory(storyId)
   progressEntries.value = await GameService.getStoryProgress(storyId)
+
+  // Mark all existing entries as ready to display
+  progressEntries.value.forEach((_, index) => {
+    isContentReady.value[index] = true
+  })
 }
 
 const loadStory = async () => {
@@ -320,7 +384,7 @@ onMounted(async () => {
     }
 
     // Modify the existing story update handler to handle the final state
-    onStoryUpdate.value = (update: any) => {
+    onStoryUpdate.value = async (update: any) => {
       // Reset the streaming content for the next story segment
       currentStreamingContent.value = ''
 
@@ -331,14 +395,24 @@ onMounted(async () => {
         // Update the decision point and options
         latestEntry.decision_point_id = update.current_decision || ''
         latestEntry.options = update.options || []
-
-        // Update current options for the UI
-        currentOptions.value = update.options || []
       }
 
       // Update story status if provided
       if (update.status && story.value) {
         story.value.status = update.status
+      }
+
+      // Fetch updated progress entries to get image_url
+      if (story.value) {
+        try {
+          progressEntries.value = await GameService.getStoryProgress(story.value.id)
+
+          // Mark the latest entry as ready to display after refetch completes
+          const lastEntryIndex = progressEntries.value.length - 1
+          isContentReady.value[lastEntryIndex] = true
+        } catch (error) {
+          console.error('Failed to refresh progress entries', error)
+        }
       }
 
       scrollToBottom()
@@ -430,9 +504,30 @@ function scrollToBottom() {
             </div>
 
             <!-- Existing progress entries display -->
-            <div v-else v-for="entry in progressEntries" :key="entry.id" class="space-y-2">
-              <div class="prose dark:prose-invert">
-                <div v-html="marked(entry.content)" />
+            <div v-else v-for="(entry, entryIndex) in progressEntries" :key="entry.id" class="space-y-2">
+              <!-- Show loading state while content is being received/fetched -->
+              <div v-if="!isContentReady[entryIndex]" class="flex flex-col items-center justify-center h-[100px] space-y-2">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
+                <p class="text-sm text-muted-foreground">Generating story...</p>
+              </div>
+
+              <!-- Display content paragraph-by-paragraph after ready -->
+              <div v-else class="prose dark:prose-invert" :data-entry-id="entry.id">
+                <!-- Show image -->
+                <img v-if="entry.image_url" :src="entry.image_url" :alt="'Story illustration'" class="w-full rounded-lg mb-4" />
+
+                <!-- Display paragraphs incrementally -->
+                <template v-for="(paragraph, index) in splitIntoParagraphs(entry.content)" :key="`${entry.id}-p-${index}`">
+                  <div v-if="index <= (currentParagraphIndex[entry.id] || 0)" v-html="marked(paragraph)" />
+                </template>
+
+                <!-- Proceed button between paragraphs -->
+                <div v-if="(currentParagraphIndex[entry.id] || 0) < splitIntoParagraphs(entry.content).length - 1" class="my-4">
+                  <Button @click="proceedToNextParagraph(entry.id)" variant="outline" class="w-full">
+                    Proceed
+                  </Button>
+                </div>
+
                 <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-2">
                   You chose: {{ entry.chosen_option_text }}
                 </div>

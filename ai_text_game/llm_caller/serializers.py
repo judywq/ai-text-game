@@ -95,6 +95,7 @@ class StoryProgressSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "content",
+            "image_url",
             "decision_point_id",
             "chosen_option_id",
             "chosen_option_text",
