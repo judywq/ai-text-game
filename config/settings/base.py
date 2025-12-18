@@ -793,6 +793,8 @@ INIT_API_KEYS = [
     },
 ]
 
+GEMINI_API_KEY = env.str("GEMINI_API_KEY", default="")
+
 FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
 # FAKE_LLM_REQUEST = False
 # FAKE_LLM_REQUEST = True

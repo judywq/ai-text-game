@@ -10,6 +10,7 @@ export interface GameScenario {
 export interface StoryProgress {
   id: number
   content: string
+  image_url?: string
   decision_point_id: string
   chosen_option_id: string
   chosen_option_text: string

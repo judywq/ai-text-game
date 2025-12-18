@@ -1,8 +1,11 @@
 # ruff: noqa: E501, PERF401
 import logging
 from collections.abc import AsyncIterator
+from io import BytesIO
 from typing import TypedDict
 
+import requests
+from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers.json import JsonOutputParser
 from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.runnables import Runnable
@@ -10,6 +13,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END
 from langgraph.graph import START
 from langgraph.graph import StateGraph
+from PIL import Image
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +56,7 @@ class StoryState(TypedDict):
     cefr_level: str
     story_text: str
     status: str
+    previous_images: list[str]
 
 
 class StoryGraph:
@@ -129,9 +134,52 @@ class StoryGraph:
                 "decision_point": formatted_decision_point,
             }
 
-            # Generate continuation
-            chain = self.llm_models["continuation"] | self.string_parser
-            story_segment = await chain.ainvoke(params)
+            # Load previous images for multimodal context
+            previous_images = state.get("previous_images", [])
+            if previous_images:
+                # Create message with images and text
+                message_content = []
+                for img_url in previous_images:
+                    try:
+                        # Extract path from URL and load from filesystem
+                        # img_url format: http://localhost:8000/media/images/story_X_progress_Y.png
+                        if "/media/" in img_url:
+                            from django.conf import settings
+                            import os
+                            import base64
+                            # Get the path after /media/
+                            media_path = img_url.split("/media/")[-1]
+                            full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+
+                            # Read image as base64 for Gemini
+                            with open(full_path, "rb") as img_file:
+                                image_data = base64.b64encode(img_file.read()).decode("utf-8")
+
+                            message_content.append({
+                                "type": "image_url",
+                                "image_url": f"data:image/png;base64,{image_data}"
+                            })
+                        else:
+                            # Fallback to HTTP request
+                            response = requests.get(img_url, timeout=10)
+                            if response.status_code == 200:
+                                image = Image.open(BytesIO(response.content))
+                                message_content.append({"type": "image", "image": image})
+                    except Exception:
+                        logger.warning("Failed to load image %s", img_url)
+
+                # Add text prompt
+                prompt_text = self.llm_models["continuation"].first.format(**params)
+                message_content.append({"type": "text", "text": prompt_text})
+
+                # Invoke with multimodal message
+                message = HumanMessage(content=message_content)
+                story_segment = await self.llm_models["continuation"].last.ainvoke([message])
+                story_segment = story_segment.content
+            else:
+                # No images, use standard text-only flow
+                chain = self.llm_models["continuation"] | self.string_parser
+                story_segment = await chain.ainvoke(params)
 
         except Exception:
             logger.exception("Error generating story delta")
@@ -158,9 +206,52 @@ class StoryGraph:
                 "cefr_level": state["cefr_level"],
             }
 
-            # Generate ending
-            chain = self.llm_models["ending"] | self.string_parser
-            ending = await chain.ainvoke(variables)
+            # Load previous images for multimodal context
+            previous_images = state.get("previous_images", [])
+            if previous_images:
+                # Create message with images and text
+                message_content = []
+                for img_url in previous_images:
+                    try:
+                        # Extract path from URL and load from filesystem
+                        # img_url format: http://localhost:8000/media/images/story_X_progress_Y.png
+                        if "/media/" in img_url:
+                            from django.conf import settings
+                            import os
+                            import base64
+                            # Get the path after /media/
+                            media_path = img_url.split("/media/")[-1]
+                            full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+
+                            # Read image as base64 for Gemini
+                            with open(full_path, "rb") as img_file:
+                                image_data = base64.b64encode(img_file.read()).decode("utf-8")
+
+                            message_content.append({
+                                "type": "image_url",
+                                "image_url": f"data:image/png;base64,{image_data}"
+                            })
+                        else:
+                            # Fallback to HTTP request
+                            response = requests.get(img_url, timeout=10)
+                            if response.status_code == 200:
+                                image = Image.open(BytesIO(response.content))
+                                message_content.append({"type": "image", "image": image})
+                    except Exception:
+                        logger.warning("Failed to load image %s", img_url)
+
+                # Add text prompt
+                prompt_text = self.llm_models["ending"].first.format(**variables)
+                message_content.append({"type": "text", "text": prompt_text})
+
+                # Invoke with multimodal message
+                message = HumanMessage(content=message_content)
+                ending = await self.llm_models["ending"].last.ainvoke([message])
+                ending = ending.content
+            else:
+                # No images, use standard text-only flow
+                chain = self.llm_models["ending"] | self.string_parser
+                ending = await chain.ainvoke(variables)
 
         except Exception:
             logger.exception("Error generating story ending")
