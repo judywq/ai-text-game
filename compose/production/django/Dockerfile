@@ -46,6 +46,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   gettext \
   # entrypoint
   wait-for-it \
+  # gosu for user switching
+  gosu \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
@@ -59,7 +61,7 @@ RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
 
 
-COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
+COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
@@ -93,10 +95,10 @@ RUN mkdir -p /app/staticfiles && \
     chown -R django:django /app/staticfiles && \
     chmod 755 /app/staticfiles
 
-USER django
+# Note: We don't set USER django here - the entrypoint will handle user switching
+# after fixing permissions on mounted volumes
 
-RUN DATABASE_URL="" \
-  DJANGO_SETTINGS_MODULE="config.settings.test" \
-  python manage.py compilemessages
+# Compile messages as django user using gosu
+RUN gosu django bash -c "DATABASE_URL=\"\" DJANGO_SETTINGS_MODULE=\"config.settings.test\" python manage.py compilemessages"
 
 ENTRYPOINT ["/entrypoint"]
