@@ -90,7 +90,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 return
 
             initial_state = {
-                "theme": story.genre,
+                "genre": story.genre,
                 "cefr_level": story.cefr_level,
                 "scene_text": story.scene_text,
                 "details_prompt": "",

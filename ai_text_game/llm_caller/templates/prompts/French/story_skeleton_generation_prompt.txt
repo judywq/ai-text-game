@@ -5,7 +5,7 @@ You are narrative designer for an interactive story game. Your task is to create
 # Story Parameters
 
 **Audience:** Children aged 8-9 learning French
-**Genre:** {theme}
+**Genre:** {genre}
 **Story Context:** The story is about "{scene_text}".
 
 {details_prompt}
