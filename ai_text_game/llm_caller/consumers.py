@@ -240,7 +240,10 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
         except RuntimeError:
             # Connection already closed, log the error instead
-            logger.error("Cannot send error message, connection closed: %s", error_message)
+            logger.exception(
+                "Cannot send error message, connection closed: %s",
+                error_message,
+            )
 
     @database_sync_to_async
     def create_text_explanation(self, story, selected_text, context_text):
@@ -434,24 +437,26 @@ class GameConsumer(AsyncWebsocketConsumer):
                     StoryProgress.objects.filter(story=story, image_url__isnull=False)
                     .exclude(id=progress.id)
                     .order_by("created_at")
-                    .values_list("image_url", flat=True)
-                )
+                    .values_list("image_url", flat=True),
+                ),
             )()
 
             # Get image generation config
             image_config = await database_sync_to_async(
-                LLMConfig.get_active_config_with_demo_fallback
+                LLMConfig.get_active_config_with_demo_fallback,
             )(purpose="image_generation", is_demo=False)
 
-            image_model_name = await database_sync_to_async(lambda: image_config.model.name)()
+            image_model_name = await database_sync_to_async(
+                lambda: image_config.model.name,
+            )()
             image_api_key = await database_sync_to_async(
-                lambda: APIKey.get_available_key(image_model_name)
+                lambda: APIKey.get_available_key(image_model_name),
             )()
 
             # Generate image for this segment
             image_prompt = await database_sync_to_async(generate_story_image_prompt)(
                 story_text=story_text,
-                has_reference_images=bool(previous_images)
+                has_reference_images=bool(previous_images),
             )
             image_url = await database_sync_to_async(generate_image_with_gemini)(
                 prompt=image_prompt,
@@ -460,7 +465,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 progress_id=progress.id,
                 reference_image_urls=previous_images if previous_images else None,
                 api_key=image_api_key.key if image_api_key else None,
-                model_name=image_model_name
+                model_name=image_model_name,
             )
 
             if image_url:
@@ -484,14 +489,17 @@ class GameConsumer(AsyncWebsocketConsumer):
         options = []
         current_decision_point_id = state.get("current_decision_point")
         if current_decision_point_id:
-            skeleton = state["story_skeleton"]
+            skeleton = state.get("story_skeleton", {})
             options = []
 
             # Find the current decision point and its options
-            for milestone in skeleton["milestones"]:
+            for milestone in skeleton.get("milestones", []):
                 for decision_point in milestone.get("decision_points", []):
-                    if decision_point["decision_point_id"] == current_decision_point_id:
-                        return decision_point["options"]
+                    if (
+                        decision_point.get("decision_point_id")
+                        == current_decision_point_id
+                    ):
+                        return decision_point.get("options", [])
         return options
 
     async def send_decision_point(self, state):
@@ -511,7 +519,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
         except RuntimeError:
             # Connection already closed
-            logger.error("Cannot send decision point, connection closed")
+            logger.exception("Cannot send decision point, connection closed")
 
     @database_sync_to_async
     def handle_user_selection(self, story, option_id, option_text):
@@ -582,8 +590,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 lambda: list(
                     story.progress_entries.filter(image_url__isnull=False)
                     .order_by("created_at")
-                    .values_list("image_url", flat=True)
-                )
+                    .values_list("image_url", flat=True),
+                ),
             )()
             if previous_images:
                 state["previous_images"] = previous_images
@@ -620,7 +628,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.revert_user_choice(story)
             logger.exception("Error in update_story_progress")
             await self.send_error(
-                f"Failed to generate story content, please try again later: {e}"
+                f"Failed to generate story content, please try again later: {e}",
             )
 
     @database_sync_to_async
