@@ -562,6 +562,14 @@ INIT_LLM_MODELS = [
         "is_active": True,
         "order": 160,
     },
+    {
+        "llm_type": "gemini",
+        "name": "gemini-2.5-flash-image",
+        "display_name": "Gemini 2.5 Flash Image",
+        "is_default": False,
+        "is_active": True,
+        "order": 200,
+    },
 ]
 
 PROMPT_LANGUAGE_CODE = env.str("PROMPT_LANGUAGE_CODE", default="English")
@@ -603,6 +611,11 @@ INIT_LLM_CONFIGS = {
         "model": "claude-3-7-sonnet-20250219",
         "template": "story_summary_prompt.txt",
         "temperature": 0.3,
+    },
+    "image_generation": {
+        "model": "gemini-2.5-flash-image",
+        "template": "image_generation_prompt.txt",
+        "temperature": 0.7,
     },
 }
 
@@ -781,6 +794,11 @@ INIT_API_KEYS = [
         "name": "DeepSeek",
         "llm_type": "deepseek",
         "key": env.str("DEEPSEEK_API_KEY", default=""),
+    },
+    {
+        "name": "Gemini",
+        "llm_type": "gemini",
+        "key": env.str("GEMINI_API_KEY", default=""),
     },
 ]
 
