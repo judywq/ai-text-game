@@ -5,6 +5,7 @@ from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
+import requests
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -23,6 +24,9 @@ from PIL import Image
 from .fake_llms import get_fake_llm_model
 
 logger = logging.getLogger(__name__)
+
+# Constants
+HTTP_OK = 200
 
 
 def get_today_date_range():
@@ -161,7 +165,11 @@ def generate_excel_response(rows, filename):
     return response
 
 
-def generate_story_image_prompt(story_text: str, has_reference_images: bool = False) -> str:
+def generate_story_image_prompt(
+    story_text: str,
+    *,
+    has_reference_images: bool = False,
+) -> str:
     """Generate image prompt for Gemini based on story content.
 
     Args:
@@ -173,13 +181,19 @@ def generate_story_image_prompt(story_text: str, has_reference_images: bool = Fa
     """
     if has_reference_images:
         return (
-            f"Create an image for this story segment, maintaining consistent character appearance and art style from the reference images provided. Do not include ANY of the options texts, or choices in the image: {story_text}"
-            f""
+            "Create an image for this story segment, maintaining consistent "
+            "character appearance and art style from the reference images provided. "
+            "Do not include ANY of the options texts, or choices in the image: "
+            f"{story_text}"
         )
-    return f"Create an image capturing the key story elements and scene. Do not include ANY of the options texts, or choices in the image: {story_text}"
+    return (
+        "Create an image capturing the key story elements and scene. "
+        "Do not include ANY of the options texts, or choices in the image: "
+        f"{story_text}"
+    )
 
 
-def generate_image_with_gemini(
+def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
     prompt: str,
     story_id: int,
     image_type: str = "progress",
@@ -215,32 +229,34 @@ def generate_image_with_gemini(
 
         # Add all reference images if provided
         if reference_image_urls:
-            import requests
             for ref_url in reference_image_urls:
                 try:
                     # Extract path from URL and load from filesystem
                     if "/media/" in ref_url:
-                        import os
                         # Get the path after /media/
                         media_path = ref_url.split("/media/")[-1]
-                        full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+                        full_path = Path(settings.MEDIA_ROOT) / media_path
                         ref_image = Image.open(full_path)
                         contents.append(ref_image)
                     else:
                         # Fallback to HTTP request
                         response = requests.get(ref_url, timeout=10)
-                        if response.status_code == 200:
+                        if response.status_code == HTTP_OK:
                             ref_image = Image.open(BytesIO(response.content))
                             contents.append(ref_image)
-                except Exception:
-                    logger.warning("Failed to load reference image %s, skipping", ref_url)
+                except (OSError, requests.RequestException) as e:
+                    logger.warning(
+                        "Failed to load reference image %s, skipping: %s",
+                        ref_url,
+                        e,
+                    )
 
         # Add prompt after images
         contents.append(prompt)
 
         response = client.models.generate_content(
             model=model_name,
-            contents=contents
+            contents=contents,
         )
 
         # Extract image data from response
@@ -261,7 +277,7 @@ def generate_image_with_gemini(
 
                 path = default_storage.save(
                     f"images/{filename}",
-                    ContentFile(img_buffer.read())
+                    ContentFile(img_buffer.read()),
                 )
 
                 # Get the full URL for the image
@@ -273,9 +289,10 @@ def generate_image_with_gemini(
                 logger.info("Generated image: %s (full URL: %s)", path, full_url)
                 return full_url
 
-        logger.warning("No image data in Gemini response")
-        return ""
-
     except Exception:
         logger.exception("Error generating image with Gemini")
+        return ""
+
+    else:
+        logger.warning("No image data in Gemini response")
         return ""
