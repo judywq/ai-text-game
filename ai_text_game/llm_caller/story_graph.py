@@ -171,7 +171,9 @@ class StoryGraph:
                             message_content.append(
                                 {
                                     "type": "image_url",
-                                    "image_url": f"data:image/png;base64,{image_data}",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{image_data}",
+                                    },
                                 },
                             )
                         else:
@@ -259,7 +261,9 @@ class StoryGraph:
                             message_content.append(
                                 {
                                     "type": "image_url",
-                                    "image_url": f"data:image/png;base64,{image_data}",
+                                    "image_url": {
+                                        "url": f"data:image/png;base64,{image_data}",
+                                    },
                                 },
                             )
                         else:
