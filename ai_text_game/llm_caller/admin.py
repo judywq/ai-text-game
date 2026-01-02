@@ -284,11 +284,18 @@ class StorySkeletonAdmin(admin.ModelAdmin):
 class StoryOptionInline(admin.TabularInline):
     model = StoryOption
     extra = 0
+    can_delete = False
     fields = ["option_id", "option_name", "created_at"]
-    readonly_fields = ["created_at"]
+    readonly_fields = ["option_id", "option_name", "created_at"]
     ordering = ["option_id"]
     verbose_name = "Story Option"
     verbose_name_plural = "Story Options"
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(StoryProgress)
