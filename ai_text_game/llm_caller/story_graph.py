@@ -1,7 +1,10 @@
 # ruff: noqa: E501, PERF401
+import asyncio
+import base64
 import logging
 from collections.abc import AsyncIterator
 from io import BytesIO
+from pathlib import Path
 from typing import TypedDict
 
 import requests
@@ -16,6 +19,9 @@ from langgraph.graph import StateGraph
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+# HTTP status code constants
+HTTP_STATUS_OK = 200
 
 
 # Type definitions
@@ -97,7 +103,7 @@ class StoryGraph:
 
         return workflow.compile(checkpointer=InMemorySaver())
 
-    async def generate_story_delta(self, state: StoryState) -> StoryState:
+    async def generate_story_delta(self, state: StoryState) -> StoryState:  # noqa: C901
         """Generate the next story segment."""
         logger.info(
             "Generating story delta for %s",
@@ -145,28 +151,42 @@ class StoryGraph:
                         # img_url format: http://localhost:8000/media/images/story_X_progress_Y.png
                         if "/media/" in img_url:
                             from django.conf import settings
-                            import os
-                            import base64
+
                             # Get the path after /media/
                             media_path = img_url.split("/media/")[-1]
-                            full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+                            full_path = Path(settings.MEDIA_ROOT) / media_path
 
-                            # Read image as base64 for Gemini
-                            with open(full_path, "rb") as img_file:
-                                image_data = base64.b64encode(img_file.read()).decode("utf-8")
+                            # Read image as base64 for Gemini (async file read)
+                            def read_image_file(file_path: Path) -> str:
+                                with file_path.open("rb") as img_file:
+                                    return base64.b64encode(img_file.read()).decode(
+                                        "utf-8",
+                                    )
 
-                            message_content.append({
-                                "type": "image_url",
-                                "image_url": f"data:image/png;base64,{image_data}"
-                            })
+                            image_data = await asyncio.to_thread(
+                                read_image_file,
+                                full_path,
+                            )
+
+                            message_content.append(
+                                {
+                                    "type": "image_url",
+                                    "image_url": f"data:image/png;base64,{image_data}",
+                                },
+                            )
                         else:
-                            # Fallback to HTTP request
-                            response = requests.get(img_url, timeout=10)
-                            if response.status_code == 200:
+                            # Fallback to HTTP request (async HTTP call)
+                            def fetch_image(url: str) -> requests.Response:
+                                return requests.get(url, timeout=10)
+
+                            response = await asyncio.to_thread(fetch_image, img_url)
+                            if response.status_code == HTTP_STATUS_OK:
                                 image = Image.open(BytesIO(response.content))
-                                message_content.append({"type": "image", "image": image})
-                    except Exception:
-                        logger.warning("Failed to load image %s", img_url)
+                                message_content.append(
+                                    {"type": "image", "image": image},
+                                )
+                    except (OSError, requests.RequestException, ValueError) as e:
+                        logger.warning("Failed to load image %s: %s", img_url, e)
 
                 # Add text prompt
                 prompt_text = self.llm_models["continuation"].first.format(**params)
@@ -174,7 +194,9 @@ class StoryGraph:
 
                 # Invoke with multimodal message
                 message = HumanMessage(content=message_content)
-                story_segment = await self.llm_models["continuation"].last.ainvoke([message])
+                story_segment = await self.llm_models["continuation"].last.ainvoke(
+                    [message],
+                )
                 story_segment = story_segment.content
             else:
                 # No images, use standard text-only flow
@@ -217,28 +239,42 @@ class StoryGraph:
                         # img_url format: http://localhost:8000/media/images/story_X_progress_Y.png
                         if "/media/" in img_url:
                             from django.conf import settings
-                            import os
-                            import base64
+
                             # Get the path after /media/
                             media_path = img_url.split("/media/")[-1]
-                            full_path = os.path.join(settings.MEDIA_ROOT, media_path)
+                            full_path = Path(settings.MEDIA_ROOT) / media_path
 
-                            # Read image as base64 for Gemini
-                            with open(full_path, "rb") as img_file:
-                                image_data = base64.b64encode(img_file.read()).decode("utf-8")
+                            # Read image as base64 for Gemini (async file read)
+                            def read_image_file(file_path: Path) -> str:
+                                with file_path.open("rb") as img_file:
+                                    return base64.b64encode(img_file.read()).decode(
+                                        "utf-8",
+                                    )
 
-                            message_content.append({
-                                "type": "image_url",
-                                "image_url": f"data:image/png;base64,{image_data}"
-                            })
+                            image_data = await asyncio.to_thread(
+                                read_image_file,
+                                full_path,
+                            )
+
+                            message_content.append(
+                                {
+                                    "type": "image_url",
+                                    "image_url": f"data:image/png;base64,{image_data}",
+                                },
+                            )
                         else:
-                            # Fallback to HTTP request
-                            response = requests.get(img_url, timeout=10)
-                            if response.status_code == 200:
+                            # Fallback to HTTP request (async HTTP call)
+                            def fetch_image(url: str) -> requests.Response:
+                                return requests.get(url, timeout=10)
+
+                            response = await asyncio.to_thread(fetch_image, img_url)
+                            if response.status_code == HTTP_STATUS_OK:
                                 image = Image.open(BytesIO(response.content))
-                                message_content.append({"type": "image", "image": image})
-                    except Exception:
-                        logger.warning("Failed to load image %s", img_url)
+                                message_content.append(
+                                    {"type": "image", "image": image},
+                                )
+                    except (OSError, requests.RequestException, ValueError) as e:
+                        logger.warning("Failed to load image %s: %s", img_url, e)
 
                 # Add text prompt
                 prompt_text = self.llm_models["ending"].first.format(**variables)
