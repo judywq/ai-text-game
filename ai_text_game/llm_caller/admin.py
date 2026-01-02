@@ -8,6 +8,7 @@ from .models import GameStory
 from .models import LLMConfig
 from .models import LLMModel
 from .models import QuotaConfig
+from .models import StoryOption
 from .models import StoryProgress
 from .models import StorySkeleton
 from .models import TextExplanation
@@ -280,6 +281,16 @@ class StorySkeletonAdmin(admin.ModelAdmin):
         return obj.story.created_by
 
 
+class StoryOptionInline(admin.TabularInline):
+    model = StoryOption
+    extra = 0
+    fields = ["option_id", "option_name", "created_at"]
+    readonly_fields = ["created_at"]
+    ordering = ["option_id"]
+    verbose_name = "Story Option"
+    verbose_name_plural = "Story Options"
+
+
 @admin.register(StoryProgress)
 class StoryProgressAdmin(admin.ModelAdmin):
     list_display = [
@@ -292,6 +303,7 @@ class StoryProgressAdmin(admin.ModelAdmin):
     ]
     list_filter = ["story", "created_at"]
     search_fields = ["content"]
+    inlines = [StoryOptionInline]
 
     @admin.display(description="Content", ordering="content")
     def get_content(self, obj):
