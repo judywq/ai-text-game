@@ -44,7 +44,11 @@ def get_today_date_range():
 
 
 def read_prompt_template(template_filename):
-    template_path = f"ai_text_game/llm_caller/templates/prompts/{template_filename}"
+    lang = settings.PROMPT_LANGUAGE_CODE
+
+    template_path = (
+        f"ai_text_game/llm_caller/templates/prompts/{lang}/{template_filename}"
+    )
     try:
         with Path(template_path).open("r") as f:
             return f.read()
