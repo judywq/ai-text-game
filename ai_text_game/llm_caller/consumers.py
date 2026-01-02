@@ -94,6 +94,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "cefr_level": story.cefr_level,
                 "scene_text": story.scene_text,
                 "details_prompt": "",
+                "theme": story.theme or "",
             }
             if story.details:
                 initial_state["details_prompt"] = (

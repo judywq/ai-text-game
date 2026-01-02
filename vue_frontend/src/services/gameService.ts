@@ -14,7 +14,8 @@ export class GameService {
     genre: string,
     sceneText?: string,
     cefrLevel?: string,
-    details?: string
+    details?: string,
+    theme?: string
   ): Promise<GameStory> {
     const response = await api.post<GameStory>(
       '/game-stories/',
@@ -22,7 +23,8 @@ export class GameService {
         genre,
         scene_text: sceneText,
         cefr_level: cefrLevel,
-        details: details
+        details: details,
+        theme: theme
       }
     );
     return response.data;
@@ -48,7 +50,7 @@ export class GameService {
     return response.data;
   }
 
-  public static async generateScenes(genre: string, details?: string) {
+  public static async generateScenes(genre: string, details?: string, theme?: string) {
     const response = await api.post<{
       scenes: Array<{
         level: string;
@@ -56,19 +58,23 @@ export class GameService {
       }>;
     }>('/generate-scenes/', {
       genre,
-      details
+      details,
+      theme
     }, {
       timeout: 5 * 60 * 1000 // 5 minutes timeout
     });
     return response.data;
   }
 
-  public static async generateScenesStream(genre: string, details?: string): Promise<EnhancedEventSource> {
+  public static async generateScenesStream(genre: string, details?: string, theme?: string): Promise<EnhancedEventSource> {
     // Create URL with query parameters
     const params = new URLSearchParams();
     params.append('genre', genre);
     if (details) {
       params.append('details', details);
+    }
+    if (theme) {
+      params.append('theme', theme);
     }
 
     console.log('params', params.toString())

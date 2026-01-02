@@ -498,6 +498,10 @@ class GameStory(CreatableBase, TimestampedBase):
         blank=True,
         help_text="Additional details of the story (generated or user-provided)",
     )
+    theme = models.TextField(
+        blank=True,
+        help_text="Theme of the story (e.g., friendship, loyalty)",
+    )
     title = models.CharField(
         max_length=200,
         help_text="Title of the story (generated or user-provided)",

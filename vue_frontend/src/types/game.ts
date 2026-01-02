@@ -28,6 +28,7 @@ export interface GameStory {
   created_at: string
   updated_at: string
   progress?: StoryProgress[]
+  theme?: string
 }
 
 export interface GameStoryListResponse {

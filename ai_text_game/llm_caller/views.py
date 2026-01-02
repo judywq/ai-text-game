@@ -125,6 +125,7 @@ class GameSceneGeneratorView(APIView):
     def post(self, request):
         genre = request.data.get("genre")
         details = request.data.get("details")
+        theme = request.data.get("theme", "")
         if not genre:
             return Response(
                 {"error": "Genre is required"},
@@ -173,6 +174,7 @@ class GameSceneGeneratorView(APIView):
             response = chain.invoke(
                 {
                     "genre": genre,
+                    "theme": theme or "",
                     "details_prompt": details_prompt,
                 },
             )
@@ -194,6 +196,7 @@ class GameSceneGeneratorStreamView(APIView):
     def get(self, request):
         genre = request.GET.get("genre")
         details = request.GET.get("details")
+        theme = request.GET.get("theme", "")
 
         if not genre:
             return Response(
@@ -235,14 +238,14 @@ class GameSceneGeneratorStreamView(APIView):
 
         # Set up the response for SSE
         response = StreamingHttpResponse(
-            self.generate_scenes_stream(genre, details_prompt, chain),
+            self.generate_scenes_stream(genre, theme or "", details_prompt, chain),
             content_type="text/event-stream",
         )
         response["Cache-Control"] = "no-cache"
         response["X-Accel-Buffering"] = "no"
         return response
 
-    async def generate_scenes_stream(self, genre, details_prompt, chain):
+    async def generate_scenes_stream(self, genre, theme, details_prompt, chain):
         try:
             # Send initial event
             yield f"event: start\ndata: Starting scene generation for {genre}\n\n"
@@ -251,6 +254,7 @@ class GameSceneGeneratorStreamView(APIView):
             async for chunk in chain.astream(
                 {
                     "genre": genre,
+                    "theme": theme or "",
                     "details_prompt": details_prompt,
                 },
             ):

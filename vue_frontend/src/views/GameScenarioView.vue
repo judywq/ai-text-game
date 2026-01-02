@@ -30,6 +30,7 @@ const isGeneratingScenes = ref(false)
 const customGenre = ref('')
 const showCustomGenreInput = ref(false)
 const details = ref('')
+const theme = ref('')
 const recentGames = ref<GameStory[]>([])
 
 // Computed properties for genres and sub-genres
@@ -142,7 +143,7 @@ async function generateScenes() {
   scenes.value = [] // Clear existing scenes
 
   try {
-    const eventSource = await GameService.generateScenesStream(genreToUse, details.value)
+    const eventSource = await GameService.generateScenesStream(genreToUse, details.value, theme.value || undefined)
 
     // Handle individual scene events
     eventSource.addEventListener('scene', ((event: MessageEvent) => {
@@ -208,7 +209,8 @@ async function startGame(sceneText?: string, cefrLevel?: string, details?: strin
       genreToUse,
       sceneText,
       cefrLevel,
-      details
+      details,
+      theme.value || undefined
     )
     router.push(`/game/${story.id}`)
   } catch (error) {
@@ -252,6 +254,16 @@ const handleGameClick = (story: GameStory) => {
               <div v-if="showCustomGenreInput" class="mt-2">
                 <Input v-model="customGenre" placeholder="Enter your genre" />
               </div>
+            </div>
+
+            <!-- Add theme input -->
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Theme (Optional)</label>
+              <Input
+                v-model="theme"
+                placeholder="Enter theme (e.g., friendship, loyalty)"
+                maxlength="100"
+              />
             </div>
 
             <!-- Add details input -->
