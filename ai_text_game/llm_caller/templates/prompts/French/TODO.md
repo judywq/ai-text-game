@@ -1,3 +1,5 @@
 - [x] Rename theme to genre and add theme options in UI. in story_skeleton_generation_prompt.txt
 - [ ] Insert remaining story skeleton instead of the whole skeleton in story_continuation_prompt.txt
 - [ ] Use possible endings instead of story skeleton in story_ending_prompt.txt
+- [ ] Make a `_base` folder for all the languages, and put the base prompts in it.
+- [ ] Add a mechanism to save multiple languages at the same time, and let the user to choose which language to use.
