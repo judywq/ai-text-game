@@ -564,6 +564,7 @@ INIT_LLM_MODELS = [
     },
 ]
 
+PROMPT_LANGUAGE_CODE = env.str("PROMPT_LANGUAGE_CODE", default="English")
 
 # Init LLM Configs
 # ------------------------------------------------------------------------------
@@ -573,11 +574,6 @@ INIT_LLM_CONFIGS = {
         "template": "scene_generation_prompt.txt",
         "temperature": 0.7,
     },
-    # "adventure_gameplay": {
-    #     "model": "gpt-4o-mini-2024-07-18",
-    #     "template": "gameplay_prompt.txt",
-    #     "temperature": 0.7,
-    # },
     "text_explanation": {
         "model": "gpt-4o-mini-2024-07-18",
         "template": "text_explanation_prompt.txt",
@@ -608,11 +604,6 @@ INIT_LLM_CONFIGS = {
         "template": "story_summary_prompt.txt",
         "temperature": 0.3,
     },
-    # "cefr_check": {
-    #     "model": "gpt-4o-mini-2024-07-18",
-    #     "template": "cefr_check_prompt.txt",
-    #     "temperature": 0.3,
-    # },
 }
 
 # Init Game Genre
