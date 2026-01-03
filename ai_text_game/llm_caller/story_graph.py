@@ -126,7 +126,9 @@ class StoryGraph:
             formatted_progress = format_progress_with_decisions(state)
             if not formatted_progress:
                 formatted_progress = "(There is no progress yet: please start writing the story from the background)"
-            formatted_skeleton = format_story_skeleton(skeleton)
+            # Use only remaining skeleton parts instead of full skeleton
+            remaining_skeleton = get_remaining_skeleton(skeleton, state["current_decision_point"])
+            formatted_skeleton = format_story_skeleton(remaining_skeleton)
             formatted_milestone = format_milestone(milestone)
             formatted_decision_point = format_decision_point(decision_point)
 
@@ -223,9 +225,11 @@ class StoryGraph:
 
         try:
             # Format variables
+            # Use only endings for story ending (no milestones needed at this point)
+            remaining_skeleton = get_remaining_skeleton(state["story_skeleton"], state.get("current_decision_point", ""))
             variables = {
                 "decisions_made": format_decisions_made(state),
-                "skeleton": format_story_skeleton(state["story_skeleton"]),
+                "skeleton": format_story_skeleton(remaining_skeleton),
                 "progress": format_progress_with_decisions(state),
                 "cefr_level": state["cefr_level"],
             }
@@ -449,6 +453,58 @@ def format_decision_point(decision_point: DecisionPoint) -> str:
             [f"    - {option['option_name']}" for option in decision_point["options"]],
         )
     )
+
+
+def get_remaining_skeleton(skeleton: StorySkeleton, current_decision_point: str) -> StorySkeleton:
+    """Get only the remaining (future) parts of the skeleton.
+
+    Args:
+        skeleton: The full story skeleton
+        current_decision_point: The current decision point ID (e.g., "M1.D1")
+
+    Returns:
+        A skeleton containing only remaining milestones, decision points, and endings
+    """
+    if not current_decision_point:
+        # At ending, return only endings
+        return {
+            "story_background": skeleton["story_background"],
+            "milestones": [],
+            "endings": skeleton.get("endings", []),
+        }
+
+    remaining_milestones = []
+    current_m_id, current_d_id = get_m_d_id(current_decision_point)
+
+    for i, milestone in enumerate(skeleton.get("milestones", [])):
+        if not isinstance(milestone, dict):
+            logger.error(f"Milestone {i} is not a dict: {milestone}")
+            continue
+        if "milestone_id" not in milestone:
+            logger.error(f"Milestone {i} missing milestone_id: {milestone}")
+            continue
+        m_id = milestone["milestone_id"]
+
+        # Include milestones that come after current
+        if m_id > current_m_id:
+            remaining_milestones.append(milestone)
+        # For current milestone, include only remaining decision points
+        elif m_id == current_m_id:
+            remaining_decisions = [
+                dp for dp in milestone["decision_points"]
+                if dp["decision_point_id"] >= current_d_id
+            ]
+            if remaining_decisions:
+                remaining_milestones.append({
+                    **milestone,
+                    "decision_points": remaining_decisions,
+                })
+
+    return {
+        "story_background": skeleton["story_background"],
+        "milestones": remaining_milestones,
+        "endings": skeleton.get("endings", []),
+    }
 
 
 def format_story_skeleton(skeleton: StorySkeleton) -> str:

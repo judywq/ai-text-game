@@ -1,8 +1,8 @@
 - [x] Rename "theme" to "genre" and add "theme" options in UI. in story_skeleton_generation_prompt.txt
   - Previously, "theme" was used to indicate story genre such as detective, love story,etc. Now we introduce a more strict definition of genre, and in the French version, it is currently set to "fable". For "theme", it refers to "friendship", etc. 
-- [ ] Insert remaining story skeleton instead of the whole skeleton in story_continuation_prompt.txt
+- [x] Insert remaining story skeleton instead of the whole skeleton in story_continuation_prompt.txt
   - Previously we fed all the skeleton to story continuation. As the summary is added to this agent, we now feed the summary as "progress" and only the remaining part of the skeletion, i.e., remaining decision points, milestones and endings.
-- [ ] Use possible endings instead of story skeleton in story_ending_prompt.txt
+- [x] Use possible endings instead of story skeleton in story_ending_prompt.txt
   - Similar to the previous one, when it comes to endings generation, all milestones and decision points have been reached, and thus only the "progress" and the "endings" are fed to the ending generation agent.
 - [ ] Update picture generation agent.
   - For the picture generation agent, now that characters are added as parameters in the Skeleton generation agent, we could ask the picture generation agent to generate a base picture for each character. Then we feed the base picture of characters every time instead of all previous pictures (or plus a sample/previous picture? Your call)

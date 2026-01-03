@@ -57,7 +57,7 @@ The story should be structured like this example:
 "characters": [
     {{
     "character_id": "A",
-    "role": "protagontist | helper | obstacle | collective"
+    "role": "protagonist | helper | obstacle | collective"
     }}
 ],
 "milestones": [

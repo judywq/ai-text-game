@@ -260,7 +260,6 @@ async function fetchStoryAndProgress() {
   const storyId = parseInt(route.params.id as string)
   story.value = await GameService.getStory(storyId)
   progressEntries.value = await GameService.getStoryProgress(storyId)
-
   // Mark all existing entries as ready to display
   progressEntries.value.forEach((_, index) => {
     isContentReady.value[index] = true
@@ -356,6 +355,11 @@ onMounted(async () => {
   try {
     // Add handler for story streaming
     onStoryStream.value = (content: string) => {
+      // Ignore empty chunks from backend
+      if (!content || content.trim() === '') {
+        return
+      }
+
       // Create a new progress entry if this is the first chunk
       if (!currentStreamingContent.value) {
         progressEntries.value.push({
