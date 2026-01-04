@@ -304,6 +304,7 @@ class StoryProgressAdmin(admin.ModelAdmin):
         "id",
         "story",
         "get_content",
+        "get_image_preview",
         "decision_point_id",
         "chosen_option_id",
         "created_at",
@@ -311,7 +312,51 @@ class StoryProgressAdmin(admin.ModelAdmin):
     list_filter = ["story", "created_at"]
     search_fields = ["content"]
     inlines = [StoryOptionInline]
+    readonly_fields = ["image_display"]
+
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "story",
+                    "content",
+                    "summary",
+                    "image_display",
+                    "image_url",
+                    "decision_point_id",
+                    "chosen_option_id",
+                    "chosen_option_text",
+                    "is_end_point",
+                ),
+            },
+        ),
+    )
 
     @admin.display(description="Content", ordering="content")
     def get_content(self, obj):
         return truncatechars(obj.content, 50)
+
+    @admin.display(description="Image")
+    def get_image_preview(self, obj):
+        if obj.image_url:
+            return format_html(
+                (
+                    '<img src="{}" style="max-width: 100px;'
+                    'max-height: 100px; object-fit: contain;" />'
+                ),
+                obj.image_url,
+            )
+        return "-"
+
+    @admin.display(description="Image")
+    def image_display(self, obj):
+        if obj.image_url:
+            return format_html(
+                (
+                    '<img src="{}" style="max-width: 500px;'
+                    ' max-height: 500px; object-fit: contain;" />'
+                ),
+                obj.image_url,
+            )
+        return "No image available"
