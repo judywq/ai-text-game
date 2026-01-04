@@ -476,6 +476,14 @@ INIT_LLM_MODELS = [
     },
     {
         "llm_type": "openai",
+        "name": "gpt-5.2-2025-12-11",
+        "display_name": "GPT-5.2",
+        "is_default": False,
+        "is_active": True,
+        "order": 12,
+    },
+    {
+        "llm_type": "openai",
         "name": "o1-2024-12-17",
         "display_name": "o1",
         "is_default": False,
@@ -578,37 +586,37 @@ PROMPT_LANGUAGE_CODE = env.str("PROMPT_LANGUAGE_CODE", default="English")
 # ------------------------------------------------------------------------------
 INIT_LLM_CONFIGS = {
     "scene_generation": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "scene_generation_prompt.txt",
         "temperature": 0.7,
     },
     "text_explanation": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "text_explanation_prompt.txt",
         "temperature": 0.1,
     },
     "story_skeleton_generation": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "story_skeleton_generation_prompt.txt",
         "temperature": 0.7,
     },
     "story_skeleton_generation_demo": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "story_skeleton_generation_prompt_demo.txt",
         "temperature": 0.7,
     },
     "story_continuation": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "story_continuation_prompt.txt",
         "temperature": 0.7,
     },
     "story_ending": {
-        "model": "gpt-4o-mini-2024-07-18",
+        "model": "gpt-5.2-2025-12-11",
         "template": "story_ending_prompt.txt",
         "temperature": 0.7,
     },
     "story_summary": {
-        "model": "claude-3-7-sonnet-20250219",
+        "model": "gpt-5.2-2025-12-11",
         "template": "story_summary_prompt.txt",
         "temperature": 0.3,
     },
@@ -622,6 +630,11 @@ INIT_LLM_CONFIGS = {
 # Init Game Genre
 # ------------------------------------------------------------------------------
 INIT_GAME_GENRE = [
+    {
+        "category": "Genre",
+        "name": "Fable",
+        "example": "The Tortoise and the Hare",
+    },
     {
         "category": "Genre",
         "name": "Fantasy",
