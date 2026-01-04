@@ -19,6 +19,7 @@ from .utils import generate_excel_response
 @admin.register(QuotaConfig)
 class QuotaConfigAdmin(admin.ModelAdmin):
     list_display = ["id", "model", "daily_limit", "created_at", "updated_at"]
+    list_display_links = ["model"]
     list_filter = ["model"]
 
 
@@ -36,6 +37,7 @@ class LLMModelAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+    list_display_links = ["display_name"]
     list_filter = ["is_active", "is_default"]
     search_fields = ["name", "display_name"]
     ordering = ["order"]
@@ -75,6 +77,7 @@ class LLMConfigAdmin(admin.ModelAdmin):
         "is_active",
         "updated_at",
     ]
+    list_display_links = ["purpose"]
     list_filter = ["model"]
     actions = ["change_llm_model"]
 
@@ -142,6 +145,7 @@ class APIKeyAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+    list_display_links = ["name"]
     list_filter = ["is_active"]
     search_fields = ["name"]
     ordering = ["order"]
@@ -166,6 +170,7 @@ class GameScenarioAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+    list_display_links = ["name"]
     list_filter = ["is_active"]
     search_fields = ["name", "example"]
     ordering = ["order"]
@@ -175,7 +180,8 @@ class GameScenarioAdmin(admin.ModelAdmin):
 class GameStoryAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "title_link",
+        "title",
+        "game_link",
         "created_by",
         "genre",
         "cefr_level",
@@ -185,13 +191,14 @@ class GameStoryAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+    list_display_links = ["title"]
     list_filter = ["status", "genre", "created_by"]
     search_fields = ["title", "created_by__username"]
 
-    @admin.display(description="Title", ordering="title")
-    def title_link(self, obj):
+    @admin.display(description="Game Link")
+    def game_link(self, obj):
         url = f"/game/{obj.id}/"
-        return format_html('<a href="{}" target="_blank">{}</a>', url, obj.title)
+        return format_html('<a href="{}" target="_blank">View Game</a>', url)
 
     @admin.display(description="Scene Text", ordering="scene_text")
     def get_scene_text(self, obj):
@@ -206,14 +213,15 @@ class GameStoryAdmin(admin.ModelAdmin):
 class TextExplanationAdmin(admin.ModelAdmin):
     list_display = [
         "id",
-        "created_by",
-        "story",
-        "model",
         "selected_text",
         "context_text",
         "explanation",
+        "created_by",
+        "story",
+        "model",
         "created_at",
     ]
+    list_display_links = ["selected_text"]
     list_filter = ["created_by", "story", "model"]
     search_fields = ["selected_text", "explanation"]
 
@@ -275,6 +283,7 @@ class StorySkeletonAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     ]
+    list_display_links = ["story"]
 
     @admin.display(description="Created By")
     def get_created_by(self, obj):
@@ -309,6 +318,7 @@ class StoryProgressAdmin(admin.ModelAdmin):
         "chosen_option_id",
         "created_at",
     ]
+    list_display_links = ["story"]
     list_filter = ["story", "created_at"]
     search_fields = ["content"]
     inlines = [StoryOptionInline]
