@@ -56,7 +56,9 @@ The story should be structured like this example:
 "story_background": "", // a background of the story
 "characters": [
     {{
-    "character_id": "A",
+    "character_id": "", // a unique identifier for the character
+    "character_name": "", // a name for the character
+    "character_description": "", // a description of appearance and personality traits
     "role": "protagonist | helper | obstacle | collective"
     }}
 ],
