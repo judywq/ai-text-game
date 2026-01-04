@@ -16,4 +16,5 @@ You are a story summarization assistant. Your task is to create a concise summar
 - Use past tense
 - To avoid ambiguity, do not use personal pronouns to replace character names.
 - Keep the CEFR level: {cefr_level}
+- Ouput in French
 - Output only the summary text without any headings, labels, or formatting. Start directly with the summary content.
