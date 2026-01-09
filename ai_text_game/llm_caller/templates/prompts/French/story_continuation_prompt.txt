@@ -54,8 +54,8 @@ Example: Au cœur de la forêt, le petit garçon distingue une maison solitaire.
 - Reuse key verbs and nouns at least 3 times.
 - Repeat dialogue patterns
 - Keep the tone consistent
-- Write approximately 70-100 words
+- Write approximately 100-200 words
 - Start by describing the previous decision made by the user and the consequences of the decision. If the decision made is none yet, ignore this step.
-- Stop by asking the audience to make the Next Decision
+- Stop by asking the audience to make the Next Decision, but do not show the milestone and decision numbers.
 - Do not tell the audience the consequences of their decisions
 - Output only the new story segment, written in an engaging narrative style.

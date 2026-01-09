@@ -58,6 +58,7 @@ The story should be structured like this example:
     {{
     "character_id": "", // a unique identifier for the character
     "character_name": "", // a name for the character
+   "character_gender": "", female, male, no gender, others
     "character_description": "", // a description of appearance and personality traits
     "role": "protagonist | helper | obstacle | collective"
     }}
