@@ -185,20 +185,21 @@ def generate_story_image_prompt(
     """
     if has_reference_images:
         return (
-            "Create a NEW illustration for this story scene. "
-            "Use the reference images provided to maintain CONSISTENT character appearances "
-            "(same faces, clothing, colors, body types) and the same art style. "
-            "However, create a DIFFERENT scene showing the NEW story events described below. "
-            "The characters should be doing DIFFERENT actions in a DIFFERENT setting based on the new story text. "
-            "Style: Children's storybook illustration, colorful, engaging for ages 8-9. "
-            "Do NOT include any text, options, or choices in the image. "
+            "Create a NEW illustration for this story scene. Use the reference "
+            "images provided to maintain CONSISTENT character appearances (same "
+            "faces, colors, body types) and the same art style. However, create a "
+            "DIFFERENT scene showing the NEW story events described below. Do not "
+            "just copy the reference images. The characters should be doing DIFFERENT "
+            "actions in a DIFFERENT setting based on the new story text. Style: "
+            "Children's storybook illustration, colorful, engaging for ages 8-9. "
+            "Do NOT include any text, options, or choices in the image."
             f"\n\nNEW STORY SCENE TO ILLUSTRATE:\n{story_text}"
         )
     return (
-        "Create a children's storybook illustration for this story scene. "
-        "Style: Colorful, engaging, appropriate for ages 8-9, warm and inviting. "
-        "Show the characters and setting clearly. "
-        "Do NOT include any text, options, or choices in the image. "
+        "Create a children's storybook illustration for this story scene. Style: "
+        "Colorful, engaging, appropriate for ages 8-9, warm and inviting. Show the "
+        "characters and setting clearly. Do NOT include any text, options, or choices "
+        "in the image."
         f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
     )
 

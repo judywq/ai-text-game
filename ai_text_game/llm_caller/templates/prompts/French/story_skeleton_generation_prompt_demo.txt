@@ -5,8 +5,8 @@ You are narrative designer for an interactive story game. Your task is to create
 # Story Parameters
 
 **Audience:** Children aged 8-9 learning French
-**Genre:** {genre}
 **Theme:** {theme}
+**Genre:** {genre}
 **Story Context:** The story is about "{scene_text}".
 
 {details_prompt}
@@ -15,36 +15,34 @@ You are narrative designer for an interactive story game. Your task is to create
 
 The story should incorporate the following classic narrative elements:
 
-1. **Stable beginning**
-   - Example: "Il était une fois…"
-   - Known environment (maison, forêt, village)
+1. Stable beginning
+e.g., Known environment (maison, forêt, village)
 
-2. **Desire / problem**
-   - Example: Wanting something (go to the ball, eat, explore, help)
+2. Desire / problem
+e.g., Wanting something (go to the ball, eat, explore, help)
 
-3. **Obstacle**
-   - Example: Villain, rule, fatigue, danger, limitation
+3. Obstacle
+e.g., Villain, rule, fatigue, danger, limitation
 
-4. **Repeated attempts**
-   - Example: Often 3 times with increasing intensity
+4. Repeated attempts
+e.g., Often 3 times with increasing intensity
 
-5. **Resolution**
-   - Example: Help, cleverness, cooperation
+5. Resolution
+e.g., Help, cleverness, cooperation
 
-6. **Explicit moral**
-   - Example: Stated directly, not inferred
+6. Explicit moral
+e.g., Stated directly, not inferred
 
 # Character Design Patterns
 
-- **Protagonist:** Childlike, curious, imperfect
-- **Helper:** Animal, fairy, friend, object
-- **Obstacle:** Not morally complex
-- **Collective:** Group solves problem together
+- Protagonist: Childlike, curious, imperfect
+- Helper: Animal, fairy, friend, object
+- Obstacle: Not morally complex
+- Collective: Group solves problem together
 
 # Game Structure Requirements
 
 The game should consist of several milestones where a major event will happen no matter what has happened previously, albeit with different developments influenced by previous plots.
-
 There should be several decision-making points in story development that lead to each milestone.
 
 # Output Format
@@ -56,8 +54,11 @@ The story should be structured like this example:
 "story_background": "", // a background of the story
 "characters": [
     {{
-    "character_id": "A",
-    "role": "protagontist | helper | obstacle"
+    "character_id": "", // a unique identifier for the character
+    "character_name": "", // a name for the character
+    "character_gender": "", female, male, no gender, others
+    "character_description": "", // a description of appearance and personality traits
+    "role": "protagonist | helper | obstacle | collective"
     }}
 ],
 "milestones": [
@@ -90,10 +91,10 @@ The story should be structured like this example:
 
 # Requirements
 
-- Write in CEFR level {cefr_level} of the French language.
+- Write in level {cefr_level} in French
 - There should be:
   - 1 milestones
-  - 3 decision points in each milestone
+  - 2 decision points in each milestone
   - 3 options in each decision point
   - 2~3 possible endings
 - The story should be engaging and have multiple meaningful choice points that affect the story's direction.

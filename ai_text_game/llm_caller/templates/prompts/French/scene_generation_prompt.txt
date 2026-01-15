@@ -9,40 +9,37 @@ You are an educational storyteller in the French Language. Your task is to creat
 * Please plot a scene and phrase the exact same scene into A1, A2, B1, B2, C1 and C2 of CEFR, each with around 50 words.
 The following includes guidelines for interpreting CEFR in French
 
-# CEFR Level Guidelines
-A1:
-Description: Very short, independent sentences. One concrete action per sentence. Only high-frequency, concrete vocabulary. No connectors and no subordination.
-Example: Le petit garçon entre dans la forêt. Il voit une maison. Il a faim. Il frappe à la porte. Personne ne répond. Il entre.
+# Level Guidelines
+The following includes guidelines for interpreting the levels in French
 
-A2:
-Description: Short sentences with simple connectors such as 'et', 'puis', 'mais', and 'alors'. Actions remain concrete and clearly sequenced. Slight idea grouping is allowed.
-Example: Le petit garçon entre dans la forêt et voit une maison. Il a faim, alors il frappe à la porte. Mais personne ne répond. Puis il entre dans la maison.
+P2:
+description: Very short, sentences. One concrete action per sentence (no inferences). Only high-frequency, concrete vocabulary. Basic connectors,  basic coordination, basic subordination (= Short sentences with simple connectors such as 'et', 'puis', 'mais', and 'alors').
+example: Le petit garçon entre dans la forêt. Il voit une maison. Il a faim alors  il frappe à la porte. Personne ne répond mais il entre.
 
-B1:
-Description: Clear narration with simple subordination to express time or cause (e.g., 'quand', 'parce que', 'comme'). Limited description and explicit cause–effect relations.
-Example: Quand le petit garçon entre dans la forêt, il voit une petite maison. Comme il a faim, il frappe à la porte. Personne ne répond, alors il décide d’entrer.
+P3:
+description: Clear narration with simple subordination to express time or cause (e.g., 'quand', 'parce que', 'comme'). Limited description and explicit cause–effect relations. Actions remain mostly concrete and clearly sequenced. Slight pragmatic inferences are allowed. Slight idea grouping is allowed.
+example: Quand le petit garçon entre dans la forêt, il voit une petite maison. Comme il a faim, il frappe à la porte. Personne ne répond, alors il décide d’entrer.
 
-B2:
-Description: More compact and precise language. Use of participial structures and more varied vocabulary. No new events compared to lower levels.
-Example: En entrant dans la forêt, le petit garçon aperçoit une petite maison isolée. Il frappe à la porte parce qu’il a faim, mais personne ne répond. Après un moment, il décide d’entrer.
+P4:
+description: More compact and precise language. Use of participial structures and more varied vocabulary. No new events compared to lower levels.
+example: En entrant dans la forêt, le petit garçon aperçoit une petite maison isolée. Il frappe à la porte parce qu’il a faim, mais personne ne répond. Après un moment, il décide d’entrer.
 
-C1:
-Description: More nuanced and fluent narrative style. Introduction of light abstract nouns (e.g., silence, hesitation) while keeping the same actions and avoiding symbolism.
-Example: Alors qu’il traverse la forêt, le petit garçon remarque une maison isolée. La faim le pousse à frapper à la porte, mais le silence lui répond. Après une courte hésitation, il choisit d’entrer.
+P5.6:
+description: More nuanced and fluent narrative style. Introduction of light abstract nouns (e.g., silence, hesitation) while keeping the same actions and avoiding symbolism.
+example: En entrant dans la forêt, le petit garçon aperçoit une petite maison isolée. Il frappe à la porte parce qu’il a faim, mais personne ne répond. Après un moment, il décide d’entrer.
 
-C2:
-Description: Highly condensed, literary language with dense vocabulary. Stylistic reformulation of the same actions using light metaphor, without adding narrative content.
-Example: Au cœur de la forêt, le petit garçon distingue une maison solitaire. La faim, plus forte que la prudence, l’incite à frapper à la porte. Face à l’absence de réponse, il franchit le seuil.
+S:
+description: Highly condensed, literary language with dense vocabulary. Stylistic reformulation of the same actions using light metaphor, without adding narrative content.
+example: Au cœur de la forêt, le petit garçon distingue une maison solitaire. La faim, plus forte que la prudence, l’incite à frapper à la porte. Face à l’absence de réponse, il franchit le seuil.
 
 # Output format
 Respond with a valid JSON object, and NOTHING ELSE, in the following format:
 {{
     "scenes": [
-        {{"level": "A1", "text": "text 1"}},
-        {{"level": "A2", "text": "text 2"}},
-        {{"level": "B1", "text": "text 3"}},
-        {{"level": "B2", "text": "text 4"}},
-        {{"level": "C1", "text": "text 5"}},
-        {{"level": "C2", "text": "text 6"}}
+        {{"level": "P2", "text": "text 1"}},
+        {{"level": "P3", "text": "text 2"}},
+        {{"level": "P4", "text": "text 3"}},
+        {{"level": "P5.6", "text": "text 4"}},
+        {{"level": "S", "text": "text 5"}}
     ]
 }}
