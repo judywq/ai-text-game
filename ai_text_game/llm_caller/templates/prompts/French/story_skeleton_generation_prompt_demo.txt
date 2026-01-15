@@ -91,7 +91,7 @@ The story should be structured like this example:
 
 # Requirements
 
-- Write in level {cefr_level} in French
+- Write in level {language_level} in French
 - There should be:
   - 1 milestones
   - 2 decision points in each milestone

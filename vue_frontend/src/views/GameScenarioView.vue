@@ -191,7 +191,7 @@ async function generateScenes() {
 }
 
 // Modify the startGame function to use custom genre when appropriate
-async function startGame(sceneText?: string, cefrLevel?: string, details?: string) {
+async function startGame(sceneText?: string, languageLevel?: string, details?: string) {
   const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
 
   if (!genreToUse) {
@@ -208,7 +208,7 @@ async function startGame(sceneText?: string, cefrLevel?: string, details?: strin
     const story = await GameService.createStory(
       genreToUse,
       sceneText,
-      cefrLevel,
+      languageLevel,
       details,
       theme.value || undefined
     )

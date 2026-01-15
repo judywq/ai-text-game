@@ -184,7 +184,7 @@ class GameStoryAdmin(admin.ModelAdmin):
         "game_link",
         "created_by",
         "genre",
-        "cefr_level",
+        "language_level",
         "get_scene_text",
         "get_details",
         "status",
@@ -243,7 +243,7 @@ class TextExplanationAdmin(admin.ModelAdmin):
         ("story__status", "Story Status"),
         ("story__title", "Story Title"),
         ("story__genre", "Story Genre"),
-        ("story__cefr_level", "Story CEFR Level"),
+        ("story__language_level", "Story Language Level"),
         ("story__scene_text", "Story Scene Text"),
         ("story__details", "Story Details"),
     ]

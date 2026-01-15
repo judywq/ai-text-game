@@ -48,7 +48,7 @@ example: Au cœur de la forêt, le petit garçon distingue une maison solitaire.
 
 - The audience is 8-9 year old students learning French
 - Always use past tenses, such as simple past, past continuous and past perfect.
-- Write in level {cefr_level} in French
+- Write in level {language_level} in French
 - Reuse key verbs and nouns at least 3 times.
 - Repeat dialogue patterns
 - Keep the tone consistent

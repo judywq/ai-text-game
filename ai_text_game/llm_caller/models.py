@@ -192,11 +192,11 @@ class LLMConfig(TimestampedBase):
         elif self.purpose == "adventure_gameplay":
             if (
                 "{genre}" not in self.system_prompt
-                or "{cefr_level}" not in self.system_prompt
+                or "{language_level}" not in self.system_prompt
             ):
                 msg = (
                     "Adventure gameplay prompt must include {genre}"
-                    " and {cefr_level} placeholders"
+                    " and {language_level} placeholders"
                 )
                 raise ValidationError(msg)
         elif self.purpose == "text_explanation":
@@ -472,23 +472,13 @@ class StoryOption(TimestampedBase):
 
 
 class GameStory(CreatableBase, TimestampedBase):
-    CEFR_CHOICES = [
-        ("A1", "A1"),
-        ("A2", "A2"),
-        ("B1", "B1"),
-        ("B2", "B2"),
-        ("C1", "C1"),
-        ("C2", "C2"),
-    ]
     genre = models.CharField(
         max_length=100,
         help_text="Genre of the story (e.g., Fantasy, Sci-Fi)",
     )
-    cefr_level = models.CharField(
+    language_level = models.CharField(
         max_length=10,
-        choices=CEFR_CHOICES,
-        help_text="CEFR level of the story (e.g., A1, B2)",
-        default="A1",
+        help_text="Language level of the story (e.g., A1, B2)",
     )
     scene_text = models.TextField(
         blank=True,
@@ -615,7 +605,7 @@ class GameStory(CreatableBase, TimestampedBase):
                 for entry in progress_entries
                 if entry.chosen_option_id
             ],
-            "cefr_level": self.cefr_level,
+            "language_level": self.language_level,
             "status": self.status,
         }
 

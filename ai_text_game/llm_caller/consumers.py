@@ -91,7 +91,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             initial_state = {
                 "genre": story.genre,
-                "cefr_level": story.cefr_level,
+                "language_level": story.language_level,
                 "scene_text": story.scene_text,
                 "details_prompt": "",
                 "theme": story.theme or "",
@@ -558,7 +558,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         summary = await self.story_graph.summarize_segment(
             story_segment=latest_progress.content,
             player_decision=latest_progress.chosen_option_text,
-            cefr_level=story.cefr_level,
+            language_level=story.language_level,
         )
 
         # Store the summary

@@ -59,7 +59,7 @@ class StoryState(TypedDict):
     current_decision_point: str
     story_progress: list[str]
     chosen_decisions: list[str]
-    cefr_level: str
+    language_level: str
     story_text: str
     status: str
     previous_images: list[str]
@@ -141,7 +141,7 @@ class StoryGraph:
                 "progress": formatted_progress,
                 "milestone": formatted_milestone,
                 "decisions_made": format_decisions_made(state),
-                "cefr_level": state["cefr_level"],
+                "language_level": state["language_level"],
                 "decision_point": formatted_decision_point,
             }
 
@@ -238,7 +238,7 @@ class StoryGraph:
                 "skeleton": format_story_skeleton(remaining_skeleton),
                 "progress": format_progress_with_decisions(state),
                 "endings": state["story_skeleton"].get("endings", []),
-                "cefr_level": state["cefr_level"],
+                "language_level": state["language_level"],
             }
 
             # Load previous images for multimodal context
@@ -317,14 +317,14 @@ class StoryGraph:
         self,
         story_segment: str,
         player_decision: str,
-        cefr_level: str,
+        language_level: str,
     ) -> str:
         """Summarize a story segment and player decision.
 
         Args:
             story_segment: The story text to summarize
             player_decision: The player's choice text
-            cefr_level: The CEFR level of the story
+            language_level: The language level of the story
 
         Returns:
             A condensed summary of the segment and decision
@@ -334,7 +334,7 @@ class StoryGraph:
             params = {
                 "story_segment": story_segment,
                 "player_decision": player_decision,
-                "cefr_level": cefr_level,
+                "language_level": language_level,
             }
 
             chain = self.llm_models["summary"] | self.string_parser

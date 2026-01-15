@@ -4,7 +4,7 @@ Write the ending of the story based on these elements:
 {decisions_made}
 
 ## Requirements:
-- Write in CEFR level {cefr_level} English
+- Write in CEFR level {language_level} English
 - Keep the tone consistent
 - Write approximately 150-200 words
 - Start by mentioning the previous decisions made by the user naturally

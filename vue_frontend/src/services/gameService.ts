@@ -13,7 +13,7 @@ export class GameService {
   public static async createStory(
     genre: string,
     sceneText?: string,
-    cefrLevel?: string,
+    languageLevel?: string,
     details?: string,
     theme?: string
   ): Promise<GameStory> {
@@ -22,7 +22,7 @@ export class GameService {
       {
         genre,
         scene_text: sceneText,
-        cefr_level: cefrLevel,
+        language_level: languageLevel,
         details: details,
         theme: theme
       }

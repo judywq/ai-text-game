@@ -12,6 +12,6 @@ You are a story summarization assistant. Your task is to create a concise summar
   - The player's choice and its immediate consequence
 - Maintain the narrative flow for continuity
 - Use past tense
-- Keep the CEFR level: {cefr_level}
+- Keep the CEFR level: {language_level}
 
 Generate only the summary text without any headings, labels, or formatting. Start directly with the summary content.

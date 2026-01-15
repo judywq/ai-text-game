@@ -36,7 +36,7 @@ The story should be structured like this example:
 
 
 Requirements:
-- Write in CEFR level {cefr_level} English
+- Write in CEFR level {language_level} English
 - There should be
   - 1 milestone
   - 3 decision points in each milestone

@@ -60,7 +60,7 @@ class GameStorySerializer(serializers.ModelSerializer):
             "scene_text",
             "details",
             "theme",
-            "cefr_level",
+            "language_level",
             "status",
             "created_at",
             "updated_at",
