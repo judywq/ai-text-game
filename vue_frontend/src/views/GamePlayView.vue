@@ -533,7 +533,7 @@ function scrollToBottom() {
                 </div>
 
                 <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-2">
-                  You chose: {{ entry.chosen_option_text }}
+                  Vous avez choisi : {{ entry.chosen_option_text }}
                 </div>
               </div>
             </div>

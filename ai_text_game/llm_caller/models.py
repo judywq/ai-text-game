@@ -392,6 +392,7 @@ class StorySkeleton(TimestampedBase):
     background = models.TextField(blank=True)
     raw_data = models.JSONField(blank=True, default=dict)
     stock_images = models.JSONField(blank=True, default=list)
+    character_base_images = models.JSONField(blank=True, default=dict)
     status = models.CharField(
         max_length=20,
         choices=[

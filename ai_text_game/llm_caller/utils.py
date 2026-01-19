@@ -204,11 +204,49 @@ def generate_story_image_prompt(
     )
 
 
+def generate_character_image(
+    character: dict,
+    story_id: int,
+    api_key: str | None = None,
+    model_name: str | None = None,
+) -> str:
+    """Generate base image for a character.
+
+    Args:
+        character: Character dict with id, name, gender, description, role
+        story_id: The story ID
+        api_key: Gemini API key
+        model_name: Gemini model name
+
+    Returns:
+        URL to the saved character image
+    """
+    prompt = (
+        f"Create a character portrait for a children's storybook. "
+        f"Name: {character.get('character_name')}. "
+        f"Gender: {character.get('character_gender')}. "
+        f"Role: {character.get('role')}. "
+        f"Description: {character.get('character_description')}. "
+        f"Style: Colorful, engaging, appropriate for ages 8-9. "
+        f"Show the character clearly with consistent features. "
+        f"Plain or simple background. Do NOT include any text."
+    )
+    return generate_image_with_gemini(
+        prompt=prompt,
+        story_id=story_id,
+        image_type="character",
+        character_id=character.get("character_id"),
+        api_key=api_key,
+        model_name=model_name,
+    )
+
+
 def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
     prompt: str,
     story_id: int,
     image_type: str = "progress",
     progress_id: int | None = None,
+    character_id: str | None = None,
     reference_image_urls: list[str] | None = None,
     api_key: str | None = None,
     model_name: str | None = None,
@@ -278,6 +316,8 @@ def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
                 # Generate filename
                 if image_type == "stock":
                     filename = f"story_{story_id}_stock.png"
+                elif image_type == "character":
+                    filename = f"story_{story_id}_char_{character_id}.png"
                 else:
                     filename = f"story_{story_id}_progress_{progress_id}.png"
 

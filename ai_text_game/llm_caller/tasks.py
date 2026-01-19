@@ -11,6 +11,7 @@ from .models import APIKey
 from .models import GameStory
 from .models import LLMConfig
 from .models import StorySkeleton
+from .utils import generate_character_image
 from .utils import get_llm_model
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,33 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
             skeleton.raw_data = skeleton_data
             skeleton.status = "COMPLETED"
             skeleton.save()
+
+            # Generate character base images
+            try:
+                image_config = LLMConfig.get_active_config_with_demo_fallback(
+                    purpose="image_generation",
+                    is_demo=is_demo,
+                )
+                image_key = APIKey.get_available_key(image_config.model.name)
+
+                character_images = {}
+                for character in skeleton_data.get("characters", []):
+                    char_id = character.get("character_id")
+                    if char_id:
+                        image_url = generate_character_image(
+                            character=character,
+                            story_id=story_id,
+                            api_key=image_key.key if image_key else None,
+                            model_name=image_config.model.name,
+                        )
+                        if image_url:
+                            character_images[char_id] = image_url
+
+                skeleton.character_base_images = character_images
+                skeleton.save()
+                logger.info("Generated %d character images", len(character_images))
+            except Exception:
+                logger.exception("Failed to generate character images")
 
             # Send completion notification
             async_to_sync(channel_layer.group_send)(

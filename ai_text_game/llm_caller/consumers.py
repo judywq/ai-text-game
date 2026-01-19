@@ -432,15 +432,22 @@ class GameConsumer(AsyncWebsocketConsumer):
                 decision_point_id=state.get("current_decision_point"),
             )
 
-            # Get all previous progress images for reference
-            previous_images = await database_sync_to_async(
-                lambda: list(
-                    StoryProgress.objects.filter(story=story, image_url__isnull=False)
-                    .exclude(id=progress.id)
-                    .order_by("created_at")
-                    .values_list("image_url", flat=True),
-                ),
+            # Get character base images for reference
+            character_images = await database_sync_to_async(
+                lambda: story.skeleton.character_base_images if hasattr(story, "skeleton") else {},
             )()
+            reference_images = list(character_images.values()) if character_images else []
+
+            # # Add last progress image (uncomment to use the n-1 image as reference)
+            # last_image = await database_sync_to_async(
+            #     lambda: StoryProgress.objects.filter(story=story, image_url__isnull=False)
+            #     .exclude(id=progress.id)
+            #     .order_by("-created_at")
+            #     .values_list("image_url", flat=True)
+            #     .first(),
+            # )()
+            # if last_image:
+            #     reference_images.append(last_image)
 
             # Get image generation config
             image_config = await database_sync_to_async(
@@ -457,14 +464,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Generate image for this segment
             image_prompt = await database_sync_to_async(generate_story_image_prompt)(
                 story_text=story_text,
-                has_reference_images=bool(previous_images),
+                has_reference_images=bool(reference_images),
             )
             image_url = await database_sync_to_async(generate_image_with_gemini)(
                 prompt=image_prompt,
                 story_id=story.id,
                 image_type="progress",
                 progress_id=progress.id,
-                reference_image_urls=previous_images if previous_images else None,
+                reference_image_urls=reference_images if reference_images else None,
                 api_key=image_api_key.key if image_api_key else None,
                 model_name=image_model_name,
             )
