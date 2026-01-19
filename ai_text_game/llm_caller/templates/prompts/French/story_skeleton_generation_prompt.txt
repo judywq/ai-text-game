@@ -4,7 +4,7 @@ You are narrative designer for an interactive story game. Your task is to create
 
 # Story Parameters
 
-**Audience:** Children aged 8-9 learning French
+**Audience:** K12 students learning French
 **Theme:** {theme}
 **Genre:** {genre}
 **Story Context:** The story is about "{scene_text}".
@@ -25,7 +25,7 @@ e.g., Wanting something (go to the ball, eat, explore, help)
 e.g., Villain, rule, fatigue, danger, limitation
 
 4. Repeated attempts
-e.g., Often 3 times with increasing intensity
+e.g., Often 2 or more times with increasing intensity
 
 5. Resolution
 e.g., Help, cleverness, cooperation
@@ -38,7 +38,7 @@ e.g., Stated directly, not inferred
 - Protagonist: Childlike, curious, imperfect
 - Helper: Animal, fairy, friend, object
 - Obstacle: Not morally complex
-- Collective: Group solves problem together
+- Collective (optional): Group solves problem together
 
 # Game Structure Requirements
 

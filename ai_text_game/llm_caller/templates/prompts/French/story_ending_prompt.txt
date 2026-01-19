@@ -10,7 +10,7 @@ You are a story writer and your task is to write the ending of the story based o
 
 # Requirements
 - Choose the most appropriate ending and write on it.
-- The audience is 8-9 year old students learning French
+- The audience is K12 students learning French
 - Write approximately 70-100 words.
 - Do NOT create any more options for the user to choose from.
 - Output only the ending.

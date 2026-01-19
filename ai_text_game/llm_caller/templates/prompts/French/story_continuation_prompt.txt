@@ -46,14 +46,13 @@ example: Au cœur de la forêt, le petit garçon distingue une maison solitaire.
 
 # Requirements
 
-- The audience is 8-9 year old students learning French
+- The audience is K12 students learning French
 - Always use past tenses, such as simple past, past continuous and past perfect.
 - Write in level {language_level} in French
-- Reuse key verbs and nouns at least 3 times.
-- Repeat dialogue patterns
 - Keep the tone consistent
 - Write approximately 70-100 words
-- Start by mentioning the consequences of the previous action
+- Start by describing the Previous Decision to ensure smooth transition.
 - Stop by asking the audience to make the Next Decision
+- When asking the player to choose and presenting the available options in a decision, always use past tenses.
 - Do not tell the audience the consequences of their decisions
 - Output only the new story segment, written in an engaging narrative style.
