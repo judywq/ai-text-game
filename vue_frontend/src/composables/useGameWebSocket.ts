@@ -15,6 +15,7 @@ export function useGameWebSocket() {
   const onExplanationStatus = ref<((id: number, status: ExplanationStatus) => void) | null>(null)
   const onStoryUpdate = ref<((update: StoryUpdate) => void) | null>(null)
   const onStoryStream = ref<((content: string) => void) | null>(null)
+  const onImageReady = ref<((progressId: number, imageUrl: string) => void) | null>(null)
   const onError = ref<((error: Error) => void) | null>(null)
 
   const pendingExplanationPromise = ref<{
@@ -46,6 +47,13 @@ export function useGameWebSocket() {
             current_decision: data.current_decision,
             options: data.options
           })
+        }
+        break
+
+      case 'image_ready':
+        // Image has been generated and is ready to display
+        if (onImageReady.value) {
+          onImageReady.value(data.progress_id, data.image_url)
         }
         break
 
@@ -187,6 +195,7 @@ export function useGameWebSocket() {
     onExplanationStatus,
     onStoryUpdate,
     onStoryStream,
+    onImageReady,
     onError,
   }
 }

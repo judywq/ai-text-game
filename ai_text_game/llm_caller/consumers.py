@@ -480,6 +480,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 progress.image_url = image_url
                 await database_sync_to_async(progress.save)()
 
+                # Send image_ready message to frontend
+                await self.send(
+                    text_data=json.dumps({
+                        "type": "image_ready",
+                        "progress_id": progress.id,
+                        "image_url": image_url,
+                    }),
+                )
+
             options = self.get_options(state)
             if options:
                 # Create option objects

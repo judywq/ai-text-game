@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
@@ -13,6 +13,7 @@ import { Separator } from '@/components/ui/separator'
 import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { marked } from 'marked'
 import { CircleHelp } from 'lucide-vue-next'
+import StorySegment from '@/components/StorySegment.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
 import {
   Dialog,
@@ -42,6 +43,7 @@ const {
   lookupExplanation,
   onStoryUpdate,
   onStoryStream,
+  onImageReady,
   onExplanationCreated,
   onExplanationStream,
   onExplanationStatus,
@@ -67,76 +69,39 @@ const currentStreamingContent = ref('')
 // Track which entries are ready to display (after refetch completes)
 const isContentReady = ref<{ [entryIndex: number]: boolean }>({})
 
-// Track paragraph index by entry ID
-const currentParagraphIndex = ref<{ [entryId: number]: number }>({})
+// Track if all paragraphs have been shown for the latest entry
+const allParagraphsShown = ref(false)
 
-// Split content into paragraphs
-function splitIntoParagraphs(content: string): string[] {
-  console.log('=== RAW CONTENT BEFORE SPLITTING ===')
-  console.log(content)
-  console.log('=== CONTENT WITH VISIBLE NEWLINES ===')
-  console.log(JSON.stringify(content))
+// Computed property to determine if options should be shown
+const shouldShowOptions = computed(() => {
+  if (progressEntries.value.length === 0) return false
+  const lastEntry = progressEntries.value[progressEntries.value.length - 1]
+  const lastEntryIndex = progressEntries.value.length - 1
 
-  const paragraphs = content.split(/\n\n+/).filter(p => p.trim().length > 0)
+  // Show options only if:
+  // 1. Content is ready (streaming complete and refetch done)
+  // 2. No option has been chosen yet
+  // 3. All paragraphs have been shown
+  return isContentReady.value[lastEntryIndex] &&
+         !lastEntry.chosen_option_text &&
+         allParagraphsShown.value
+})
 
-  console.log('=== SPLIT PARAGRAPHS ===')
-  paragraphs.forEach((p, i) => {
-    console.log(`Paragraph ${i}:`, JSON.stringify(p))
-  })
-
-  return paragraphs
-}
-
-// Handle proceeding to next paragraph
-function proceedToNextParagraph(entryId: number) {
-  const currentIndex = currentParagraphIndex.value[entryId] || 0
-  currentParagraphIndex.value[entryId] = currentIndex + 1
-  // Scroll smoothly to show the newly revealed paragraph
-  setTimeout(() => {
-    if (scrollRef.value) {
-      const newParagraph = scrollRef.value.querySelector(`[data-entry-id="${entryId}"]`)?.lastElementChild
-      if (newParagraph) {
-        newParagraph.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-      }
-    }
-  }, 100)
-}
-
-// Check if all paragraphs are displayed for an entry
-function allParagraphsDisplayed(entry: StoryProgress): boolean {
-  const paragraphs = splitIntoParagraphs(entry.content)
-  const currentIndex = currentParagraphIndex.value[entry.id] || 0
-  return currentIndex >= paragraphs.length - 1
-}
-
-// Watch progressEntries to update options visibility
-watch(progressEntries, (entries) => {
-  if (entries.length > 0) {
-    const lastEntry = entries[entries.length - 1]
-    const lastEntryIndex = entries.length - 1
-    // Only show options if content is ready, no chosen option, and all paragraphs displayed
-    if (isContentReady.value[lastEntryIndex] && !lastEntry.chosen_option_text && allParagraphsDisplayed(lastEntry)) {
-      currentOptions.value = lastEntry.options || []
-    } else {
-      currentOptions.value = []
-    }
+// Update current options based on shouldShowOptions
+watch(shouldShowOptions, (show) => {
+  if (show && progressEntries.value.length > 0) {
+    const lastEntry = progressEntries.value[progressEntries.value.length - 1]
+    currentOptions.value = lastEntry.options || []
   } else {
     currentOptions.value = []
   }
-}, { deep: true })
+}, { immediate: true })
 
-// Watch currentParagraphIndex to update options visibility
-watch(currentParagraphIndex, () => {
-  if (progressEntries.value.length > 0) {
-    const lastEntry = progressEntries.value[progressEntries.value.length - 1]
-    const lastEntryIndex = progressEntries.value.length - 1
-    if (isContentReady.value[lastEntryIndex] && !lastEntry.chosen_option_text && allParagraphsDisplayed(lastEntry)) {
-      currentOptions.value = lastEntry.options || []
-    } else {
-      currentOptions.value = []
-    }
-  }
-}, { deep: true })
+// Handle when all paragraphs are shown in a segment
+function onAllParagraphsShown() {
+  allParagraphsShown.value = true
+  scrollToBottom()
+}
 
 // New helper function using the Range object for an accurate context extraction.
 function extractSentenceFromRange(range: Range): string {
@@ -160,7 +125,7 @@ function extractSentenceFromRange(range: Range): string {
   return textContent.slice(start, end).trim();
 }
 
-function handleTextSelection(e: MouseEvent) {
+function handleTextSelection(e: MouseEvent | TouchEvent) {
   const sel = window.getSelection();
   if (!sel || sel.toString().trim().length === 0) {
     showLookupButton.value = false;
@@ -183,19 +148,33 @@ function handleTextSelection(e: MouseEvent) {
   rawSelection.value = sel.toString().trim();
   contextSelection.value = extractSentenceFromRange(range);
 
+  // Get client coordinates from either mouse or touch event
+  let clientX: number;
+  let clientY: number;
+
+  if (e instanceof MouseEvent) {
+    clientX = e.clientX;
+    clientY = e.clientY;
+  } else {
+    // TouchEvent - use the first touch point
+    const touch = e.changedTouches[0];
+    clientX = touch.clientX;
+    clientY = touch.clientY;
+  }
+
   // Calculate popup position relative to the scroll container including its scroll offsets.
   const containerRect = scrollRef.value?.getBoundingClientRect();
   if (containerRect && scrollRef.value) {
     const scrollLeft = scrollRef.value.scrollLeft;
     const scrollTop = scrollRef.value.scrollTop;
     popupPosition.value = {
-      x: e.clientX - containerRect.left + scrollLeft,
-      y: e.clientY - containerRect.top + scrollTop,
+      x: clientX - containerRect.left + scrollLeft,
+      y: clientY - containerRect.top + scrollTop,
     }
   } else {
     popupPosition.value = {
-      x: e.clientX,
-      y: e.clientY,
+      x: clientX,
+      y: clientY,
     }
   }
 
@@ -331,6 +310,23 @@ const handleOptionSelect = async (optionId: string) => {
       latestEntry.chosen_option_text = selectedOption.option_name
     }
 
+    // Hide options immediately after selection
+    currentOptions.value = []
+    allParagraphsShown.value = false
+
+    // Add a loading placeholder entry
+    progressEntries.value.push({
+      id: -1, // Special ID for loading state
+      content: 'LOADING',
+      decision_point_id: '',
+      chosen_option_id: '',
+      chosen_option_text: '',
+      is_end_point: false,
+      options: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+
     // Send the selection to the server
     await selectOption(optionId)
 
@@ -355,9 +351,17 @@ onMounted(async () => {
   try {
     // Add handler for story streaming
     onStoryStream.value = (content: string) => {
+      // Turn off loading spinner when streaming starts
+      isLoading.value = false
+
       // Ignore empty chunks from backend
       if (!content || content.trim() === '') {
         return
+      }
+
+      // Remove loading placeholder if it exists
+      if (progressEntries.value.length > 0 && progressEntries.value[progressEntries.value.length - 1].id === -1) {
+        progressEntries.value.pop()
       }
 
       // Create a new progress entry if this is the first chunk
@@ -392,8 +396,12 @@ onMounted(async () => {
       // Reset the streaming content for the next story segment
       currentStreamingContent.value = ''
 
+      // Reset the all paragraphs shown flag for the new entry
+      allParagraphsShown.value = false
+
       // Get the latest progress entry that was being updated with streaming content
       const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+      const lastEntryIndex = progressEntries.value.length - 1
 
       if (latestEntry) {
         // Update the decision point and options
@@ -401,22 +409,12 @@ onMounted(async () => {
         latestEntry.options = update.options || []
       }
 
+      // Mark content as ready immediately (streaming is done)
+      isContentReady.value[lastEntryIndex] = true
+
       // Update story status if provided
       if (update.status && story.value) {
         story.value.status = update.status
-      }
-
-      // Fetch updated progress entries to get image_url
-      if (story.value) {
-        try {
-          progressEntries.value = await GameService.getStoryProgress(story.value.id)
-
-          // Mark the latest entry as ready to display after refetch completes
-          const lastEntryIndex = progressEntries.value.length - 1
-          isContentReady.value[lastEntryIndex] = true
-        } catch (error) {
-          console.error('Failed to refresh progress entries', error)
-        }
       }
 
       scrollToBottom()
@@ -450,6 +448,16 @@ onMounted(async () => {
     onExplanationStatus.value = (id: number, status: ExplanationStatus) => {
       if (currentExplanation.value?.id === id) {
         currentExplanation.value.status = status
+      }
+    }
+
+    // Add handler for image_ready message
+    onImageReady.value = (progressId: number, imageUrl: string) => {
+      // Update the latest progress entry (images arrive in order)
+      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+      if (latestEntry) {
+        latestEntry.image_url = imageUrl
+        latestEntry.id = progressId // Update to real database ID
       }
     }
 
@@ -499,42 +507,30 @@ function scrollToBottom() {
           class="flex-1 relative overflow-y-auto"
           ref="scrollRef"
           @mouseup="handleTextSelection"
+          @touchend="handleTextSelection"
         >
-          <div v-if="story" class="space-y-2 pt-4 px-4 pb-4">
+          <div v-if="story" class="space-y-6 pt-4 px-4 pb-4">
             <!-- Add loading state -->
             <div v-if="progressEntries.length === 0" class="flex flex-col items-center justify-center h-[200px] space-y-4">
               <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
               <p class="text-muted-foreground">Initializing your story...</p>
             </div>
 
-            <!-- Existing progress entries display -->
-            <div v-else v-for="(entry, entryIndex) in progressEntries" :key="entry.id" class="space-y-2">
-              <!-- Show loading state while content is being received/fetched -->
-              <div v-if="!isContentReady[entryIndex]" class="flex flex-col items-center justify-center h-[100px] space-y-2">
-                <div class="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent"></div>
-                <p class="text-sm text-muted-foreground">Generating story...</p>
-              </div>
+            <!-- Story segments using new component -->
+            <div v-else>
+              <StorySegment
+                v-for="(entry, entryIndex) in progressEntries"
+                :key="entry.id"
+                :entry="entry"
+                :is-latest="entryIndex === progressEntries.length - 1"
+                :is-content-ready="isContentReady[entryIndex] || false"
+                @all-paragraphs-shown="onAllParagraphsShown"
+              />
 
-              <!-- Display content paragraph-by-paragraph after ready -->
-              <div v-else class="prose dark:prose-invert" :data-entry-id="entry.id">
-                <!-- Show image -->
-                <img v-if="entry.image_url" :src="entry.image_url" :alt="'Story illustration'" class="w-full rounded-lg mb-4" />
-
-                <!-- Display paragraphs incrementally -->
-                <template v-for="(paragraph, index) in splitIntoParagraphs(entry.content)" :key="`${entry.id}-p-${index}`">
-                  <div v-if="index <= (currentParagraphIndex[entry.id] || 0)" v-html="marked(paragraph)" />
-                </template>
-
-                <!-- Proceed button between paragraphs -->
-                <div v-if="(currentParagraphIndex[entry.id] || 0) < splitIntoParagraphs(entry.content).length - 1" class="my-4">
-                  <Button @click="proceedToNextParagraph(entry.id)" variant="outline" class="w-full">
-                    Proceed
-                  </Button>
-                </div>
-
-                <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-2">
-                  Vous avez choisi : {{ entry.chosen_option_text }}
-                </div>
+              <!-- Loading spinner after option selection -->
+              <div v-if="isLoading" class="flex flex-col items-center justify-center py-8 space-y-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+                <p class="text-muted-foreground">Generating next part...</p>
               </div>
             </div>
           </div>
@@ -542,7 +538,7 @@ function scrollToBottom() {
           <!-- Lookup button remains within interaction area for text selection -->
           <div v-if="showLookupButton"
             :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
-            <Button variant="outline" size="icon" @click="lookupExplanationSubmit">
+            <Button variant="outline" size="icon" @click="lookupExplanationSubmit" @touchend.stop="lookupExplanationSubmit">
               <CircleHelp class="w-4 h-4" />
             </Button>
           </div>
@@ -551,7 +547,9 @@ function scrollToBottom() {
         <!-- Story Options -->
         <div class="px-4">
           <StoryOptions
+            v-if="shouldShowOptions"
             :options="currentOptions"
+            :disabled="false"
             @select="handleOptionSelect"
           />
         </div>
