@@ -595,6 +595,11 @@ INIT_LLM_CONFIGS = {
         "template": "text_explanation_prompt.txt",
         "temperature": 0.1,
     },
+    "vocabulary_quiz": {
+        "model": "gpt-5.2-2025-12-11",
+        "template": "vocabulary_quiz_evaluation_prompt.txt",
+        "temperature": 0.1,
+    },
     "story_skeleton_generation": {
         "model": "gpt-5.2-2025-12-11",
         "template": "story_skeleton_generation_prompt.txt",

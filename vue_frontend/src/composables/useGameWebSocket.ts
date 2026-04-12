@@ -43,7 +43,7 @@ export function useGameWebSocket() {
           onStoryUpdate.value({
             type: 'story_update',
             content: '',  // Content already streamed
-            status: 'IN_PROGRESS',
+            status: typeof data.status === 'string' ? data.status : 'IN_PROGRESS',
             current_decision: data.current_decision,
             options: data.options
           })

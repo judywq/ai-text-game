@@ -39,6 +39,12 @@ const routes = [
         meta: { requiresAuth: true }
       },
       {
+        path: '/game/:id/quiz',
+        name: 'game-quiz',
+        component: () => import('@/views/GameQuizView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: '/history',
         name: 'history',
         component: () => import('@/views/HistoryView.vue'),

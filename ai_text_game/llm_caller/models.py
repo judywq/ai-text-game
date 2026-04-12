@@ -137,6 +137,8 @@ class LLMConfig(TimestampedBase):
         ("story_summary", "Story Summary"),
         ("image_generation", "Image Generation"),
         ("image_generation_demo", "Image Generation (Demo)"),
+        ("vocabulary_quiz", "Vocabulary Quiz Evaluation"),
+        ("vocabulary_quiz_demo", "Vocabulary Quiz Evaluation (Demo)"),
     ]
 
     purpose = models.CharField(
@@ -209,6 +211,12 @@ class LLMConfig(TimestampedBase):
                     " and {context_text} placeholders"
                 )
                 raise ValidationError(msg)
+        elif self.purpose in ("vocabulary_quiz", "vocabulary_quiz_demo"):
+            if "{quiz_items_json}" not in self.system_prompt:
+                msg = (
+                    "Vocabulary quiz prompt must include {quiz_items_json} placeholder"
+                )
+                raise ValidationError(msg)
 
     @classmethod
     def get_active_config(
@@ -220,6 +228,7 @@ class LLMConfig(TimestampedBase):
             "story_skeleton_generation",
             "story_continuation",
             "story_ending",
+            "vocabulary_quiz",
         ],
     ):
         """Get the active config for the given purpose."""
@@ -242,6 +251,7 @@ class LLMConfig(TimestampedBase):
             "story_skeleton_generation",
             "story_continuation",
             "story_ending",
+            "vocabulary_quiz",
         ],
         is_demo: bool = False,  # noqa: FBT001, FBT002
     ):

@@ -62,3 +62,20 @@ export interface TextExplanation {
   error?: string
   created_at: string
 }
+
+export interface VocabularyQuizAnswerPayload {
+  explanation_id: number
+  user_explanation: string
+}
+
+export interface VocabularyQuizResultItem {
+  explanation_id: number
+  selected_text: string
+  score: number
+  reason: string
+}
+
+export interface VocabularyQuizSubmitResponse {
+  results: VocabularyQuizResultItem[]
+  average_score: number
+}

@@ -72,6 +72,10 @@ const isContentReady = ref<{ [entryIndex: number]: boolean }>({})
 // Track if all paragraphs have been shown for the latest entry
 const allParagraphsShown = ref(false)
 
+const isGameEnded = computed(() => story.value?.status === 'COMPLETED')
+
+const canOpenVocabularyReview = computed(() => lookupHistory.value.length > 0)
+
 // Computed property to determine if options should be shown
 const shouldShowOptions = computed(() => {
   if (progressEntries.value.length === 0) return false
@@ -569,6 +573,15 @@ function scrollToBottom() {
               @click="showHistoryPanel = true"
             >
               History
+            </Button>
+            <Button
+              v-if="isGameEnded"
+              variant="secondary"
+              :disabled="isLoading || !canOpenVocabularyReview"
+              :title="!canOpenVocabularyReview ? 'Look up at least one word during the game to use review.' : undefined"
+              @click="router.push({ name: 'game-quiz', params: { id: route.params.id } })"
+            >
+              Review
             </Button>
             <Button
               variant="outline"

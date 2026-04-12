@@ -531,6 +531,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                         "type": "send_decision_point",
                         "current_decision": state.get("current_decision_point"),
                         "options": options,
+                        "status": state.get("status", "IN_PROGRESS"),
                     },
                 ),
             )
