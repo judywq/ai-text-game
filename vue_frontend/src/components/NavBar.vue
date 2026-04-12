@@ -88,6 +88,15 @@ const isSheetOpen = ref(false)
           >
             <span>Admin</span>
           </a>
+          <router-link
+            v-if="isAuthenticated"
+            :to="{ name: 'profile' }"
+            class="text-muted-foreground hover:text-foreground"
+            :class="{ 'text-primary': $route.name === 'profile' }"
+            @click="isSheetOpen = false"
+          >
+            <span>Profile</span>
+          </router-link>
         </nav>
       </SheetContent>
     </Sheet>
@@ -105,6 +114,7 @@ const isSheetOpen = ref(false)
             <DropdownMenuLabel>{{ username }}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem @click="router.push({ name: 'history' })">History</DropdownMenuItem>
+            <DropdownMenuItem @click="router.push({ name: 'profile' })">Profile</DropdownMenuItem>
             <DropdownMenuItem @click="router.push({ name: 'change-password' })">
               Change Password
             </DropdownMenuItem>

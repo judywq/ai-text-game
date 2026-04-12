@@ -24,10 +24,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { useAuthStore } from '@/stores/auth'
+import { AuthService } from '@/services/authService'
+import { NATIVE_LANGUAGE_OPTIONS } from '@/constants/nativeLanguage'
 
 const route = useRoute()
 const router = useRouter()
 const { toast } = useToast()
+const authStore = useAuthStore()
 
 const story = ref<GameStory | null>(null)
 const progressEntries = ref<StoryProgress[]>([])
@@ -59,6 +70,8 @@ const showLookupButton = ref(false)
 const explanationModalVisible = ref(false)
 const currentExplanation = ref<TextExplanation | null>(null)
 const lookupHistory = ref<TextExplanation[]>([])
+const nativeLanguagePromptOpen = ref(false)
+const nativeLanguageChoiceForPrompt = ref('')
 
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
@@ -191,7 +204,7 @@ function clearTextSelection() {
   showLookupButton.value = false
 }
 
-async function lookupExplanationSubmit() {
+async function runLookupExplanation() {
   if (!story.value) return
   try {
     const clientId = Date.now()
@@ -226,6 +239,42 @@ async function lookupExplanationSubmit() {
     explanationModalVisible.value = false
   } finally {
     clearTextSelection()
+  }
+}
+
+async function lookupExplanationSubmit() {
+  if (!story.value) return
+  if (!authStore.user?.native_language) {
+    nativeLanguageChoiceForPrompt.value = ''
+    nativeLanguagePromptOpen.value = true
+    return
+  }
+  await runLookupExplanation()
+}
+
+async function confirmNativeLanguageAndLookup() {
+  if (!nativeLanguageChoiceForPrompt.value) {
+    toast({
+      title: 'Native language required',
+      description: 'Please choose your native language to continue.',
+      variant: 'destructive',
+    })
+    return
+  }
+  try {
+    const user = await AuthService.updateUser({
+      native_language: nativeLanguageChoiceForPrompt.value,
+    })
+    authStore.user = user
+    authStore.saveState()
+    nativeLanguagePromptOpen.value = false
+    await runLookupExplanation()
+  } catch (error: any) {
+    toast({
+      title: 'Error',
+      description: error?.message ?? 'Failed to save language preference',
+      variant: 'destructive',
+    })
   }
 }
 
@@ -618,6 +667,42 @@ function scrollToBottom() {
         </div>
       </div>
     </div>
+
+    <Dialog :open="nativeLanguagePromptOpen" @update:open="nativeLanguagePromptOpen = $event">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Choose your native language</DialogTitle>
+          <DialogDescription>
+            Word explanations will be written in this language. You can change it anytime from Profile in the user menu.
+          </DialogDescription>
+        </DialogHeader>
+        <div class="space-y-2 py-2">
+          <label class="text-sm font-medium">Native language</label>
+          <Select v-model="nativeLanguageChoiceForPrompt">
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="Select a language" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="opt in NATIVE_LANGUAGE_OPTIONS"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <DialogFooter class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="outline" @click="nativeLanguagePromptOpen = false">
+            Cancel
+          </Button>
+          <Button @click="confirmNativeLanguageAndLookup">
+            Continue
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Mobile: Modal for Lookup History -->
     <Dialog v-model:open="showHistoryPanel">

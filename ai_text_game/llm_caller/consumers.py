@@ -10,6 +10,8 @@ from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAIError
 
+from ai_text_game.users.models import UserProfile
+
 from .models import APIKey
 from .models import GameStory
 from .models import LLMConfig
@@ -306,12 +308,21 @@ class GameConsumer(AsyncWebsocketConsumer):
                 name="text_explanation",
             )
             chain = prompt | llm | string_parser
-            stream = chain.astream(
-                {
-                    "selected_text": explanation.selected_text,
-                    "context_text": explanation.context_text,
-                },
-            )
+            stream_inputs = {
+                "selected_text": explanation.selected_text,
+                "context_text": explanation.context_text,
+            }
+            if "{native_language}" in system_prompt:
+                code = None
+                user = explanation.created_by
+                if user and getattr(user, "is_authenticated", False):
+                    profile = getattr(user, "userprofile", None)
+                    if profile:
+                        code = profile.native_language
+                stream_inputs["native_language"] = (
+                    UserProfile.native_language_prompt_label(code)
+                )
+            stream = chain.astream(stream_inputs)
 
             # Update status to streaming when starting to process
             explanation.status = "streaming"
