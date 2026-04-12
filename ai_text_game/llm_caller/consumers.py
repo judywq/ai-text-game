@@ -434,9 +434,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # Get character base images for reference
             character_images = await database_sync_to_async(
-                lambda: story.skeleton.character_base_images if hasattr(story, "skeleton") else {},
+                lambda: story.skeleton.character_base_images
+                if hasattr(story, "skeleton")
+                else {},
             )()
-            reference_images = list(character_images.values()) if character_images else []
+            reference_images = (
+                list(character_images.values()) if character_images else []
+            )
 
             # # Add last progress image (uncomment to use the n-1 image as reference)
             # last_image = await database_sync_to_async(
@@ -482,11 +486,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
                 # Send image_ready message to frontend
                 await self.send(
-                    text_data=json.dumps({
-                        "type": "image_ready",
-                        "progress_id": progress.id,
-                        "image_url": image_url,
-                    }),
+                    text_data=json.dumps(
+                        {
+                            "type": "image_ready",
+                            "progress_id": progress.id,
+                            "image_url": image_url,
+                        }
+                    ),
                 )
 
             options = self.get_options(state)

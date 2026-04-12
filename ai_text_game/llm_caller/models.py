@@ -671,3 +671,49 @@ class TextExplanation(CreatableBase, TimestampedBase):
 
     def __str__(self):
         return f"Explanation for {self.selected_text[:30]} by {self.created_by}"
+
+
+class VocabularyQuizSubmission(CreatableBase, TimestampedBase):
+    """One quiz submit action for a story; users may create many per story."""
+
+    story = models.ForeignKey(
+        "GameStory",
+        on_delete=models.CASCADE,
+        related_name="vocabulary_quiz_submissions",
+    )
+    average_score = models.FloatField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Quiz submission for story {self.story_id} at {self.created_at}"
+
+
+class VocabularyQuizSubmissionItem(TimestampedBase):
+    """Single word/phrase answer within a vocabulary quiz submission."""
+
+    submission = models.ForeignKey(
+        VocabularyQuizSubmission,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    text_explanation = models.ForeignKey(
+        TextExplanation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quiz_submission_items",
+    )
+    selected_text = models.TextField()
+    context_text = models.TextField()
+    reference_explanation = models.TextField()
+    user_explanation = models.TextField()
+    score = models.FloatField()
+    feedback_reason = models.TextField()
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"Item {self.selected_text[:30]!r} (submission {self.submission_id})"

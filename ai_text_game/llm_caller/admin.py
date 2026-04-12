@@ -12,6 +12,8 @@ from .models import StoryOption
 from .models import StoryProgress
 from .models import StorySkeleton
 from .models import TextExplanation
+from .models import VocabularyQuizSubmission
+from .models import VocabularyQuizSubmissionItem
 from .utils import format_datetime
 from .utils import generate_excel_response
 
@@ -271,6 +273,36 @@ class TextExplanationAdmin(admin.ModelAdmin):
                 row.update({header: value})
             rows.append(row)
         return generate_excel_response(rows, "TextExplanations")
+
+
+class VocabularyQuizSubmissionItemInline(admin.TabularInline):
+    model = VocabularyQuizSubmissionItem
+    extra = 0
+    can_delete = False
+    readonly_fields = [
+        "text_explanation",
+        "selected_text",
+        "context_text",
+        "reference_explanation",
+        "user_explanation",
+        "score",
+        "feedback_reason",
+        "created_at",
+    ]
+
+
+@admin.register(VocabularyQuizSubmission)
+class VocabularyQuizSubmissionAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "story",
+        "created_by",
+        "average_score",
+        "created_at",
+    ]
+    list_filter = ["created_at"]
+    raw_id_fields = ["story", "created_by"]
+    inlines = [VocabularyQuizSubmissionItemInline]
 
 
 @admin.register(StorySkeleton)

@@ -2,6 +2,7 @@ import json
 
 import openai
 from django.conf import settings
+from django.db import transaction
 from django.http import StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -22,6 +23,8 @@ from .models import LLMConfig
 from .models import LLMModel
 from .models import StoryProgress
 from .models import TextExplanation
+from .models import VocabularyQuizSubmission
+from .models import VocabularyQuizSubmissionItem
 from .negotiation import IgnoreClientContentNegotiation
 from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
@@ -32,6 +35,36 @@ from .serializers import VocabularyQuizSubmitSerializer
 from .utils import get_llm_model
 
 VALID_VOCABULARY_SCORES = frozenset({0.0, 0.5, 1.0})
+
+
+@transaction.atomic
+def _persist_vocabulary_quiz_submission(
+    story,
+    user,
+    merged,
+    average_score,
+    by_id,
+    id_to_user_text,
+):
+    submission = VocabularyQuizSubmission.objects.create(
+        story=story,
+        created_by=user,
+        average_score=average_score,
+    )
+    for row in merged:
+        eid = row["explanation_id"]
+        exp = by_id[eid]
+        VocabularyQuizSubmissionItem.objects.create(
+            submission=submission,
+            text_explanation=exp,
+            selected_text=row["selected_text"],
+            context_text=exp.context_text,
+            reference_explanation=(exp.explanation or "").strip(),
+            user_explanation=id_to_user_text[eid].strip(),
+            score=row["score"],
+            feedback_reason=row["reason"],
+        )
+    return submission
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -159,19 +192,28 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        by_id = {e.id: e for e in explanations}
+
         if settings.FAKE_LLM_REQUEST:
-            by_id_fake = {e.id: e for e in explanations}
-            results = [
+            merged = [
                 {
                     "explanation_id": eid,
-                    "selected_text": by_id_fake[eid].selected_text,
+                    "selected_text": by_id[eid].selected_text,
                     "score": 1.0,
                     "reason": "Fake LLM mode: response not evaluated.",
                 }
                 for eid in explanation_ids
             ]
-            avg = sum(r["score"] for r in results) / len(results) if results else 0.0
-            return Response({"results": results, "average_score": avg})
+            average = sum(r["score"] for r in merged) / len(merged) if merged else 0.0
+            _persist_vocabulary_quiz_submission(
+                story,
+                request.user,
+                merged,
+                average,
+                by_id,
+                id_to_user_text,
+            )
+            return Response({"results": merged, "average_score": average})
 
         is_demo = False
         if hasattr(request.user, "userprofile"):
@@ -183,7 +225,9 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 is_demo=is_demo,
             )
         except ValueError as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         quiz_items = [
             {
@@ -227,8 +271,6 @@ class GameStoryViewSet(viewsets.ModelViewSet):
                 {"error": "Model returned an unexpected JSON shape"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        by_id = {e.id: e for e in explanations}
 
         def normalize_score(value):
             try:
@@ -284,6 +326,14 @@ class GameStoryViewSet(viewsets.ModelViewSet):
 
         merged.sort(key=lambda r: explanation_ids.index(r["explanation_id"]))
         average = sum(r["score"] for r in merged) / len(merged) if merged else 0.0
+        _persist_vocabulary_quiz_submission(
+            story,
+            request.user,
+            merged,
+            average,
+            by_id,
+            id_to_user_text,
+        )
         return Response({"results": merged, "average_score": average})
 
 
