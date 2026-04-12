@@ -277,10 +277,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def process_explanation(self, story, explanation):
         try:
-            # Check if user is demo account
-            is_demo = False
-            if story.created_by and hasattr(story.created_by, "userprofile"):
-                is_demo = story.created_by.userprofile.is_demo_account
+            is_demo = await database_sync_to_async(
+                lambda: (
+                    story.created_by.userprofile.is_demo_account
+                    if story.created_by and hasattr(story.created_by, "userprofile")
+                    else False
+                ),
+            )()
 
             active_config = await database_sync_to_async(
                 LLMConfig.get_active_config_with_demo_fallback,
@@ -313,12 +316,14 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "context_text": explanation.context_text,
             }
             if "{native_language}" in system_prompt:
-                code = None
-                user = explanation.created_by
-                if user and getattr(user, "is_authenticated", False):
-                    profile = getattr(user, "userprofile", None)
-                    if profile:
-                        code = profile.native_language
+                code = await database_sync_to_async(
+                    lambda: (
+                        explanation.created_by.userprofile.native_language
+                        if explanation.created_by
+                        and hasattr(explanation.created_by, "userprofile")
+                        else None
+                    ),
+                )()
                 stream_inputs["native_language"] = (
                     UserProfile.native_language_prompt_label(code)
                 )
