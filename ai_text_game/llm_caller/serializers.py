@@ -82,6 +82,25 @@ class TextExplanationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class VocabularyQuizAnswerSerializer(serializers.Serializer):
+    explanation_id = serializers.IntegerField(min_value=1)
+    user_explanation = serializers.CharField(allow_blank=False, trim_whitespace=True)
+
+
+class VocabularyQuizSubmitSerializer(serializers.Serializer):
+    answers = serializers.ListField(
+        child=VocabularyQuizAnswerSerializer(),
+        min_length=1,
+    )
+
+    def validate_answers(self, answers):
+        ids = [a["explanation_id"] for a in answers]
+        if len(ids) != len(set(ids)):
+            msg = "Duplicate explanation_id in answers"
+            raise serializers.ValidationError(msg)
+        return answers
+
+
 class StoryOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = StoryOption

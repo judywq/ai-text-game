@@ -21,15 +21,35 @@ const routes = [
         },
       },
       {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/views/ProfileView.vue'),
+        meta: {
+          requiresAuth: true,
+        },
+      },
+      {
         path: '/game',
         name: 'game-scenarios',
         component: () => import('@/views/GameScenarioView.vue'),
         meta: { requiresAuth: true }
       },
       {
+        path: '/game/:id/loading',
+        name: 'game-loading',
+        component: () => import('@/views/GameLoadingView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
         path: '/game/:id',
         name: 'game-play',
         component: () => import('@/views/GamePlayView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/game/:id/quiz',
+        name: 'game-quiz',
+        component: () => import('@/views/GameQuizView.vue'),
         meta: { requiresAuth: true }
       },
       {

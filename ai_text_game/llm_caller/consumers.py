@@ -10,6 +10,8 @@ from langchain_core.output_parsers.string import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from openai import OpenAIError
 
+from ai_text_game.users.models import UserProfile
+
 from .models import APIKey
 from .models import GameStory
 from .models import LLMConfig
@@ -275,10 +277,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def process_explanation(self, story, explanation):
         try:
-            # Check if user is demo account
-            is_demo = False
-            if story.created_by and hasattr(story.created_by, "userprofile"):
-                is_demo = story.created_by.userprofile.is_demo_account
+            is_demo = await database_sync_to_async(
+                lambda: (
+                    story.created_by.userprofile.is_demo_account
+                    if story.created_by and hasattr(story.created_by, "userprofile")
+                    else False
+                ),
+            )()
 
             active_config = await database_sync_to_async(
                 LLMConfig.get_active_config_with_demo_fallback,
@@ -306,12 +311,23 @@ class GameConsumer(AsyncWebsocketConsumer):
                 name="text_explanation",
             )
             chain = prompt | llm | string_parser
-            stream = chain.astream(
-                {
-                    "selected_text": explanation.selected_text,
-                    "context_text": explanation.context_text,
-                },
-            )
+            stream_inputs = {
+                "selected_text": explanation.selected_text,
+                "context_text": explanation.context_text,
+            }
+            if "{native_language}" in system_prompt:
+                code = await database_sync_to_async(
+                    lambda: (
+                        explanation.created_by.userprofile.native_language
+                        if explanation.created_by
+                        and hasattr(explanation.created_by, "userprofile")
+                        else None
+                    ),
+                )()
+                stream_inputs["native_language"] = (
+                    UserProfile.native_language_prompt_label(code)
+                )
+            stream = chain.astream(stream_inputs)
 
             # Update status to streaming when starting to process
             explanation.status = "streaming"
@@ -434,9 +450,13 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # Get character base images for reference
             character_images = await database_sync_to_async(
-                lambda: story.skeleton.character_base_images if hasattr(story, "skeleton") else {},
+                lambda: story.skeleton.character_base_images
+                if hasattr(story, "skeleton")
+                else {},
             )()
-            reference_images = list(character_images.values()) if character_images else []
+            reference_images = (
+                list(character_images.values()) if character_images else []
+            )
 
             # # Add last progress image (uncomment to use the n-1 image as reference)
             # last_image = await database_sync_to_async(
@@ -480,6 +500,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 progress.image_url = image_url
                 await database_sync_to_async(progress.save)()
 
+                # Send image_ready message to frontend
+                await self.send(
+                    text_data=json.dumps(
+                        {
+                            "type": "image_ready",
+                            "progress_id": progress.id,
+                            "image_url": image_url,
+                        }
+                    ),
+                )
+
             options = self.get_options(state)
             if options:
                 # Create option objects
@@ -522,6 +553,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                         "type": "send_decision_point",
                         "current_decision": state.get("current_decision_point"),
                         "options": options,
+                        "status": state.get("status", "IN_PROGRESS"),
                     },
                 ),
             )

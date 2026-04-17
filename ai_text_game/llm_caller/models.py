@@ -137,6 +137,8 @@ class LLMConfig(TimestampedBase):
         ("story_summary", "Story Summary"),
         ("image_generation", "Image Generation"),
         ("image_generation_demo", "Image Generation (Demo)"),
+        ("vocabulary_quiz", "Vocabulary Quiz Evaluation"),
+        ("vocabulary_quiz_demo", "Vocabulary Quiz Evaluation (Demo)"),
     ]
 
     purpose = models.CharField(
@@ -209,6 +211,12 @@ class LLMConfig(TimestampedBase):
                     " and {context_text} placeholders"
                 )
                 raise ValidationError(msg)
+        elif self.purpose in ("vocabulary_quiz", "vocabulary_quiz_demo"):
+            if "{quiz_items_json}" not in self.system_prompt:
+                msg = (
+                    "Vocabulary quiz prompt must include {quiz_items_json} placeholder"
+                )
+                raise ValidationError(msg)
 
     @classmethod
     def get_active_config(
@@ -220,6 +228,7 @@ class LLMConfig(TimestampedBase):
             "story_skeleton_generation",
             "story_continuation",
             "story_ending",
+            "vocabulary_quiz",
         ],
     ):
         """Get the active config for the given purpose."""
@@ -242,6 +251,7 @@ class LLMConfig(TimestampedBase):
             "story_skeleton_generation",
             "story_continuation",
             "story_ending",
+            "vocabulary_quiz",
         ],
         is_demo: bool = False,  # noqa: FBT001, FBT002
     ):
@@ -661,3 +671,49 @@ class TextExplanation(CreatableBase, TimestampedBase):
 
     def __str__(self):
         return f"Explanation for {self.selected_text[:30]} by {self.created_by}"
+
+
+class VocabularyQuizSubmission(CreatableBase, TimestampedBase):
+    """One quiz submit action for a story; users may create many per story."""
+
+    story = models.ForeignKey(
+        "GameStory",
+        on_delete=models.CASCADE,
+        related_name="vocabulary_quiz_submissions",
+    )
+    average_score = models.FloatField()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Quiz submission for story {self.story_id} at {self.created_at}"
+
+
+class VocabularyQuizSubmissionItem(TimestampedBase):
+    """Single word/phrase answer within a vocabulary quiz submission."""
+
+    submission = models.ForeignKey(
+        VocabularyQuizSubmission,
+        on_delete=models.CASCADE,
+        related_name="items",
+    )
+    text_explanation = models.ForeignKey(
+        TextExplanation,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="quiz_submission_items",
+    )
+    selected_text = models.TextField()
+    context_text = models.TextField()
+    reference_explanation = models.TextField()
+    user_explanation = models.TextField()
+    score = models.FloatField()
+    feedback_reason = models.TextField()
+
+    class Meta:
+        ordering = ["id"]
+
+    def __str__(self):
+        return f"Item {self.selected_text[:30]!r} (submission {self.submission_id})"

@@ -2,6 +2,7 @@ import json
 
 import openai
 from django.conf import settings
+from django.db import transaction
 from django.http import StreamingHttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -22,13 +23,48 @@ from .models import LLMConfig
 from .models import LLMModel
 from .models import StoryProgress
 from .models import TextExplanation
+from .models import VocabularyQuizSubmission
+from .models import VocabularyQuizSubmissionItem
 from .negotiation import IgnoreClientContentNegotiation
 from .serializers import GameScenarioSerializer
 from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
 from .serializers import StoryProgressSerializer
 from .serializers import TextExplanationSerializer
+from .serializers import VocabularyQuizSubmitSerializer
 from .utils import get_llm_model
+
+VALID_VOCABULARY_SCORES = frozenset({0.0, 0.5, 1.0})
+
+
+@transaction.atomic
+def _persist_vocabulary_quiz_submission(
+    story,
+    user,
+    merged,
+    average_score,
+    by_id,
+    id_to_user_text,
+):
+    submission = VocabularyQuizSubmission.objects.create(
+        story=story,
+        created_by=user,
+        average_score=average_score,
+    )
+    for row in merged:
+        eid = row["explanation_id"]
+        exp = by_id[eid]
+        VocabularyQuizSubmissionItem.objects.create(
+            submission=submission,
+            text_explanation=exp,
+            selected_text=row["selected_text"],
+            context_text=exp.context_text,
+            reference_explanation=(exp.explanation or "").strip(),
+            user_explanation=id_to_user_text[eid].strip(),
+            score=row["score"],
+            feedback_reason=row["reason"],
+        )
+    return submission
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -117,6 +153,188 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         progress = StoryProgress.objects.filter(story=story).order_by("created_at")
         serializer = StoryProgressSerializer(progress, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], url_path="vocabulary-quiz/submit")
+    def submit_vocabulary_quiz(self, request, pk=None):
+        """Evaluate user explanations for looked-up words via LLM."""
+        story = self.get_object()
+        submit_serializer = VocabularyQuizSubmitSerializer(data=request.data)
+        submit_serializer.is_valid(raise_exception=True)
+        answers = submit_serializer.validated_data["answers"]
+        explanation_ids = [a["explanation_id"] for a in answers]
+        id_to_user_text = {a["explanation_id"]: a["user_explanation"] for a in answers}
+
+        explanations = list(
+            TextExplanation.objects.filter(
+                story=story,
+                id__in=explanation_ids,
+            ),
+        )
+        if len(explanations) != len(set(explanation_ids)):
+            return Response(
+                {"error": "One or more explanations were not found for this story"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        incomplete = [
+            e.id
+            for e in explanations
+            if e.status != "completed" or not (e.explanation or "").strip()
+        ]
+        if incomplete:
+            return Response(
+                {
+                    "error": (
+                        "Some lookups are not ready for review "
+                        f"(ids: {sorted(incomplete)})"
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        by_id = {e.id: e for e in explanations}
+
+        if settings.FAKE_LLM_REQUEST:
+            merged = [
+                {
+                    "explanation_id": eid,
+                    "selected_text": by_id[eid].selected_text,
+                    "score": 1.0,
+                    "reason": "Fake LLM mode: response not evaluated.",
+                }
+                for eid in explanation_ids
+            ]
+            average = sum(r["score"] for r in merged) / len(merged) if merged else 0.0
+            _persist_vocabulary_quiz_submission(
+                story,
+                request.user,
+                merged,
+                average,
+                by_id,
+                id_to_user_text,
+            )
+            return Response({"results": merged, "average_score": average})
+
+        is_demo = False
+        if hasattr(request.user, "userprofile"):
+            is_demo = request.user.userprofile.is_demo_account
+
+        try:
+            active_config = LLMConfig.get_active_config_with_demo_fallback(
+                purpose="vocabulary_quiz",
+                is_demo=is_demo,
+            )
+        except ValueError as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        quiz_items = [
+            {
+                "explanation_id": e.id,
+                "selected_text": e.selected_text,
+                "context_text": e.context_text,
+                "reference_explanation": e.explanation.strip(),
+                "user_explanation": id_to_user_text[e.id].strip(),
+            }
+            for e in explanations
+        ]
+        quiz_items_json = json.dumps(quiz_items, ensure_ascii=False)
+
+        key = APIKey.get_available_key(model_name=active_config.model.name)
+        prompt = ChatPromptTemplate.from_template(active_config.system_prompt)
+        json_parser = JsonOutputParser()
+        llm = get_llm_model(
+            {
+                "model_name": active_config.model.name,
+                "llm_type": active_config.model.llm_type,
+                "url": active_config.model.url,
+                "temperature": active_config.temperature,
+                "key": key,
+            },
+            fake=settings.FAKE_LLM_REQUEST,
+            name="vocabulary_quiz",
+        )
+        chain = prompt | llm | json_parser
+
+        try:
+            parsed = chain.invoke({"quiz_items_json": quiz_items_json})
+        except (openai.OpenAIError, ValueError, TypeError) as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        raw_results = parsed.get("results") if isinstance(parsed, dict) else None
+        if not isinstance(raw_results, list):
+            return Response(
+                {"error": "Model returned an unexpected JSON shape"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        def normalize_score(value):
+            try:
+                s = float(value)
+            except (TypeError, ValueError):
+                return None
+            for allowed in VALID_VOCABULARY_SCORES:
+                if abs(s - allowed) < 1e-9:
+                    return allowed
+            return None
+
+        merged = []
+        seen = set()
+        for row in raw_results:
+            if not isinstance(row, dict):
+                continue
+            eid = row.get("explanation_id")
+            try:
+                eid = int(eid)
+            except (TypeError, ValueError):
+                continue
+            if eid not in by_id or eid not in id_to_user_text:
+                continue
+            sc = normalize_score(row.get("score"))
+            reason = row.get("reason")
+            if not isinstance(reason, str) or not reason.strip():
+                reason = "No reason provided."
+            if sc is None:
+                sc = 0.0
+                reason = f"Unusable score from model; treating as 0. ({reason})"
+            exp = by_id[eid]
+            merged.append(
+                {
+                    "explanation_id": eid,
+                    "selected_text": exp.selected_text,
+                    "score": sc,
+                    "reason": reason.strip(),
+                },
+            )
+            seen.add(eid)
+
+        missing = set(explanation_ids) - seen
+        for eid in sorted(missing):
+            exp = by_id[eid]
+            merged.append(
+                {
+                    "explanation_id": eid,
+                    "selected_text": exp.selected_text,
+                    "score": 0.0,
+                    "reason": "Model did not return an evaluation for this item.",
+                },
+            )
+
+        merged.sort(key=lambda r: explanation_ids.index(r["explanation_id"]))
+        average = sum(r["score"] for r in merged) / len(merged) if merged else 0.0
+        _persist_vocabulary_quiz_submission(
+            story,
+            request.user,
+            merged,
+            average,
+            by_id,
+            id_to_user_text,
+        )
+        return Response({"results": merged, "average_score": average})
 
 
 class GameSceneGeneratorView(APIView):

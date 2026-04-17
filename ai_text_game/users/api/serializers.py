@@ -6,7 +6,19 @@ from dj_rest_auth.serializers import UserDetailsSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from ai_text_game.users.models import UserProfile
+
 UserModel = get_user_model()
+
+
+class NativeLanguageChoiceField(serializers.ChoiceField):
+    """Reads/writes `UserProfile.native_language` while the serializer instance is a User."""
+
+    def get_attribute(self, instance):
+        profile = getattr(instance, "userprofile", None)
+        if not profile:
+            return None
+        return profile.native_language
 
 
 class CustomLoginSerializer(LoginSerializer):
@@ -26,6 +38,11 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
     """
 
     must_change_password = serializers.SerializerMethodField()
+    native_language = NativeLanguageChoiceField(
+        choices=UserProfile.NATIVE_LANGUAGE_CHOICES,
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         extra_fields = []
@@ -42,7 +59,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         if hasattr(UserModel, "last_name"):
             extra_fields.append("last_name")
         model = UserModel
-        fields = ("pk", *extra_fields, "must_change_password")
+        fields = ("pk", *extra_fields, "must_change_password", "native_language")
         read_only_fields = ("email",)
 
     def get_must_change_password(self, obj):
@@ -50,6 +67,14 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         if hasattr(obj, "userprofile"):
             return obj.userprofile.must_change_password
         return False
+
+    def update(self, instance, validated_data):
+        native_language = validated_data.pop("native_language", serializers.empty)
+        user = super().update(instance, validated_data)
+        if native_language is not serializers.empty and hasattr(user, "userprofile"):
+            user.userprofile.native_language = native_language
+            user.userprofile.save(update_fields=["native_language"])
+        return user
 
 
 class TokenSerializer(serializers.ModelSerializer):

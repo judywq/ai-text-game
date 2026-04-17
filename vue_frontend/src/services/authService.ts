@@ -48,6 +48,11 @@ export class AuthService {
     return response.data
   }
 
+  public static async updateUser(data: { native_language?: string | null }): Promise<any> {
+    const response = await api.patch('/dj-rest-auth/user/', data)
+    return response.data
+  }
+
   public static async changePassword(old_password: string, new_password1: string, new_password2: string): Promise<AxiosResponse> {
     const response = await api.post('/dj-rest-auth/password/change/', {
       old_password: old_password,

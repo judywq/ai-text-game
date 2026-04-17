@@ -212,7 +212,7 @@ async function startGame(sceneText?: string, languageLevel?: string, details?: s
       details,
       theme.value || undefined
     )
-    router.push(`/game/${story.id}`)
+    router.push(`/game/${story.id}/loading`)
   } catch (error) {
     toast({
       title: 'Error',
