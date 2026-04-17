@@ -183,6 +183,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             selected_text = data.get("selected_text")
             context_text = data.get("context_text")
             client_explanation_id = data.get("explanation_id")
+            native_language_override = data.get("native_language")
 
             if not all([selected_text, context_text]):
                 await self.send_error("selected_text and context_text are required")
@@ -207,7 +208,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
             # Process the explanation
-            await self.process_explanation(story, explanation)
+            await self.process_explanation(story, explanation, native_language_override)
 
         except (ValueError, TextExplanation.DoesNotExist) as e:
             await self.send_error(str(e))
@@ -275,7 +276,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return TextExplanationSerializer(explanation).data
 
-    async def process_explanation(self, story, explanation):
+    async def process_explanation(self, story, explanation, native_language_override=None):
         try:
             is_demo = await database_sync_to_async(
                 lambda: (
@@ -316,14 +317,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 "context_text": explanation.context_text,
             }
             if "{native_language}" in system_prompt:
-                code = await database_sync_to_async(
-                    lambda: (
-                        explanation.created_by.userprofile.native_language
-                        if explanation.created_by
-                        and hasattr(explanation.created_by, "userprofile")
-                        else None
-                    ),
-                )()
+                if native_language_override:
+                    code = native_language_override
+                else:
+                    code = await database_sync_to_async(
+                        lambda: (
+                            explanation.created_by.userprofile.native_language
+                            if explanation.created_by
+                            and hasattr(explanation.created_by, "userprofile")
+                            else None
+                        ),
+                    )()
                 stream_inputs["native_language"] = (
                     UserProfile.native_language_prompt_label(code)
                 )

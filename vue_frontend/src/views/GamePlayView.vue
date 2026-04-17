@@ -34,6 +34,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { AuthService } from '@/services/authService'
 import { NATIVE_LANGUAGE_OPTIONS } from '@/constants/nativeLanguage'
+import { Settings } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,6 +73,9 @@ const currentExplanation = ref<TextExplanation | null>(null)
 const lookupHistory = ref<TextExplanation[]>([])
 const nativeLanguagePromptOpen = ref(false)
 const nativeLanguageChoiceForPrompt = ref('')
+const nativeLanguagePersistToProfile = ref(false)
+const sessionNativeLanguage = ref<string>('')
+const nativeLanguageDialogMode = ref<'lookup' | 'settings'>('lookup')
 
 // Add reactive variable for mobile lookup history panel
 const showHistoryPanel = ref(false)
@@ -225,7 +229,8 @@ async function runLookupExplanation() {
       story.value.id,
       rawSelection.value,
       contextSelection.value,
-      clientId
+      clientId,
+      nativeLanguageForLookup.value
     )
     currentExplanation.value = result
     fetchLookupHistory()
@@ -244,12 +249,22 @@ async function runLookupExplanation() {
 
 async function lookupExplanationSubmit() {
   if (!story.value) return
-  if (!authStore.user?.native_language) {
+  if (!authStore.user?.native_language && !sessionNativeLanguage.value) {
+    nativeLanguageDialogMode.value = 'lookup'
     nativeLanguageChoiceForPrompt.value = ''
+    nativeLanguagePersistToProfile.value = false
     nativeLanguagePromptOpen.value = true
     return
   }
   await runLookupExplanation()
+}
+
+function openNativeLanguageSettings() {
+  nativeLanguageDialogMode.value = 'settings'
+  nativeLanguageChoiceForPrompt.value =
+    authStore.user?.native_language || sessionNativeLanguage.value || ''
+  nativeLanguagePersistToProfile.value = true
+  nativeLanguagePromptOpen.value = true
 }
 
 async function confirmNativeLanguageAndLookup() {
@@ -262,13 +277,20 @@ async function confirmNativeLanguageAndLookup() {
     return
   }
   try {
-    const user = await AuthService.updateUser({
-      native_language: nativeLanguageChoiceForPrompt.value,
-    })
-    authStore.user = user
-    authStore.saveState()
+    if (nativeLanguagePersistToProfile.value) {
+      const user = await AuthService.updateUser({
+        native_language: nativeLanguageChoiceForPrompt.value,
+      })
+      authStore.user = user
+      authStore.saveState()
+      sessionNativeLanguage.value = ''
+    } else {
+      sessionNativeLanguage.value = nativeLanguageChoiceForPrompt.value
+    }
     nativeLanguagePromptOpen.value = false
-    await runLookupExplanation()
+    if (nativeLanguageDialogMode.value === 'lookup') {
+      await runLookupExplanation()
+    }
   } catch (error: any) {
     toast({
       title: 'Error',
@@ -287,6 +309,11 @@ async function fetchLookupHistory() {
     console.error("Failed to fetch lookup history", error)
   }
 }
+
+const nativeLanguageForLookup = computed(() => {
+  // Session override must take precedence over profile value.
+  return sessionNativeLanguage.value || authStore.user?.native_language || undefined
+})
 
 async function fetchStoryAndProgress() {
   const storyId = parseInt(route.params.id as string)
@@ -653,7 +680,18 @@ function scrollToBottom() {
       <div class="hidden md:block w-[240px]">
         <div class="bg-white rounded-lg shadow h-full overflow-auto">
           <div class="p-4">
-            <h4 class="font-bold text-lg mb-2">Lookup History</h4>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-bold text-lg">Lookup History</h4>
+              <Button
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8"
+                title="Language settings"
+                @click="openNativeLanguageSettings"
+              >
+                <Settings class="h-4 w-4" />
+              </Button>
+            </div>
             <Separator />
             <ul>
               <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
@@ -673,7 +711,7 @@ function scrollToBottom() {
         <DialogHeader>
           <DialogTitle>Choose your native language</DialogTitle>
           <DialogDescription>
-            Word explanations will be written in this language. You can change it anytime from Profile in the user menu.
+            Word explanations will be written in this language. You can change it anytime from the gear button in the lookup panel.
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-2 py-2">
@@ -692,6 +730,18 @@ function scrollToBottom() {
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+        <div class="flex items-start gap-2 pb-2">
+          <input
+            id="native-language-persist"
+            type="checkbox"
+            class="mt-1 h-4 w-4"
+            v-model="nativeLanguagePersistToProfile"
+          />
+          <label for="native-language-persist" class="text-sm text-muted-foreground">
+            Do not display this option next time (save to my profile).
+            <span class="text-foreground">If unchecked, this is used only for the current game session.</span>
+          </label>
         </div>
         <DialogFooter class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="outline" @click="nativeLanguagePromptOpen = false">

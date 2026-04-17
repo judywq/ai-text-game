@@ -154,7 +154,8 @@ export function useGameWebSocket() {
     storyId: number,
     selectedText: string,
     contextText: string,
-    clientExplanationId: number
+    clientExplanationId: number,
+    nativeLanguage?: string
   ): Promise<TextExplanation> => {
     if (!socket.value || socket.value.readyState !== WebSocket.OPEN) {
       return Promise.reject(new Error('WebSocket not connected'))
@@ -172,7 +173,8 @@ export function useGameWebSocket() {
         type: 'explain_text',
         selected_text: selectedText,
         context_text: contextText,
-        explanation_id: clientExplanationId
+        explanation_id: clientExplanationId,
+        native_language: nativeLanguage
       }))
     })
   }
