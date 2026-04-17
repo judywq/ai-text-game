@@ -270,8 +270,8 @@ function openNativeLanguageSettings() {
 async function confirmNativeLanguageAndLookup() {
   if (!nativeLanguageChoiceForPrompt.value) {
     toast({
-      title: 'Native language required',
-      description: 'Please choose your native language to continue.',
+      title: 'Explanation language required',
+      description: 'Please choose your explanation language to continue.',
       variant: 'destructive',
     })
     return
@@ -709,13 +709,13 @@ function scrollToBottom() {
     <Dialog :open="nativeLanguagePromptOpen" @update:open="nativeLanguagePromptOpen = $event">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Choose your native language</DialogTitle>
+          <DialogTitle>Choose your explanation language</DialogTitle>
           <DialogDescription>
             Word explanations will be written in this language. You can change it anytime from the gear button in the lookup panel.
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-2 py-2">
-          <label class="text-sm font-medium">Native language</label>
+          <label class="text-sm font-medium">Explanation language</label>
           <Select v-model="nativeLanguageChoiceForPrompt">
             <SelectTrigger class="w-full">
               <SelectValue placeholder="Select a language" />

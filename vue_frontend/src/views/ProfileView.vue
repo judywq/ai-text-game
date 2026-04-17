@@ -4,12 +4,12 @@
       <CardHeader>
         <CardTitle class="text-2xl">Profile</CardTitle>
         <CardDescription>
-          Set your native language. Word explanations in the game will be written in this language.
+          Set your explanation language. Word explanations in the game will be written in this language.
         </CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
         <div class="space-y-2">
-          <label class="text-sm font-medium">Native language</label>
+          <label class="text-sm font-medium">Explanation language</label>
           <Select v-model="nativeLanguageModel">
             <SelectTrigger class="w-full">
               <SelectValue placeholder="Not set" />
