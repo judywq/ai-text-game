@@ -21,10 +21,7 @@
       <!-- Text content AFTER image in HTML - slides down when image appears -->
       <div class="story-text-container" :class="{ 'text-push-down': isImageLoaded && entry.image_url }">
         <div class="prose dark:prose-invert max-w-none">
-          <!-- Display all paragraphs immediately -->
-          <template v-for="(paragraph, index) in paragraphs" :key="`${entry.id}-p-${index}`">
-            <div v-html="marked(paragraph)" />
-          </template>
+          <div v-html="renderedContent" />
 
           <!-- Show chosen option if exists -->
           <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-4 italic">
@@ -37,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
 import type { StoryProgress } from '@/types/game'
 import StoryImage from './StoryImage.vue'
@@ -54,10 +51,7 @@ const emit = defineEmits<{
 
 const isImageLoaded = ref(false)
 
-// Split content into paragraphs
-const paragraphs = computed(() => {
-  return props.entry.content.split(/\n\n+/).filter(p => p.trim().length > 0)
-})
+const renderedContent = computed(() => marked.parse(props.entry.content) as string)
 
 // Watch for image URL - reset loaded state when new image comes
 watch(() => props.entry.image_url, (newUrl) => {
