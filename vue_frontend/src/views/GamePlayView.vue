@@ -155,12 +155,12 @@ function handleTextSelection(e: MouseEvent | TouchEvent) {
 
   // If selection spans different nodes, refuse the request
   if (sel.anchorNode !== sel.focusNode) {
-    toast({
-      title: 'Error',
-      description: 'Please select text within a single message!',
-      variant: 'destructive',
-    });
-    sel.removeAllRanges();
+    // toast({
+    //   title: 'Error',
+    //   description: 'Please select text within a single message!',
+    //   variant: 'destructive',
+    // });
+    // sel.removeAllRanges();
     showLookupButton.value = false;
     return;
   }
