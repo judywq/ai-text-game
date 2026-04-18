@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
-import type { GameStory, StoryProgress, StoryOption, TextExplanation, ExplanationStatus } from '@/types/game'
+import type { GameStory, StoryProgress, StoryOption, TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -82,6 +82,16 @@ const showHistoryPanel = ref(false)
 
 // Add a new ref for the current streaming content
 const currentStreamingContent = ref('')
+const pendingStreamingBuffer = ref('')
+const activeStreamingEntryIndex = ref<number | null>(null)
+const pendingStoryUpdate = ref<StoryUpdate | null>(null)
+const STREAM_REVEAL_INTERVAL_MS = 50
+const STREAM_REVEAL_CHARS_PER_SECOND = 50
+const STREAM_REVEAL_CHUNK_SIZE = Math.max(
+  1,
+  Math.round((STREAM_REVEAL_CHARS_PER_SECOND * STREAM_REVEAL_INTERVAL_MS) / 1000)
+)
+let streamRenderTimer: ReturnType<typeof window.setInterval> | null = null
 
 // Track which entries are ready to display (after refetch completes)
 const isContentReady = ref<{ [entryIndex: number]: boolean }>({})
@@ -122,6 +132,123 @@ watch(shouldShowOptions, (show) => {
 function onAllParagraphsShown() {
   allParagraphsShown.value = true
   scrollToBottom()
+}
+
+function stopStreamRenderTimer() {
+  if (streamRenderTimer !== null) {
+    window.clearInterval(streamRenderTimer)
+    streamRenderTimer = null
+  }
+}
+
+function resetStreamingState() {
+  stopStreamRenderTimer()
+  currentStreamingContent.value = ''
+  pendingStreamingBuffer.value = ''
+  activeStreamingEntryIndex.value = null
+  pendingStoryUpdate.value = null
+}
+
+function ensureStreamingEntry() {
+  if (activeStreamingEntryIndex.value !== null && progressEntries.value[activeStreamingEntryIndex.value]) {
+    return
+  }
+
+  if (
+    progressEntries.value.length > 0 &&
+    progressEntries.value[progressEntries.value.length - 1].id === -1
+  ) {
+    progressEntries.value.pop()
+  }
+
+  progressEntries.value.push({
+    id: Date.now(),
+    content: '',
+    decision_point_id: '',
+    chosen_option_id: '',
+    chosen_option_text: '',
+    is_end_point: false,
+    options: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  })
+
+  activeStreamingEntryIndex.value = progressEntries.value.length - 1
+  currentStreamingContent.value = ''
+  allParagraphsShown.value = false
+  isContentReady.value[activeStreamingEntryIndex.value] = false
+}
+
+function syncVisibleStreamingContent() {
+  if (activeStreamingEntryIndex.value === null) {
+    return
+  }
+
+  const activeEntry = progressEntries.value[activeStreamingEntryIndex.value]
+  if (!activeEntry) {
+    activeStreamingEntryIndex.value = null
+    return
+  }
+
+  activeEntry.content = currentStreamingContent.value
+  activeEntry.updated_at = new Date().toISOString()
+}
+
+function finalizeStoryStream() {
+  const update = pendingStoryUpdate.value
+  if (!update) {
+    return
+  }
+
+  const latestEntryIndex = activeStreamingEntryIndex.value ?? (progressEntries.value.length - 1)
+  const latestEntry = latestEntryIndex >= 0 ? progressEntries.value[latestEntryIndex] : null
+
+  allParagraphsShown.value = false
+
+  if (latestEntry) {
+    latestEntry.decision_point_id = update.current_decision || ''
+    latestEntry.options = update.options || []
+    isContentReady.value[latestEntryIndex] = true
+  }
+
+  if (update.status && story.value) {
+    story.value.status = update.status as GameStory['status']
+  }
+
+  currentStreamingContent.value = ''
+  pendingStreamingBuffer.value = ''
+  activeStreamingEntryIndex.value = null
+  pendingStoryUpdate.value = null
+  stopStreamRenderTimer()
+  scrollToBottom()
+}
+
+function flushStreamingBuffer() {
+  if (!pendingStreamingBuffer.value) {
+    stopStreamRenderTimer()
+    finalizeStoryStream()
+    return
+  }
+
+  const nextChunk = pendingStreamingBuffer.value.slice(0, STREAM_REVEAL_CHUNK_SIZE)
+  pendingStreamingBuffer.value = pendingStreamingBuffer.value.slice(nextChunk.length)
+  currentStreamingContent.value += nextChunk
+  syncVisibleStreamingContent()
+  scrollToBottom()
+
+  if (!pendingStreamingBuffer.value && pendingStoryUpdate.value) {
+    finalizeStoryStream()
+  }
+}
+
+function startStreamRenderTimer() {
+  if (streamRenderTimer !== null) {
+    return
+  }
+
+  streamRenderTimer = window.setInterval(() => {
+    flushStreamingBuffer()
+  }, STREAM_REVEAL_INTERVAL_MS)
 }
 
 // New helper function using the Range object for an accurate context extraction.
@@ -317,6 +444,7 @@ const nativeLanguageForLookup = computed(() => {
 
 async function fetchStoryAndProgress() {
   const storyId = parseInt(route.params.id as string)
+  resetStreamingState()
   story.value = await GameService.getStory(storyId)
   progressEntries.value = await GameService.getStoryProgress(storyId)
   // Mark all existing entries as ready to display
@@ -439,65 +567,18 @@ onMounted(async () => {
         return
       }
 
-      // Remove loading placeholder if it exists
-      if (progressEntries.value.length > 0 && progressEntries.value[progressEntries.value.length - 1].id === -1) {
-        progressEntries.value.pop()
-      }
-
-      // Create a new progress entry if this is the first chunk
-      if (!currentStreamingContent.value) {
-        progressEntries.value.push({
-          id: Date.now(), // Temporary ID for frontend
-          content: '',
-          decision_point_id: '',
-          chosen_option_id: '',
-          chosen_option_text: '',
-          is_end_point: false,
-          options: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-      }
-
-      // Append the new content to the current streaming entry
-      currentStreamingContent.value += content
-
-      // Update the latest progress entry with the streamed content
-      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
-      if (latestEntry) {
-        latestEntry.content = currentStreamingContent.value
-      }
-
-      scrollToBottom()
+      ensureStreamingEntry()
+      pendingStreamingBuffer.value += content
+      startStreamRenderTimer()
     }
 
     // Modify the existing story update handler to handle the final state
-    onStoryUpdate.value = async (update: any) => {
-      // Reset the streaming content for the next story segment
-      currentStreamingContent.value = ''
+    onStoryUpdate.value = (update: StoryUpdate) => {
+      pendingStoryUpdate.value = update
 
-      // Reset the all paragraphs shown flag for the new entry
-      allParagraphsShown.value = false
-
-      // Get the latest progress entry that was being updated with streaming content
-      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
-      const lastEntryIndex = progressEntries.value.length - 1
-
-      if (latestEntry) {
-        // Update the decision point and options
-        latestEntry.decision_point_id = update.current_decision || ''
-        latestEntry.options = update.options || []
+      if (!pendingStreamingBuffer.value && streamRenderTimer === null) {
+        finalizeStoryStream()
       }
-
-      // Mark content as ready immediately (streaming is done)
-      isContentReady.value[lastEntryIndex] = true
-
-      // Update story status if provided
-      if (update.status && story.value) {
-        story.value.status = update.status
-      }
-
-      scrollToBottom()
     }
 
     // Set up explanation handlers
@@ -559,6 +640,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  stopStreamRenderTimer()
 })
 
 function scrollToBottom() {
