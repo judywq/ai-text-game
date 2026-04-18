@@ -91,7 +91,7 @@ const STREAM_REVEAL_CHUNK_SIZE = Math.max(
   1,
   Math.round((STREAM_REVEAL_CHARS_PER_SECOND * STREAM_REVEAL_INTERVAL_MS) / 1000)
 )
-let streamRenderTimer: ReturnType<typeof window.setInterval> | null = null
+let streamRenderTimer: number | null = null
 
 // Track which entries are ready to display (after refetch completes)
 const isContentReady = ref<{ [entryIndex: number]: boolean }>({})
