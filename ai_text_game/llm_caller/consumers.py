@@ -452,6 +452,18 @@ class GameConsumer(AsyncWebsocketConsumer):
                 decision_point_id=state.get("current_decision_point"),
             )
 
+            options = self.get_options(state)
+            if options:
+                # Create option objects
+                for option in options:
+                    await database_sync_to_async(StoryOption.objects.create)(
+                        progress=progress,
+                        option_id=option["option_id"],
+                        option_name=option["option_name"],
+                    )
+
+            story.status = state["status"]
+
             # Get character base images for reference
             character_images = await database_sync_to_async(
                 lambda: story.skeleton.character_base_images
@@ -514,18 +526,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                         }
                     ),
                 )
-
-            options = self.get_options(state)
-            if options:
-                # Create option objects
-                for option in options:
-                    await database_sync_to_async(StoryOption.objects.create)(
-                        progress=progress,
-                        option_id=option["option_id"],
-                        option_name=option["option_name"],
-                    )
-
-            story.status = state["status"]
             await database_sync_to_async(story.save)()
 
     def get_options(self, state):
