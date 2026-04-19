@@ -11,7 +11,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
 import { Separator } from '@/components/ui/separator'
 import { useGameWebSocket } from '@/composables/useGameWebSocket'
-import { marked } from 'marked'
 import { CircleHelp } from 'lucide-vue-next'
 import StorySegment from '@/components/StorySegment.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
@@ -85,6 +84,7 @@ const currentStreamingContent = ref('')
 const pendingStreamingBuffer = ref('')
 const activeStreamingEntryIndex = ref<number | null>(null)
 const pendingStoryUpdate = ref<StoryUpdate | null>(null)
+const isFinalizingStoryStream = ref(false)
 const STREAM_REVEAL_INTERVAL_MS = 50
 const STREAM_REVEAL_CHARS_PER_SECOND = 50
 const STREAM_REVEAL_CHUNK_SIZE = Math.max(
@@ -194,11 +194,37 @@ function syncVisibleStreamingContent() {
   activeEntry.updated_at = new Date().toISOString()
 }
 
-function finalizeStoryStream() {
+async function syncCompletedStoryEntry(entryIndex: number) {
+  if (!story.value || !progressEntries.value[entryIndex]) {
+    return
+  }
+
+  try {
+    const serverEntries = await GameService.getStoryProgress(story.value.id)
+    const completedEntry = serverEntries[entryIndex]
+
+    if (completedEntry) {
+      progressEntries.value[entryIndex] = completedEntry
+    }
+  } catch (error) {
+    console.error('Failed to sync completed story entry', error)
+  } finally {
+    isContentReady.value[entryIndex] = true
+    scrollToBottom()
+  }
+}
+
+async function finalizeStoryStream() {
+  if (isFinalizingStoryStream.value) {
+    return
+  }
+
   const update = pendingStoryUpdate.value
   if (!update) {
     return
   }
+
+  isFinalizingStoryStream.value = true
 
   const latestEntryIndex = activeStreamingEntryIndex.value ?? (progressEntries.value.length - 1)
   const latestEntry = latestEntryIndex >= 0 ? progressEntries.value[latestEntryIndex] : null
@@ -206,9 +232,13 @@ function finalizeStoryStream() {
   allParagraphsShown.value = false
 
   if (latestEntry) {
+    if (update.content) {
+      latestEntry.content = update.content
+    }
     latestEntry.decision_point_id = update.current_decision || ''
     latestEntry.options = update.options || []
-    isContentReady.value[latestEntryIndex] = true
+    latestEntry.updated_at = new Date().toISOString()
+    isContentReady.value[latestEntryIndex] = false
   }
 
   if (update.status && story.value) {
@@ -220,13 +250,22 @@ function finalizeStoryStream() {
   activeStreamingEntryIndex.value = null
   pendingStoryUpdate.value = null
   stopStreamRenderTimer()
-  scrollToBottom()
+
+  try {
+    if (latestEntry) {
+      await syncCompletedStoryEntry(latestEntryIndex)
+    } else {
+      scrollToBottom()
+    }
+  } finally {
+    isFinalizingStoryStream.value = false
+  }
 }
 
 function flushStreamingBuffer() {
   if (!pendingStreamingBuffer.value) {
     stopStreamRenderTimer()
-    finalizeStoryStream()
+    void finalizeStoryStream()
     return
   }
 
@@ -237,7 +276,7 @@ function flushStreamingBuffer() {
   scrollToBottom()
 
   if (!pendingStreamingBuffer.value && pendingStoryUpdate.value) {
-    finalizeStoryStream()
+    void finalizeStoryStream()
   }
 }
 
@@ -577,7 +616,7 @@ onMounted(async () => {
       pendingStoryUpdate.value = update
 
       if (!pendingStreamingBuffer.value && streamRenderTimer === null) {
-        finalizeStoryStream()
+        void finalizeStoryStream()
       }
     }
 
