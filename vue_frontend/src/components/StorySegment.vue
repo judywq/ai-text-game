@@ -25,7 +25,7 @@
 
           <!-- Show chosen option if exists -->
           <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-4 italic">
-            Vous avez choisi : {{ entry.chosen_option_text }}
+            {{ chosenLabel }} {{ entry.chosen_option_text }}
           </div>
         </div>
       </div>
@@ -48,6 +48,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'allParagraphsShown'): void
 }>()
+
+// Label follows the content language (mirrors backend PROMPT_LANGUAGE_CODE)
+const chosenLabel = import.meta.env.VITE_PROMPT_LANGUAGE_CODE === 'French'
+  ? 'Vous avez choisi :'
+  : 'You chose:'
 
 const isImageLoaded = ref(false)
 
