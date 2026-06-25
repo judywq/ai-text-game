@@ -31,7 +31,7 @@ langchain-anthropic==0.3.7 # https://github.com/langchain-ai/langchain
 langchain-groq==0.2.4 # https://github.com/langchain-ai/langchain
 langchain-deepseek==0.1.2 # https://github.com/langchain-ai/langchain
 langchain-google-genai==2.0.8 # https://github.com/langchain-ai/langchain
-google-genai==1.53.0 # https://github.com/google/generative-ai-python
+google-genai==2.10.0 # https://github.com/google/generative-ai-python
 langgraph==0.2.74 # https://github.com/langchain-ai/langgraph
 langchain-community==0.3.18 # https://github.com/langchain-ai/langchain
 requests==2.32.3 # https://github.com/psf/requests

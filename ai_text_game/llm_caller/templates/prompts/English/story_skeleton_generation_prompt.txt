@@ -40,8 +40,8 @@ The story should be structured like this example:
 Requirements:
 - Write in CEFR level {language_level} English
 - There should be
-  - 6 milestones
-  - 2~3 decision points in each milestone
+  - 3 milestones
+  - 2 decision points in each milestone
   - 3 options in each decision point
   - 2~3 possible endings
 - The story should be engaging and have multiple meaningful choice points that affect the story's direction.

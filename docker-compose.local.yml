@@ -21,6 +21,7 @@ services:
     ports:
       - '8000:8000'
     command: /start
+    restart: unless-stopped
 
   postgres:
     build:
@@ -33,17 +34,20 @@ services:
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.secrets
+    restart: unless-stopped
 
   mailpit:
     image: docker.io/axllent/mailpit:latest
     ports:
       - "8025:8025"
+    restart: unless-stopped
 
   redis:
     image: docker.io/redis:6
 
     volumes:
       - ai_text_game_local_redis_data:/data
+    restart: unless-stopped
 
 
   celeryworker:
@@ -86,3 +90,4 @@ services:
     command: vite dev --host
     ports:
       - '5173:5173'
+    restart: unless-stopped

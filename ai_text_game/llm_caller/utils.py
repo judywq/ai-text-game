@@ -192,15 +192,15 @@ def generate_story_image_prompt(
             "faces, colors, body types) and the same art style. However, create a "
             "DIFFERENT scene showing the NEW story events described below. Do not "
             "just copy the reference images. The characters should be doing DIFFERENT "
-            "actions in a DIFFERENT setting based on the new story text. Style: "
-            "Children's storybook illustration, colorful, engaging for ages 8-9. "
+            "actions in a DIFFERENT setting based on the new story text."
+            # "Style: Children's storybook illustration, colorful, engaging for ages 8-9. "
             "Do NOT include any text, options, or choices in the image."
             f"\n\nNEW STORY SCENE TO ILLUSTRATE:\n{story_text}"
         )
     return (
-        "Create a children's storybook illustration for this story scene. Style: "
-        "Colorful, engaging, appropriate for ages 8-9, warm and inviting. Show the "
-        "characters and setting clearly. Do NOT include any text, options, or choices "
+        # "Create a children's storybook illustration for this story scene. Style: "
+        # "Colorful, engaging, appropriate for ages 8-9, warm and inviting."
+        "Show the characters and setting clearly. Do NOT include any text, options, or choices "
         "in the image."
         f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
     )
@@ -354,12 +354,12 @@ def generate_character_image(
         URL to the saved character image
     """
     prompt = (
-        f"Create a character portrait for a children's storybook. "
+        f"Create a character portrait. "  # for a children's storybook. "
         f"Name: {character.get('character_name')}. "
         f"Gender: {character.get('character_gender')}. "
         f"Role: {character.get('role')}. "
         f"Description: {character.get('character_description')}. "
-        f"Style: Colorful, engaging, appropriate for ages 8-9. "
+        # f"Style: Colorful, engaging, appropriate for ages 8-9. "
         f"Show the character clearly with consistent features. "
         f"Plain or simple background. Do NOT include any text."
     )
