@@ -226,7 +226,11 @@ async function startGame(sceneText?: string, languageLevel?: string, details?: s
 
 // Add function to handle clicking a recent game
 const handleGameClick = (story: GameStory) => {
-  router.push(`/game/${story.id}`)
+  if (story.status === 'INIT') {
+    router.push(`/game/${story.id}/loading`)
+  } else {
+    router.push(`/game/${story.id}`)
+  }
 }
 </script>
 

@@ -47,7 +47,6 @@ const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 
 const {
-  isConnected,
   connect,
   selectOption,
   startStory,
@@ -59,7 +58,8 @@ const {
   onExplanationStream,
   onExplanationStatus,
   onExplanationCompleted,
-  onError
+  onError,
+  onSkeletonGenerationStarted,
 } = useGameWebSocket()
 
 const currentOptions = ref<StoryOption[]>([])
@@ -497,27 +497,15 @@ const loadStory = async () => {
     const storyId = parseInt(route.params.id as string)
     await fetchStoryAndProgress()
 
-    // Connect WebSocket and wait for connection
     await connect(storyId)
 
-    // Wait for WebSocket connection to be established
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('WebSocket connection timeout'))
-      }, 5000)
-
-      const checkConnection = setInterval(() => {
-        if (isConnected.value) {
-          clearInterval(checkConnection)
-          clearTimeout(timeout)
-          resolve()
-        }
-      }, 100)
-    })
+    onSkeletonGenerationStarted.value = () => {
+      router.push(`/game/${storyId}/loading`)
+    }
 
     // Start story if no progress exists
     if (progressEntries.value.length === 0 && story.value?.status === 'INIT') {
-      await startStory(storyId)
+      await startStory()
     }
 
     // Add error handler

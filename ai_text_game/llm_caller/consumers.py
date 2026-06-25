@@ -34,39 +34,39 @@ class GameConsumer(AsyncWebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.story_graph = None
         self.story_thread = {"configurable": {"thread_id": "1"}}
+        self._joined_group = False
 
     async def connect(self):
         logger.debug("WebSocket connect attempt with scope: %s", self.scope)
         try:
-            # Get story_id from URL route
             self.story_id = self.scope["url_route"]["kwargs"]["story_id"]
             self.room_group_name = f"game_{self.story_id}"
             self.story_thread = {"configurable": {"thread_id": self.story_id}}
 
-            # Get story
-            story = await self.get_story(self.story_id)
+            await self.get_story(self.story_id)
 
-            # Initialize story graph
-            await self.initialize_story_graph(story)
-
-            # Join room group
             await self.channel_layer.group_add(
                 self.room_group_name,
                 self.channel_name,
             )
+            self._joined_group = True
             await self.accept()
             logger.debug("WebSocket connection accepted")
-        except (KeyError, TypeError, ValueError):
+        except GameStory.DoesNotExist:
+            logger.exception("WebSocket connection error: story not found")
+            await self.close(code=4004)
+        except Exception:
             logger.exception("WebSocket connection error")
-            raise
+            await self.close(code=1011)
 
     async def disconnect(self, close_code):
         logger.debug("WebSocket disconnected with code: %s", close_code)
-        # Leave room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name,
-        )
+        if self._joined_group:
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name,
+            )
+            self._joined_group = False
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -383,6 +383,14 @@ class GameConsumer(AsyncWebsocketConsumer):
             await database_sync_to_async(explanation.save)()
             await self.send_error(str(e))
 
+    async def ensure_story_graph_initialized(self, story=None):
+        """Lazily initialize the story graph on first use."""
+        if self.story_graph is not None:
+            return
+        if story is None:
+            story = await self.get_story(self.story_id)
+        await self.initialize_story_graph(story)
+
     async def initialize_story_graph(self, story):
         """Initialize the story graph with the current story state"""
 
@@ -601,6 +609,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         if not latest_progress or not latest_progress.chosen_option_text:
             return
 
+        await self.ensure_story_graph_initialized(story)
+
         # Generate summary using the story graph
         summary = await self.story_graph.summarize_segment(
             story_segment=latest_progress.content,
@@ -618,6 +628,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def update_story_progress(self, story):
         """Create the next progress entry."""
         try:
+            await self.ensure_story_graph_initialized(story)
+
             # Get current story state
             state = await database_sync_to_async(lambda: story.story_state)()
 
