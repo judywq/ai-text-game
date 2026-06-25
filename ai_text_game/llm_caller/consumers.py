@@ -20,7 +20,7 @@ from .models import StoryProgress
 from .models import TextExplanation
 from .story_graph import StoryGraph
 from .tasks import generate_story_skeleton
-from .utils import generate_image_with_gemini
+from .utils import generate_image
 from .utils import generate_story_image_prompt
 from .utils import get_llm_model
 
@@ -493,6 +493,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             image_model_name = await database_sync_to_async(
                 lambda: image_config.model.name,
             )()
+            image_llm_type = await database_sync_to_async(
+                lambda: image_config.model.llm_type,
+            )()
             image_api_key = await database_sync_to_async(
                 lambda: APIKey.get_available_key(image_model_name),
             )()
@@ -502,7 +505,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                 story_text=story_text,
                 has_reference_images=bool(reference_images),
             )
-            image_url = await database_sync_to_async(generate_image_with_gemini)(
+            image_url = await database_sync_to_async(generate_image)(
+                llm_type=image_llm_type,
                 prompt=image_prompt,
                 story_id=story.id,
                 image_type="progress",

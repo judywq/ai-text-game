@@ -476,8 +476,8 @@ INIT_LLM_MODELS = [
     },
     {
         "llm_type": "openai",
-        "name": "gpt-5.2-2025-12-11",
-        "display_name": "GPT-5.2",
+        "name": "gpt-5.5",
+        "display_name": "GPT-5.5",
         "is_default": False,
         "is_active": True,
         "order": 12,
@@ -578,6 +578,14 @@ INIT_LLM_MODELS = [
         "is_active": True,
         "order": 200,
     },
+    {
+        "llm_type": "openai",
+        "name": "gpt-image-2",
+        "display_name": "GPT Image 2",
+        "is_default": False,
+        "is_active": True,
+        "order": 201,
+    },
 ]
 
 PROMPT_LANGUAGE_CODE = env.str("PROMPT_LANGUAGE_CODE", default="English")
@@ -586,47 +594,47 @@ PROMPT_LANGUAGE_CODE = env.str("PROMPT_LANGUAGE_CODE", default="English")
 # ------------------------------------------------------------------------------
 INIT_LLM_CONFIGS = {
     "scene_generation": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "scene_generation_prompt.txt",
         "temperature": 0.7,
     },
     "text_explanation": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "text_explanation_prompt.txt",
         "temperature": 0.1,
     },
     "vocabulary_quiz": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "vocabulary_quiz_evaluation_prompt.txt",
         "temperature": 0.1,
     },
     "story_skeleton_generation": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "story_skeleton_generation_prompt.txt",
         "temperature": 0.7,
     },
     "story_skeleton_generation_demo": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "story_skeleton_generation_prompt_demo.txt",
         "temperature": 0.7,
     },
     "story_continuation": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "story_continuation_prompt.txt",
         "temperature": 0.7,
     },
     "story_ending": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "story_ending_prompt.txt",
         "temperature": 0.7,
     },
     "story_summary": {
-        "model": "gpt-5.2-2025-12-11",
+        "model": "gpt-5.5",
         "template": "story_summary_prompt.txt",
         "temperature": 0.3,
     },
     "image_generation": {
-        "model": "gemini-2.5-flash-image",
+        "model": "gpt-image-2",
         "template": "image_generation_prompt.txt",
         "temperature": 0.7,
     },
@@ -821,6 +829,7 @@ INIT_API_KEYS = [
 ]
 
 GEMINI_API_KEY = env.str("GEMINI_API_KEY", default="")
+OPENAI_API_KEY = env.str("OPENAI_API_KEY", default="")
 
 FAKE_LLM_REQUEST = env.bool("FAKE_LLM_REQUEST", default=False)
 # FAKE_LLM_REQUEST = False

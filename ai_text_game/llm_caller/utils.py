@@ -1,3 +1,4 @@
+import base64
 import logging
 import re
 from datetime import timedelta
@@ -18,6 +19,7 @@ from langchain_deepseek import ChatDeepSeek
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
+from openai import OpenAI
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from PIL import Image
 
@@ -75,7 +77,7 @@ def get_llm_model(config, fake=False, name=None):  # noqa: FBT002
         llm = ChatOpenAI(
             model=model_name,
             api_key=key.key,
-            temperature=temperature,
+            # temperature=temperature,
         )
     elif llm_type == "anthropic":
         llm = ChatAnthropic(
@@ -174,7 +176,7 @@ def generate_story_image_prompt(
     *,
     has_reference_images: bool = False,
 ) -> str:
-    """Generate image prompt for Gemini based on story content.
+    """Generate image prompt based on story content.
 
     Args:
         story_text: The story segment text
@@ -204,9 +206,138 @@ def generate_story_image_prompt(
     )
 
 
+def _load_reference_images(
+    reference_image_urls: list[str] | None,
+) -> list[Image.Image]:
+    """Load reference images from local media paths or remote URLs."""
+    if not reference_image_urls:
+        return []
+
+    images: list[Image.Image] = []
+    for ref_url in reference_image_urls:
+        try:
+            if "/media/" in ref_url:
+                media_path = ref_url.split("/media/")[-1]
+                full_path = Path(settings.MEDIA_ROOT) / media_path
+                images.append(Image.open(full_path))
+            else:
+                response = requests.get(ref_url, timeout=10)
+                if response.status_code == HTTP_OK:
+                    images.append(Image.open(BytesIO(response.content)))
+        except (OSError, requests.RequestException) as e:
+            logger.warning(
+                "Failed to load reference image %s, skipping: %s",
+                ref_url,
+                e,
+            )
+    return images
+
+
+def _save_image_to_storage(
+    image: Image.Image,
+    *,
+    story_id: int,
+    image_type: str,
+    progress_id: int | None = None,
+    character_id: str | None = None,
+) -> str:
+    """Save a PIL image to media storage and return its full URL."""
+    if image_type == "stock":
+        filename = f"story_{story_id}_stock.png"
+    elif image_type == "character":
+        filename = f"story_{story_id}_char_{character_id}.png"
+    else:
+        filename = f"story_{story_id}_progress_{progress_id}.png"
+
+    img_buffer = BytesIO()
+    image.save(img_buffer, format="PNG")
+    img_buffer.seek(0)
+
+    path = default_storage.save(
+        f"images/{filename}",
+        ContentFile(img_buffer.read()),
+    )
+
+    domain = settings.DOMAIN_NAME
+    if not domain.startswith("http"):
+        domain = f"http://{domain}"
+    full_url = f"{domain}/media/{path}"
+    logger.info("Generated image: %s (full URL: %s)", path, full_url)
+    return full_url
+
+
+def _pil_image_to_upload_file(
+    image: Image.Image,
+    name: str,
+) -> tuple[str, BytesIO, str]:
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    return (name, buffer, "image/png")
+
+
+def _openai_image_response_to_bytes(response) -> bytes | None:
+    """Extract image bytes from an OpenAI ImagesResponse."""
+    if not response.data:
+        return None
+
+    image_data = response.data[0]
+    if image_data.b64_json:
+        return base64.b64decode(image_data.b64_json)
+
+    if image_data.url:
+        download_response = requests.get(image_data.url, timeout=30)
+        if download_response.status_code == HTTP_OK:
+            return download_response.content
+
+    return None
+
+
+def generate_image(  # noqa: PLR0913
+    *,
+    llm_type: str,
+    prompt: str,
+    story_id: int,
+    api_key: str | None = None,
+    model_name: str | None = None,
+    image_type: str = "progress",
+    progress_id: int | None = None,
+    character_id: str | None = None,
+    reference_image_urls: list[str] | None = None,
+) -> str:
+    """Generate an image using the configured provider and save to media storage."""
+    if llm_type == "gemini":
+        return generate_image_with_gemini(
+            prompt=prompt,
+            story_id=story_id,
+            image_type=image_type,
+            progress_id=progress_id,
+            character_id=character_id,
+            reference_image_urls=reference_image_urls,
+            api_key=api_key,
+            model_name=model_name,
+        )
+    if llm_type == "openai":
+        return generate_image_with_openai(
+            prompt=prompt,
+            story_id=story_id,
+            image_type=image_type,
+            progress_id=progress_id,
+            character_id=character_id,
+            reference_image_urls=reference_image_urls,
+            api_key=api_key,
+            model_name=model_name,
+        )
+
+    logger.warning("Unsupported image model type: %s", llm_type)
+    return ""
+
+
 def generate_character_image(
     character: dict,
     story_id: int,
+    *,
+    llm_type: str,
     api_key: str | None = None,
     model_name: str | None = None,
 ) -> str:
@@ -215,8 +346,9 @@ def generate_character_image(
     Args:
         character: Character dict with id, name, gender, description, role
         story_id: The story ID
-        api_key: Gemini API key
-        model_name: Gemini model name
+        llm_type: Provider type (e.g. openai, gemini)
+        api_key: API key for the image provider
+        model_name: Image model name
 
     Returns:
         URL to the saved character image
@@ -231,7 +363,8 @@ def generate_character_image(
         f"Show the character clearly with consistent features. "
         f"Plain or simple background. Do NOT include any text."
     )
-    return generate_image_with_gemini(
+    return generate_image(
+        llm_type=llm_type,
         prompt=prompt,
         story_id=story_id,
         image_type="character",
@@ -241,7 +374,64 @@ def generate_character_image(
     )
 
 
-def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
+def generate_image_with_openai(  # noqa: PLR0913
+    prompt: str,
+    story_id: int,
+    image_type: str = "progress",
+    progress_id: int | None = None,
+    character_id: str | None = None,
+    reference_image_urls: list[str] | None = None,
+    api_key: str | None = None,
+    model_name: str | None = None,
+) -> str:
+    """Generate image using OpenAI and save to media folder."""
+    try:
+        if not api_key:
+            api_key = settings.OPENAI_API_KEY
+        if not model_name:
+            model_name = "gpt-image-2"
+
+        client = OpenAI(api_key=api_key)
+        reference_images = _load_reference_images(reference_image_urls)
+
+        if reference_images:
+            upload_files = [
+                _pil_image_to_upload_file(image, f"reference_{index}.png")
+                for index, image in enumerate(reference_images)
+            ]
+            response = client.images.edit(
+                model=model_name,
+                image=upload_files if len(upload_files) > 1 else upload_files[0],
+                prompt=prompt,
+            )
+        else:
+            response = client.images.generate(
+                model=model_name,
+                prompt=prompt,
+                size="1024x1024",
+                quality="medium",
+            )
+
+        image_bytes = _openai_image_response_to_bytes(response)
+        if not image_bytes:
+            logger.warning("No image data in OpenAI response")
+            return ""
+
+        image = Image.open(BytesIO(image_bytes))
+        return _save_image_to_storage(
+            image,
+            story_id=story_id,
+            image_type=image_type,
+            progress_id=progress_id,
+            character_id=character_id,
+        )
+
+    except Exception:
+        logger.exception("Error generating image with OpenAI")
+        return ""
+
+
+def generate_image_with_gemini(  # noqa: PLR0913
     prompt: str,
     story_id: int,
     image_type: str = "progress",
@@ -256,51 +446,26 @@ def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
     Args:
         prompt: The image generation prompt
         story_id: The story ID
-        image_type: Type of image ('stock' or 'progress')
+        image_type: Type of image ('stock', 'character', or 'progress')
         progress_id: Progress entry ID (required for progress images)
         reference_image_urls: Optional list of reference image URLs for consistency
         api_key: Gemini API key (optional, uses settings if not provided)
         model_name: Gemini model name (optional, uses default if not provided)
 
     Returns:
-        Relative path to the saved image
+        Full URL to the saved image
     """
     try:
         if not api_key:
             api_key = settings.GEMINI_API_KEY
         if not model_name:
-            model_name = "gemini-2.5-flash-image-preview"
+            model_name = "gemini-2.5-flash-image"
 
         client = genai.Client(api_key=api_key)
 
-        # Prepare contents for Gemini
-        contents = []
-
-        # Add all reference images if provided
-        if reference_image_urls:
-            for ref_url in reference_image_urls:
-                try:
-                    # Extract path from URL and load from filesystem
-                    if "/media/" in ref_url:
-                        # Get the path after /media/
-                        media_path = ref_url.split("/media/")[-1]
-                        full_path = Path(settings.MEDIA_ROOT) / media_path
-                        ref_image = Image.open(full_path)
-                        contents.append(ref_image)
-                    else:
-                        # Fallback to HTTP request
-                        response = requests.get(ref_url, timeout=10)
-                        if response.status_code == HTTP_OK:
-                            ref_image = Image.open(BytesIO(response.content))
-                            contents.append(ref_image)
-                except (OSError, requests.RequestException) as e:
-                    logger.warning(
-                        "Failed to load reference image %s, skipping: %s",
-                        ref_url,
-                        e,
-                    )
-
-        # Add prompt after images
+        contents: list[Image.Image | str] = list(
+            _load_reference_images(reference_image_urls),
+        )
         contents.append(prompt)
 
         response = client.models.generate_content(
@@ -308,37 +473,16 @@ def generate_image_with_gemini(  # noqa: C901, PLR0913, PLR0912
             contents=contents,
         )
 
-        # Extract image data from response
         for part in response.candidates[0].content.parts:
             if part.inline_data:
                 image = Image.open(BytesIO(part.inline_data.data))
-
-                # Generate filename
-                if image_type == "stock":
-                    filename = f"story_{story_id}_stock.png"
-                elif image_type == "character":
-                    filename = f"story_{story_id}_char_{character_id}.png"
-                else:
-                    filename = f"story_{story_id}_progress_{progress_id}.png"
-
-                # Save to media folder
-                img_buffer = BytesIO()
-                image.save(img_buffer, format="PNG")
-                img_buffer.seek(0)
-
-                path = default_storage.save(
-                    f"images/{filename}",
-                    ContentFile(img_buffer.read()),
+                return _save_image_to_storage(
+                    image,
+                    story_id=story_id,
+                    image_type=image_type,
+                    progress_id=progress_id,
+                    character_id=character_id,
                 )
-
-                # Get the full URL for the image
-                domain = settings.DOMAIN_NAME
-                # Ensure domain has protocol
-                if not domain.startswith("http"):
-                    domain = f"http://{domain}"
-                full_url = f"{domain}/media/{path}"
-                logger.info("Generated image: %s (full URL: %s)", path, full_url)
-                return full_url
 
     except Exception:
         logger.exception("Error generating image with Gemini")

@@ -123,6 +123,7 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
                         image_url = generate_character_image(
                             character=character,
                             story_id=story_id,
+                            llm_type=image_config.model.llm_type,
                             api_key=image_key.key if image_key else None,
                             model_name=image_config.model.name,
                         )
