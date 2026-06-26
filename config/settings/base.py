@@ -579,12 +579,20 @@ INIT_LLM_MODELS = [
         "order": 200,
     },
     {
+        "llm_type": "gemini",
+        "name": "gemini-3.1-flash-image",
+        "display_name": "Gemini 3.1 Flash Image",
+        "is_default": False,
+        "is_active": True,
+        "order": 201,
+    },
+    {
         "llm_type": "openai",
         "name": "gpt-image-2",
         "display_name": "GPT Image 2",
         "is_default": False,
         "is_active": True,
-        "order": 201,
+        "order": 210,
     },
 ]
 
@@ -634,7 +642,7 @@ INIT_LLM_CONFIGS = {
         "temperature": 0.3,
     },
     "image_generation": {
-        "model": "gpt-image-2",
+        "model": "gemini-3.1-flash-image",
         "template": "image_generation_prompt.txt",
         "temperature": 0.7,
     },
