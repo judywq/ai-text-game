@@ -116,13 +116,30 @@ class StoryGraph:
                 state["current_decision_point"],
             )
             milestone = next(
-                m for m in skeleton["milestones"] if m["milestone_id"] == milestone_id
+                (
+                    m
+                    for m in skeleton["milestones"]
+                    if m.get("milestone_id") == milestone_id
+                ),
+                None,
             )
+            if milestone is None:
+                msg = f"Milestone {milestone_id} not found in story skeleton"
+                raise ValueError(msg)  # noqa: TRY301
             decision_point = next(
-                d
-                for d in milestone["decision_points"]
-                if d["decision_point_id"] == decision_point_id
+                (
+                    d
+                    for d in milestone.get("decision_points", [])
+                    if d.get("decision_point_id") == decision_point_id
+                ),
+                None,
             )
+            if decision_point is None:
+                msg = (
+                    f"Decision point {decision_point_id} not found in "
+                    f"milestone {milestone_id}"
+                )
+                raise ValueError(msg)  # noqa: TRY301
             formatted_progress = format_progress_with_decisions(state)
             if not formatted_progress:
                 formatted_progress = "(There is no progress yet: please start writing the story from the background)"

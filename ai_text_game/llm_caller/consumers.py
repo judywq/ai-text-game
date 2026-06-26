@@ -17,6 +17,7 @@ from .models import GameStory
 from .models import LLMConfig
 from .models import StoryOption
 from .models import StoryProgress
+from .models import StorySkeleton
 from .models import TextExplanation
 from .story_graph import StoryGraph
 from .tasks import generate_story_skeleton
@@ -29,12 +30,14 @@ logger = logging.getLogger(__name__)
 
 class GameConsumer(AsyncWebsocketConsumer):
     START_GAME_SINCE_MILESTONE = 2
+    START_GAME_SINCE_MILESTONE_DEMO = 1
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.story_graph = None
         self.story_thread = {"configurable": {"thread_id": "1"}}
         self._joined_group = False
+        self._story_progress_started = False
 
     async def connect(self):
         logger.debug("WebSocket connect attempt with scope: %s", self.scope)
@@ -625,9 +628,90 @@ class GameConsumer(AsyncWebsocketConsumer):
             ),
         )()
 
+    @database_sync_to_async
+    def has_progress_entries(self, story) -> bool:
+        return story.progress_entries.exists()
+
+    @database_sync_to_async
+    def get_start_game_milestone_threshold(self, story) -> int:
+        is_demo = False
+        if story.created_by and hasattr(story.created_by, "userprofile"):
+            is_demo = story.created_by.userprofile.is_demo_account
+        if is_demo:
+            return self.START_GAME_SINCE_MILESTONE_DEMO
+        return self.START_GAME_SINCE_MILESTONE
+
+    @database_sync_to_async
+    def get_skeleton_readiness(self, story) -> tuple[int, bool]:
+        skeleton = getattr(story, "skeleton", None)
+        if not skeleton or not skeleton.raw_data:
+            return 0, False
+        raw_data = skeleton.raw_data
+        return (
+            StorySkeleton.count_complete_milestones(raw_data),
+            StorySkeleton.is_ready_for_story_start(raw_data),
+        )
+
+    async def maybe_start_story_progress(
+        self,
+        story,
+        n_milestones: int | None = None,
+        *,
+        force: bool = False,
+    ) -> None:
+        """Start first story progress once skeleton has enough milestones."""
+        if await self.has_progress_entries(story):
+            return
+        if self._story_progress_started:
+            return
+
+        complete_count, ready = await self.get_skeleton_readiness(story)
+
+        if not force:
+            threshold = await self.get_start_game_milestone_threshold(story)
+            if complete_count < threshold:
+                logger.info(
+                    "Skeleton progress for story %s: %s complete milestones "
+                    "(%s reported, threshold %s), waiting",
+                    story.id,
+                    complete_count,
+                    n_milestones,
+                    threshold,
+                )
+                return
+            if not ready:
+                logger.info(
+                    "Skeleton for story %s has enough milestones but "
+                    "first decision point is not ready yet",
+                    story.id,
+                )
+                return
+        elif not ready:
+            logger.warning(
+                "Skeleton completed for story %s but is not valid for story start",
+                story.id,
+            )
+            await self.send_error(
+                "Story structure generation produced invalid data. Please try again.",
+            )
+            return
+
+        self._story_progress_started = True
+        logger.info(
+            "Starting first story progress for story %s "
+            "(n_milestones=%s, force=%s)",
+            story.id,
+            n_milestones,
+            force,
+        )
+        await self.update_story_progress(story)
+        if not await self.has_progress_entries(story):
+            self._story_progress_started = False
+
     async def update_story_progress(self, story):
         """Create the next progress entry."""
         try:
+            logger.info("Starting update_story_progress for story %s", story.id)
             await self.ensure_story_graph_initialized(story)
 
             # Get current story state
@@ -683,8 +767,10 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             # Send response to client
             await self.send_decision_point(new_state)
+            logger.info("Completed update_story_progress for story %s", story.id)
 
         except Exception as e:
+            self._story_progress_started = False
             await self.revert_user_choice(story)
             logger.exception("Error in update_story_progress")
             await self.send_error(
@@ -714,15 +800,20 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def skeleton_generation_progress(self, event):
         """Handle skeleton generation progress."""
         story_id = event["story_id"]
+        n_milestones = event["n_milestones"]
+        logger.info(
+            "Skeleton generation progress for story %s: %s milestones",
+            story_id,
+            n_milestones,
+        )
         story = await self.get_story(story_id)
-        if event["n_milestones"] == self.START_GAME_SINCE_MILESTONE:
-            # Start generating story when first milestone is generated
-            logger.debug("Start generating the first story progress")
-            await self.update_story_progress(story)
+        await self.maybe_start_story_progress(story, n_milestones)
 
     async def skeleton_generation_completed(self, event):
         """Handle skeleton generation completion."""
-        # No need to do anythin
+        logger.info("Skeleton generation completed for story %s", self.story_id)
+        story = await self.get_story(self.story_id)
+        await self.maybe_start_story_progress(story, force=True)
 
     async def skeleton_generation_failed(self, event):
         """Handle skeleton generation failure."""

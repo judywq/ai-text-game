@@ -423,6 +423,62 @@ class StorySkeleton(TimestampedBase):
         """Count the number of milestones in the raw data"""
         return len(raw_data.get("milestones", []))
 
+    @staticmethod
+    def is_milestone_complete(milestone: dict) -> bool:
+        """Return true when a milestone has the fields needed for story generation."""
+        if not milestone or not isinstance(milestone, dict):
+            return False
+        if not milestone.get("milestone_id") or not milestone.get("description"):
+            return False
+        decision_points = milestone.get("decision_points")
+        if not decision_points or not isinstance(decision_points, list):
+            return False
+        for decision_point in decision_points:
+            if not decision_point.get("decision_point_id") or not decision_point.get(
+                "description",
+            ):
+                return False
+            options = decision_point.get("options")
+            if not options or not isinstance(options, list):
+                return False
+            for option in options:
+                if not option.get("option_id") or not option.get("option_name"):
+                    return False
+        return True
+
+    @staticmethod
+    def count_complete_milestones(raw_data: dict) -> int:
+        """Count milestones that are complete enough for story generation."""
+        return sum(
+            1
+            for milestone in raw_data.get("milestones", [])
+            if StorySkeleton.is_milestone_complete(milestone)
+        )
+
+    @staticmethod
+    def is_ready_for_story_start(raw_data: dict) -> bool:
+        """Return true when the skeleton can support generating the first segment."""
+        if not raw_data.get("story_background"):
+            return False
+        milestones = raw_data.get("milestones", [])
+        if not milestones:
+            return False
+        first_milestone = next(
+            (m for m in milestones if m.get("milestone_id") == "M1"),
+            milestones[0],
+        )
+        if not StorySkeleton.is_milestone_complete(first_milestone):
+            return False
+        first_decision = next(
+            (
+                dp
+                for dp in first_milestone.get("decision_points", [])
+                if dp.get("decision_point_id") == "M1.D1"
+            ),
+            None,
+        )
+        return first_decision is not None and bool(first_decision.get("options"))
+
 
 class StoryProgress(TimestampedBase):
     story = models.ForeignKey(

@@ -90,6 +90,11 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
                 skeleton.raw_data = skeleton_data
                 skeleton.save()
 
+                logger.info(
+                    "Sending skeleton progress for story %s: %s milestones",
+                    story_id,
+                    n_milestones,
+                )
                 async_to_sync(channel_layer.group_send)(
                     f"game_{story_id}",
                     {
