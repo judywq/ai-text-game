@@ -1,0 +1,27 @@
+---
+description: Run pre-commit after making code changes
+alwaysApply: true
+---
+
+# Pre-commit Verification
+
+After making code changes, run pre-commit before finishing:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+Equivalent Makefile target: `make pc`
+
+## When to run
+
+- After editing Python, Vue/TS, config, or other tracked project files
+- Before claiming work is complete or ready to commit
+
+## If hooks fail
+
+1. Fix reported issues (lint, format, etc.)
+2. If a formatter hook modified files, include those changes
+3. Re-run `uv run pre-commit run --all-files` until all hooks pass
+
+Do not skip hooks or leave lint/format failures for the user to fix.
