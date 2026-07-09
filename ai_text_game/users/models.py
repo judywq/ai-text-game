@@ -42,8 +42,8 @@ class UserProfile(models.Model):
         _("Native language"),
         max_length=10,
         choices=NATIVE_LANGUAGE_CHOICES,
-        null=True,
         blank=True,
+        default="",
         help_text="Language used for word explanations and UI copy where relevant.",
     )
 

@@ -22,6 +22,7 @@ export class AuthService {
   public static async signup(email: string, password: string, name: string): Promise<void> {
     await api.post('/dj-rest-auth/registration/', {
       email,
+      username: email,
       password1: password,
       password2: password,
       name,

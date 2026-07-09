@@ -12,13 +12,13 @@ UserModel = get_user_model()
 
 
 class NativeLanguageChoiceField(serializers.ChoiceField):
-    """Reads/writes `UserProfile.native_language` while the serializer instance is a User."""
+    """Read/write UserProfile.native_language on a User serializer instance."""
 
     def get_attribute(self, instance):
         profile = getattr(instance, "userprofile", None)
         if not profile:
             return None
-        return profile.native_language
+        return profile.native_language or None
 
 
 class CustomLoginSerializer(LoginSerializer):
@@ -72,7 +72,7 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         native_language = validated_data.pop("native_language", serializers.empty)
         user = super().update(instance, validated_data)
         if native_language is not serializers.empty and hasattr(user, "userprofile"):
-            user.userprofile.native_language = native_language
+            user.userprofile.native_language = native_language or ""
             user.userprofile.save(update_fields=["native_language"])
         return user
 
@@ -88,9 +88,21 @@ class TokenSerializer(serializers.ModelSerializer):
 class CustomRegisterSerializer(RegisterSerializer):
     name = serializers.CharField(required=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].required = False
+        self.fields["username"].allow_blank = True
+
+    def validate(self, attrs):
+        if not attrs.get("username"):
+            attrs["username"] = attrs["email"]
+        return super().validate(attrs)
+
     def get_cleaned_data(self):
         data = super().get_cleaned_data()
         data["name"] = self.validated_data.get("name", "")
+        if not data.get("username"):
+            data["username"] = data.get("email", "")
         return data
 
     def save(self, request):

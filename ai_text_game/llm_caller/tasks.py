@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True)
-def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  # noqa: C901, PLR0915
+def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  # noqa: C901, PLR0912, PLR0915
     """Generate story skeleton in background."""
     skeleton = None
     try:
