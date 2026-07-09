@@ -276,7 +276,12 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         return TextExplanationSerializer(explanation).data
 
-    async def process_explanation(self, story, explanation, native_language_override=None):
+    async def process_explanation(
+        self,
+        story,
+        explanation,
+        native_language_override=None,
+    ):
         try:
             is_demo = await database_sync_to_async(
                 lambda: (
@@ -474,17 +479,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 list(character_images.values()) if character_images else []
             )
 
-            # # Add last progress image (uncomment to use the n-1 image as reference)
-            # last_image = await database_sync_to_async(
-            #     lambda: StoryProgress.objects.filter(story=story, image_url__isnull=False)
-            #     .exclude(id=progress.id)
-            #     .order_by("-created_at")
-            #     .values_list("image_url", flat=True)
-            #     .first(),
-            # )()
-            # if last_image:
-            #     reference_images.append(last_image)
-
             # Get image generation config
             image_config = await database_sync_to_async(
                 LLMConfig.get_active_config_with_demo_fallback,
@@ -523,7 +517,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                             "type": "image_ready",
                             "progress_id": progress.id,
                             "image_url": image_url,
-                        }
+                        },
                     ),
                 )
             await database_sync_to_async(story.save)()
