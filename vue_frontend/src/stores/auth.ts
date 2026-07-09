@@ -3,6 +3,8 @@ import type { Router } from 'vue-router';
 import { AuthService } from '@/services/authService';
 import type { AuthState } from '@/types/auth';
 
+export const PENDING_VERIFICATION_EMAIL_KEY = 'pendingVerificationEmail';
+
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => {
     const storedState = localStorage.getItem('authState');
@@ -82,6 +84,7 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         await AuthService.signup(email, password, name);
+        sessionStorage.setItem(PENDING_VERIFICATION_EMAIL_KEY, email);
         if (router) {
           await router.push({ name: "verify-email" });
         }
@@ -100,6 +103,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const response = await AuthService.verifyEmail(key);
         if (response?.status === 200) {
+          sessionStorage.removeItem(PENDING_VERIFICATION_EMAIL_KEY);
           if (router) {
             await router.push({ name: "login" });
           }
@@ -111,6 +115,26 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.setLoading(false);
       }
+    },
+
+    async resendVerificationEmail(email: string) {
+      this.setLoading(true);
+      this.setError(null);
+
+      try {
+        const response = await AuthService.resendVerificationEmail(email);
+        sessionStorage.setItem(PENDING_VERIFICATION_EMAIL_KEY, email);
+        return response;
+      } catch (error: any) {
+        this.setError(error.message || 'Failed to resend verification code');
+        throw error;
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    getPendingVerificationEmail(): string | null {
+      return sessionStorage.getItem(PENDING_VERIFICATION_EMAIL_KEY);
     },
 
     async fetchUser() {

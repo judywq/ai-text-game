@@ -34,6 +34,11 @@ export class AuthService {
     return response
   }
 
+  public static async resendVerificationEmail(email: string): Promise<AxiosResponse> {
+    const response = await api.post('/dj-rest-auth/registration/resend-email/', { email })
+    return response
+  }
+
   public static async passwordReset(email: string): Promise<AxiosResponse> {
     const response = await api.post('/dj-rest-auth/password/reset/', { email })
     return response

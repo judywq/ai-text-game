@@ -9,6 +9,9 @@ from django.views.generic import TemplateView
 from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
+from ai_text_game.users.api.views import CustomRegisterView
+from ai_text_game.users.api.views import CustomResendEmailVerificationView
+from ai_text_game.users.api.views import CustomVerifyEmailView
 from dj_rest_auth.views import PasswordResetConfirmView
 
 urlpatterns = [
@@ -45,6 +48,21 @@ urlpatterns += [
         name="api-docs",
     ),
     path("api/dj-rest-auth/", include("dj_rest_auth.urls")),
+    path(
+        "api/dj-rest-auth/registration/",
+        CustomRegisterView.as_view(),
+        name="rest_register",
+    ),
+    path(
+        "api/dj-rest-auth/registration/verify-email/",
+        CustomVerifyEmailView.as_view(),
+        name="rest_verify_email",
+    ),
+    path(
+        "api/dj-rest-auth/registration/resend-email/",
+        CustomResendEmailVerificationView.as_view(),
+        name="rest_resend_email",
+    ),
     path("api/dj-rest-auth/registration/", include("dj_rest_auth.registration.urls")),
     # Fix dj-rest-auth weird issue https://github.com/iMerica/dj-rest-auth/issues/494#issuecomment-2058652960
     path(
