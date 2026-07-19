@@ -1,0 +1,13 @@
+{
+  "files": [
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/index.html",
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/login.html",
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/about.html",
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/stories.html",
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/library.html",
+    "vue_frontend/src/assets/ui-concepts/mockup-perspective/loading.html"
+  ],
+  "insertBefore": "</body>",
+  "commentSyntax": "html",
+  "cspChecked": true
+}

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2d2117" />
+  <title>Profile · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="profile-page">
+  <header class="site-header profile-header">
+    <a class="wordmark" href="index.html" aria-label="GenQuest home">GenQuest</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a href="stories.html">Stories</a>
+      <a href="about.html">About</a>
+      <a href="library.html">My library</a>
+    </nav>
+    <a class="profile-account" href="profile.html" aria-current="page" aria-label="Open Judy's profile">
+      <span class="profile-account-mark" aria-hidden="true">✦</span>
+      <span>Profile</span>
+      <span class="profile-account-chevron" aria-hidden="true">⌄</span>
+    </a>
+  </header>
+
+  <main class="profile-stage">
+    <section class="profile-book" aria-labelledby="profile-heading">
+      <aside class="profile-side">
+        <span class="profile-emblem" aria-hidden="true"><span>▱</span></span>
+        <p class="profile-library-name">Judy&rsquo;s Library</p>
+        <div class="profile-flourish" aria-hidden="true"><span></span>✦<span></span></div>
+        <nav class="profile-nav" aria-label="Profile sections">
+          <a class="is-current" href="#profile-heading"><span aria-hidden="true">♙</span>Profile</a>
+          <a href="#reading-preferences"><span aria-hidden="true">▱</span>Reading preferences</a>
+          <a href="#profile-heading"><span aria-hidden="true">⌑</span>Change password</a>
+          <a href="index.html"><span aria-hidden="true">↗</span>Sign out</a>
+        </nav>
+      </aside>
+
+      <section class="profile-settings" aria-label="Reader settings">
+        <div class="profile-copy">
+          <p class="profile-kicker">Reader settings</p>
+          <h1 id="profile-heading">Profile</h1>
+          <p id="reading-preferences" class="profile-lede">Set your explanation language. Word explanations in the game will be written in this language.</p>
+
+          <form id="profileForm" class="profile-form">
+            <label id="explanationLanguageLabel" for="languageTrigger">Explanation language</label>
+            <div class="profile-language-picker">
+              <button id="languageTrigger" class="profile-language-trigger" type="button" aria-labelledby="explanationLanguageLabel languageValue" aria-expanded="true" aria-controls="languageMenu">
+                <span id="languageValue">French</span><span class="language-chevron" aria-hidden="true">⌃</span>
+              </button>
+              <div id="languageMenu" class="profile-language-menu" role="listbox" aria-label="Explanation language">
+                <button type="button" role="option" aria-selected="false" data-language="">Not set</button>
+                <button type="button" role="option" aria-selected="false" data-language="English">English</button>
+                <button class="is-selected" type="button" role="option" aria-selected="true" data-language="French">French <span aria-hidden="true">✓</span></button>
+                <button type="button" role="option" aria-selected="false" data-language="Japanese">Japanese</button>
+                <button type="button" role="option" aria-selected="false" data-language="Chinese">Chinese</button>
+              </div>
+              <input id="explanationLanguage" name="language" type="hidden" value="French" />
+            </div>
+            <button class="profile-save" type="submit"><span aria-hidden="true">✦</span>Save</button>
+          </form>
+        </div>
+
+        <figure class="profile-illustration">
+          <img src="../mockup/img/profile-books.jpg" alt="Engraved books with ribbon bookmarks" />
+        </figure>
+
+        <p id="profileSaved" class="profile-saved" role="status" aria-live="polite" hidden><span aria-hidden="true">✓</span>Saved. Your profile has been updated.<button type="button" aria-label="Dismiss confirmation">×</button></p>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© 2026 GenQuest</span>
+    <nav class="footer-links" aria-label="Legal">
+      <span>Terms of Service</span>
+      <span>Privacy Policy</span>
+    </nav>
+  </footer>
+
+  <script>
+    const languageTrigger = document.getElementById('languageTrigger');
+    const languageMenu = document.getElementById('languageMenu');
+    const languageValue = document.getElementById('languageValue');
+    const languageField = document.getElementById('explanationLanguage');
+    const confirmation = document.getElementById('profileSaved');
+    const LANG_KEY = 'gq-explanation-language';
+
+    function setLanguageMenu(open) {
+      languageTrigger.setAttribute('aria-expanded', String(open));
+      languageMenu.hidden = !open;
+      languageTrigger.querySelector('.language-chevron').textContent = open ? '⌃' : '⌄';
+    }
+
+    function selectLanguage(value) {
+      const label = value || 'Not set';
+      languageValue.textContent = label;
+      languageField.value = value;
+      languageMenu.querySelectorAll('[role="option"]').forEach((item) => {
+        const selected = (item.dataset.language || '') === value;
+        item.classList.toggle('is-selected', selected);
+        item.setAttribute('aria-selected', String(selected));
+      });
+    }
+
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved !== null) selectLanguage(saved);
+    setLanguageMenu(false);
+
+    languageTrigger.addEventListener('click', () => setLanguageMenu(languageTrigger.getAttribute('aria-expanded') !== 'true'));
+    languageMenu.addEventListener('click', (event) => {
+      const option = event.target.closest('[role="option"]');
+      if (!option) return;
+      selectLanguage(option.dataset.language || '');
+      setLanguageMenu(false);
+    });
+    document.getElementById('profileForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      localStorage.setItem(LANG_KEY, languageField.value || '');
+      confirmation.hidden = false;
+    });
+    confirmation.querySelector('button').addEventListener('click', () => { confirmation.hidden = true; });
+  </script>
+</body>
+</html>

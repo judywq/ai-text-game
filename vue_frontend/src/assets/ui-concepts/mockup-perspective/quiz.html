@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vocabulary review · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="review-page">
+  <header class="site-header">
+    <a class="wordmark" href="index.html">GenQuest</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a class="is-current" href="stories.html">Stories</a>
+      <a href="about.html">About</a>
+      <a href="library.html">My library</a>
+    </nav>
+    <a class="sign-in" href="profile.html">Profile</a>
+  </header>
+
+  <main class="review-stage">
+    <img class="review-scene" src="assets/game-loading-scene.png" alt="" />
+    <form class="review-book" id="reviewForm">
+      <section class="review-leaf review-leaf--left" aria-labelledby="reviewTitle">
+        <header class="review-heading">
+          <h1 id="reviewTitle">Vocabulary review</h1>
+          <p class="review-story">The Bell in the Mist</p>
+          <div class="review-flourish" aria-hidden="true"><span></span>✦<span></span></div>
+          <p class="review-intro">For each expression you looked up, explain in your own words what it means in the story.</p>
+        </header>
+        <div id="reviewTermsLeft"></div>
+      </section>
+
+      <section class="review-leaf review-leaf--right">
+        <div class="review-back-row"><a href="gameplay.html">← Back to story</a></div>
+        <div id="reviewTermsRight"></div>
+        <div class="review-submit-row" id="reviewSubmitRow"><button class="review-submit" id="reviewSubmit" type="submit">Submit</button></div>
+        <section class="review-results" id="reviewResults" aria-live="polite" hidden>
+          <div class="review-results-heading"><h2>Results</h2><p id="reviewScore"></p></div>
+          <p class="review-scale">0 = incorrect · 0.5 = partial · 1 = correct</p>
+          <div id="reviewRows"></div>
+          <p class="review-finish"><a href="library.html">Finish review →</a></p>
+        </section>
+      </section>
+      <nav class="review-pages" aria-label="Vocabulary review pages">
+        <button class="review-prev" id="reviewPrev" type="button" disabled>&#9664; Prev</button>
+        <span class="review-folio review-folio--left" id="reviewLeftPageNumber" aria-hidden="true">1</span>
+        <span class="review-page-status" id="reviewPageStatus" aria-live="polite">Spread 1 of 1. Pages 1 and 2.</span>
+        <span class="review-folio review-folio--right" id="reviewRightPageNumber" aria-hidden="true">2</span>
+        <button class="review-next" id="reviewNext" type="button">Next &#9654;</button>
+      </nav>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <span>© 2026 GenQuest</span>
+    <nav class="footer-links" aria-label="Legal"><span>Terms of Service</span><span>Privacy Policy</span></nav>
+  </footer>
+
+  <script>
+    (function () {
+      var storyId = 104;
+      var demoNotes = [
+        { phrase: 'close in', context: 'The trees close in around you, their branches whispering in a language you do not understand.' },
+        { phrase: 'coil', context: 'Mist coils along the path, blurring the world beyond a few paces.' },
+        { phrase: 'toll', context: 'Somewhere ahead, a bell tolls once.' }
+      ];
+
+      function storedNotes() {
+        try {
+          return (JSON.parse(localStorage.getItem('gq-notes-v1')) || []).filter(function (note) { return note.storyId === storyId; });
+        } catch (error) { return []; }
+      }
+
+      var saved = storedNotes();
+      var notes = saved.length ? saved : demoNotes;
+      /* A zoomed-in / short reader gets one term per leaf. This preserves the
+         folio strip instead of letting a third answer box collide with it. */
+      function pageSizeForViewport() { return window.innerHeight < 620 ? 2 : 3; }
+      var pageSize = pageSizeForViewport();
+      var currentPage = 0;
+      var totalPages = Math.max(1, Math.ceil(notes.length / pageSize));
+      var answers = notes.map(function () { return ''; });
+      var scoredRows = [];
+      var submitted = false;
+      var left = document.getElementById('reviewTermsLeft');
+      var right = document.getElementById('reviewTermsRight');
+      var previous = document.getElementById('reviewPrev');
+      var next = document.getElementById('reviewNext');
+      var leftPageNumber = document.getElementById('reviewLeftPageNumber');
+      var rightPageNumber = document.getElementById('reviewRightPageNumber');
+      var pageStatus = document.getElementById('reviewPageStatus');
+      var submitRow = document.getElementById('reviewSubmitRow');
+      var resultRows = document.getElementById('reviewRows');
+      var results = document.getElementById('reviewResults');
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function termBlock(note, index) {
+        var block = document.createElement('section');
+        block.className = 'review-term';
+        var heading = document.createElement('h2');
+        heading.textContent = note.phrase;
+        var context = document.createElement('p');
+        context.className = 'review-context';
+        context.innerHTML = '<b>Context:</b> <span></span>';
+        context.querySelector('span').textContent = note.context;
+        var label = document.createElement('label');
+        label.setAttribute('for', 'reviewAnswer' + index);
+        label.textContent = 'Your explanation';
+        var answer = document.createElement('textarea');
+        answer.id = 'reviewAnswer' + index;
+        answer.dataset.answer = index;
+        answer.rows = 2;
+        answer.placeholder = 'In your own words…';
+        answer.value = answers[index];
+        answer.addEventListener('input', function () { answers[index] = answer.value; });
+        block.append(heading, context, label, answer);
+        return block;
+      }
+
+      function renderResults() {
+        if (!submitted) {
+          results.hidden = true;
+          return;
+        }
+        var first = currentPage * pageSize;
+        resultRows.replaceChildren();
+        scoredRows.slice(first, first + pageSize).forEach(function (row) {
+          var item = document.createElement('div');
+          item.className = 'review-result-row';
+          item.innerHTML = '<i></i><b></b><span></span>';
+          item.querySelector('i').textContent = row.phrase;
+          item.querySelector('b').textContent = row.verdict + ' (' + row.value + ')';
+          item.querySelector('b').dataset.score = row.value;
+          item.querySelector('span').textContent = row.detail;
+          resultRows.append(item);
+        });
+        results.hidden = false;
+      }
+
+      function renderPage() {
+        var first = currentPage * pageSize;
+        left.replaceChildren();
+        right.replaceChildren();
+        var termsOnLeftLeaf = pageSize === 2 ? 1 : 2;
+        notes.slice(first, first + pageSize).forEach(function (note, localIndex) {
+          var noteIndex = first + localIndex;
+          (localIndex < termsOnLeftLeaf ? left : right).append(termBlock(note, noteIndex));
+        });
+        var leftFolio = currentPage * 2 + 1;
+        var rightFolio = leftFolio + 1;
+        leftPageNumber.textContent = leftFolio;
+        rightPageNumber.textContent = rightFolio;
+        pageStatus.textContent = 'Spread ' + (currentPage + 1) + ' of ' + totalPages + '. Pages ' + leftFolio + ' and ' + rightFolio + '.';
+        previous.disabled = currentPage === 0;
+        next.disabled = currentPage === totalPages - 1;
+        submitRow.hidden = currentPage !== totalPages - 1;
+        renderResults();
+      }
+
+      function showPage(target) {
+        if (target < 0 || target >= totalPages || target === currentPage) return;
+        var forward = target > currentPage;
+        currentPage = target;
+        renderPage();
+        if (reduceMotion || !left.animate) return;
+        [left, right].forEach(function (container) {
+          container.animate([
+            { opacity: .45, transform: 'translateX(' + (forward ? '10px' : '-10px') + ')' },
+            { opacity: 1, transform: 'translateX(0)' }
+          ], { duration: 180, easing: 'ease-out' });
+        });
+      }
+
+      previous.addEventListener('click', function () { showPage(currentPage - 1); });
+      next.addEventListener('click', function () { showPage(currentPage + 1); });
+      renderPage();
+
+      window.addEventListener('resize', function () {
+        var nextPageSize = pageSizeForViewport();
+        if (nextPageSize === pageSize) return;
+        pageSize = nextPageSize;
+        totalPages = Math.max(1, Math.ceil(notes.length / pageSize));
+        currentPage = Math.min(currentPage, totalPages - 1);
+        renderPage();
+      }, { passive: true });
+
+      document.getElementById('reviewForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        scoredRows = notes.map(function (note, index) {
+          var answer = answers[index].trim();
+          var wordCount = answer ? answer.split(/\s+/).length : 0;
+          var value = wordCount === 0 ? 0 : wordCount < 4 ? 0.5 : 1;
+          return {
+            phrase: note.phrase,
+            value: value,
+            verdict: value === 1 ? 'Correct' : value === 0.5 ? 'Partial' : 'Try again',
+            detail: value === 1 ? 'Clear and accurate in this context.' : value === 0.5 ? 'On the right track. Add how it works in this sentence.' : 'Add an explanation before submitting.'
+          };
+        });
+        var average = scoredRows.reduce(function (total, row) { return total + row.value; }, 0) / scoredRows.length;
+        document.getElementById('reviewScore').textContent = 'Average score: ' + average.toFixed(2);
+        submitted = true;
+        renderResults();
+        var submit = document.getElementById('reviewSubmit');
+        submit.textContent = 'Submitted';
+        submit.disabled = true;
+      });
+    }());
+  </script>
+</body>
+</html>

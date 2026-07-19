@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ui-mockup",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8137", "--directory", "vue_frontend/src/assets/ui-concepts/mockup"],
+      "port": 8137
+    }
+  ]
+}

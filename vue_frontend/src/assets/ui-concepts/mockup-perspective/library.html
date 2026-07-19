@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My library · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="library-page">
+  <header class="site-header">
+    <a class="wordmark" href="index.html" aria-label="GenQuest home">GenQuest</a>
+    <nav class="primary-nav" aria-label="Primary navigation"><a href="stories.html">Stories</a><a href="about.html">About</a><a class="is-current" href="library.html">My library</a></nav>
+    <a class="sign-in" href="profile.html">Profile</a>
+  </header>
+  <main class="library-book-section">
+    <div class="library-book-stage" id="libraryBookStage"><div class="library-book-canvas" id="libraryBookCanvas">
+      <img class="library-book-plate" src="assets/stories-scene.png" alt="" width="1672" height="941" />
+      <section class="library-list-plane" id="libraryListPlane" aria-labelledby="library-title">
+        <div class="library-list-copy">
+          <p class="story-plane-kicker">My library</p><h1 id="library-title">My stories</h1>
+          <div class="library-filter"><label class="sr-only" for="library-filter">Filter stories</label><select id="library-filter"><option>All stories</option><option>In progress</option><option>Completed</option><option>Paused</option></select></div>
+          <ul class="library-stories">
+            <li><a href="gameplay.html"><span><b>The Bell in the Mist</b><small>Mystery · Jul 17</small></span><em>In progress</em></a></li>
+            <li><a href="quiz.html"><span><b>Saltwind Letters</b><small>Adventure · Jul 15</small></span><em class="is-complete">Completed</em></a></li>
+            <li><a href="gameplay.html"><span><b>The Glass Orchard</b><small>Fantasy · Jul 12</small></span><em>In progress</em></a></li>
+            <li><a href="gameplay.html"><span><b>Ashes of the Observatory</b><small>Science fiction · Jul 8</small></span><em class="is-muted">Paused</em></a></li>
+          </ul>
+          <a class="library-new-story" href="stories.html">+ Begin a new story</a>
+        </div>
+      </section>
+      <section class="library-detail-plane" id="libraryDetailPlane" aria-labelledby="continue-title">
+        <div class="library-detail-copy">
+          <p class="story-plane-kicker">Continue reading</p><h2 id="continue-title">The Bell in the Mist</h2>
+          <p class="library-detail-lede">You paused at the sound of a bell beyond the fog.</p>
+          <a class="library-continue" href="gameplay.html">Resume chapter 4 <span aria-hidden="true">→</span></a>
+          <div class="library-rule" aria-hidden="true"></div>
+          <h3>Reading shelf</h3>
+          <dl class="library-stats"><div><dt>In progress</dt><dd>2 stories</dd></div><div><dt>Completed</dt><dd>1 story</dd></div><div><dt title="Distinct vocabulary words encountered while reading">Unique words encountered</dt><dd>248 words</dd></div></dl>
+        </div>
+      </section>
+    </div></div>
+    <section class="library-mobile-card" aria-labelledby="mobile-library-title"><p class="story-plane-kicker">My library</p><h1 id="mobile-library-title">My stories</h1><ul><li><a href="gameplay.html">The Bell in the Mist <span>In progress</span></a></li><li><a href="quiz.html">Saltwind Letters <span>Completed</span></a></li><li><a href="gameplay.html">The Glass Orchard <span>In progress</span></a></li></ul><a href="stories.html">+ Begin a new story</a></section>
+  </main>
+  <footer class="site-footer"><span>© 2026 GenQuest</span><nav class="footer-links" aria-label="Legal"><span>Terms of Service</span><span>Privacy Policy</span></nav></footer>
+  <script src="library-perspective.js"></script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js"></script>
+<!-- impeccable-live-end -->
+</body>
+</html>

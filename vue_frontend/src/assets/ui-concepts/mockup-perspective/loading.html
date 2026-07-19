@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Opening your story · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="loading-page loading-carousel-page">
+  <header class="site-header"><a class="wordmark" href="index.html">GenQuest</a><nav class="primary-nav" aria-label="Primary navigation"><a class="is-current" href="stories.html">Stories</a><a href="about.html">About</a><a href="library.html">My library</a></nav><a class="sign-in" href="profile.html">Profile</a></header>
+  <main class="loading-carousel-stage">
+    <img class="loading-table-scene" src="assets/game-loading-scene.png" alt="" />
+    <section class="loading-book-panel" id="loadingSheetPlane" aria-labelledby="loading-title"><div class="loading-content-plane">
+      <div class="tutorial-slides" id="loadingSlides" aria-live="polite">
+        <figure class="tutorial-card is-active"><img src="assets/gameplay-slide.png" alt="A game story page with words that can be highlighted for help" /></figure>
+        <figure class="tutorial-card"><img src="assets/plate-mailbox.jpg" alt="A story illustration with a letterbox on a country path" /></figure>
+        <figure class="tutorial-card"><img src="assets/plate-towers.jpg" alt="A story illustration with towers beyond a mountain path" /></figure>
+      </div>
+      <div class="loading-page-copy">
+        <h1 id="loading-title" class="sr-only">Preparing your story</h1>
+        <div class="loading-dots" id="loadingDots" aria-label="How to play"><button class="is-current" type="button" aria-label="Tutorial slide 1" aria-pressed="true"></button><button type="button" aria-label="Tutorial slide 2" aria-pressed="false"></button><button type="button" aria-label="Tutorial slide 3" aria-pressed="false"></button></div>
+        <p class="loading-tip" id="loadingTip">If you are having trouble understanding any words or phrases in the story, you can highlight that part and click the question mark icon.</p>
+        <div class="loading-rule" aria-hidden="true"></div>
+        <div class="loading-status"><span class="loading-compass" aria-hidden="true">✥</span><span id="loadingLabel">Initializing your story...</span></div>
+        <div class="loading-progress" aria-label="Story loading progress"><i><b id="loadingRail"></b></i></div>
+      </div></div>
+    </section>
+    <a class="loading-ribbon" id="loadingStart" href="gameplay.html" aria-disabled="true">Start game</a>
+  </main>
+  <footer class="site-footer"><span>© 2026 GenQuest</span><nav class="footer-links" aria-label="Legal"><span>Terms of Service</span><span>Privacy Policy</span></nav></footer>
+  <script src="loading-perspective.js"></script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js"></script>
+<!-- impeccable-live-end -->
+</body>
+</html>

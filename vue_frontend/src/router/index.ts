@@ -4,6 +4,11 @@ import HomeView from '@/views/HomeView.vue'
 
 const routes = [
   {
+    path: '/mockup/:screen?',
+    name: 'mockup',
+    component: () => import('@/views/MockupView.vue'),
+  },
+  {
     path: '/',
     component: () => import('@/layouts/BaseLayout.vue'),
     children: [
