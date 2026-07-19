@@ -49,16 +49,15 @@
             <label id="explanationLanguageLabel" for="languageTrigger">Explanation language</label>
             <div class="profile-language-picker">
               <button id="languageTrigger" class="profile-language-trigger" type="button" aria-labelledby="explanationLanguageLabel languageValue" aria-expanded="true" aria-controls="languageMenu">
-                <span id="languageValue">French</span><span class="language-chevron" aria-hidden="true">⌃</span>
+                <span id="languageValue">English</span><span class="language-chevron" aria-hidden="true">⌃</span>
               </button>
               <div id="languageMenu" class="profile-language-menu" role="listbox" aria-label="Explanation language">
-                <button type="button" role="option" aria-selected="false" data-language="">Not set</button>
-                <button type="button" role="option" aria-selected="false" data-language="English">English</button>
-                <button class="is-selected" type="button" role="option" aria-selected="true" data-language="French">French <span aria-hidden="true">✓</span></button>
-                <button type="button" role="option" aria-selected="false" data-language="Japanese">Japanese</button>
-                <button type="button" role="option" aria-selected="false" data-language="Chinese">Chinese</button>
+                <button class="is-selected" type="button" role="option" aria-selected="true" data-language="English">English <span aria-hidden="true">✓</span></button>
+                <button type="button" role="option" aria-selected="false" data-language="French">French <span aria-hidden="true" hidden>✓</span></button>
+                <button type="button" role="option" aria-selected="false" data-language="Japanese">Japanese <span aria-hidden="true" hidden>✓</span></button>
+                <button type="button" role="option" aria-selected="false" data-language="Chinese">Chinese <span aria-hidden="true" hidden>✓</span></button>
               </div>
-              <input id="explanationLanguage" name="language" type="hidden" value="French" />
+              <input id="explanationLanguage" name="language" type="hidden" value="English" />
             </div>
             <button class="profile-save" type="submit"><span aria-hidden="true">✦</span>Save</button>
           </form>
@@ -96,30 +95,33 @@
     }
 
     function selectLanguage(value) {
-      const label = value || 'Not set';
-      languageValue.textContent = label;
-      languageField.value = value;
+      const next = value || 'English';
+      languageValue.textContent = next;
+      languageField.value = next;
       languageMenu.querySelectorAll('[role="option"]').forEach((item) => {
-        const selected = (item.dataset.language || '') === value;
+        const selected = item.dataset.language === next;
         item.classList.toggle('is-selected', selected);
         item.setAttribute('aria-selected', String(selected));
+        const mark = item.querySelector('[aria-hidden="true"]');
+        if (mark) mark.hidden = !selected;
       });
     }
 
+    const languages = ['English', 'French', 'Japanese', 'Chinese'];
     const saved = localStorage.getItem(LANG_KEY);
-    if (saved !== null) selectLanguage(saved);
+    selectLanguage(languages.includes(saved) ? saved : 'English');
     setLanguageMenu(false);
 
     languageTrigger.addEventListener('click', () => setLanguageMenu(languageTrigger.getAttribute('aria-expanded') !== 'true'));
     languageMenu.addEventListener('click', (event) => {
       const option = event.target.closest('[role="option"]');
       if (!option) return;
-      selectLanguage(option.dataset.language || '');
+      selectLanguage(option.dataset.language || 'English');
       setLanguageMenu(false);
     });
     document.getElementById('profileForm').addEventListener('submit', (event) => {
       event.preventDefault();
-      localStorage.setItem(LANG_KEY, languageField.value || '');
+      localStorage.setItem(LANG_KEY, languageField.value || 'English');
       confirmation.hidden = false;
     });
     confirmation.querySelector('button').addEventListener('click', () => { confirmation.hidden = true; });

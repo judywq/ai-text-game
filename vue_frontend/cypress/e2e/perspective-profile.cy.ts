@@ -7,7 +7,7 @@ describe('profile mockup', () => {
     cy.get('.profile-account').should('contain.text', 'Profile')
     cy.get('#profileSaved').should('not.be.visible')
     cy.get('#languageMenu').should('be.visible')
-    cy.get('#explanationLanguage').should('have.value', 'French')
+    cy.get('#explanationLanguage').should('have.value', 'English')
     cy.get('[data-language="Japanese"]').click()
     cy.get('#explanationLanguage').should('have.value', 'Japanese')
     cy.get('.profile-save').click()
