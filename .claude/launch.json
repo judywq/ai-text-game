@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8137", "--directory", "vue_frontend/src/assets/ui-concepts/mockup"],
       "port": 8137
+    },
+    {
+      "name": "ui-perspective",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8138", "--directory", "vue_frontend/src/assets/ui-concepts"],
+      "port": 8138
     }
   ]
 }
