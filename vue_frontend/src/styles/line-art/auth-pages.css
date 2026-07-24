@@ -9,7 +9,33 @@
 
 
 
-.auth-aside { border-right:0; }
-.auth-content { position:relative; z-index:1; }
+/* Align leaf split with the book spine, then keep copy clear of the gutter */
+.auth-sheet {
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+}
 
-@media (max-width:700px) { .auth-sheet { border-width:3px; border-radius:30px; } }
+.auth-aside {
+  border-right: 0;
+  padding-right: clamp(32px, 5vw, 56px);
+}
+
+.auth-content {
+  position: relative;
+  z-index: 1;
+  padding-left: clamp(48px, 7vw, 72px);
+}
+
+@media (max-width:700px) {
+  .auth-sheet {
+    border-width: 3px;
+    border-radius: 30px;
+  }
+
+  .auth-aside {
+    padding-right: clamp(28px, 8vw, 60px);
+  }
+
+  .auth-content {
+    padding-left: clamp(28px, 8vw, 60px);
+  }
+}

@@ -31,36 +31,58 @@ const onSubmit = form.handleSubmit(async (values) => {
 </script>
 
 <template>
-  <BookFrame variant="auth-sheet">
+  <BookFrame variant="auth-book">
     <template #left>
-      <aside class="auth-aside">
-        <p>
-          <strong>Join the shelf.</strong>
-          Create an account to save stories, track progress, and pick up any chapter later.
-        </p>
-      </aside>
+      <section class="story-page">
+        <p class="eyebrow">CHAPTER 00</p>
+        <div class="story-copy">
+          <span class="chapter-label">New reader</span>
+          <h1>Join the shelf.</h1>
+          <p class="story-description">
+            Create an account to save stories, track progress, and pick up any chapter later.
+          </p>
+        </div>
+        <div class="trail" aria-hidden="true">
+          <span class="trail-line line-one"></span>
+          <span class="trail-line line-two"></span>
+          <span class="trail-node node-one"></span>
+          <span class="trail-node node-two"></span>
+          <span class="trail-node node-three"></span>
+        </div>
+      </section>
     </template>
-    <template #right>
-      <section class="auth-content">
-        <p class="auth-kicker">NEW READER</p>
-        <h1>Sign up</h1>
-        <p class="auth-lede">Enter your details to start your first adventure.</p>
 
-        <form class="auth-form" @submit="onSubmit">
+    <template #right>
+      <section class="form-page form-page--signup">
+        <div class="form-heading">
+          <p class="eyebrow">NEW READER</p>
+          <h2>Sign up</h2>
+          <p>Enter your details to start your first adventure.</p>
+        </div>
+
+        <form class="login-form login-form--dense" @submit="onSubmit">
           <FormField v-slot="{ componentField }" name="name">
-            <FormItem class="auth-field">
-              <label>Name</label>
+            <FormItem class="field">
+              <label for="signup-name">Name</label>
               <FormControl>
-                <input v-bind="componentField" type="text" placeholder="Your name" :disabled="loading" />
+                <input
+                  id="signup-name"
+                  v-bind="componentField"
+                  type="text"
+                  placeholder="Your name"
+                  :disabled="loading"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
           </FormField>
+
           <FormField v-slot="{ componentField }" name="email">
-            <FormItem class="auth-field">
-              <label>Email</label>
+            <FormItem class="field">
+              <label for="signup-email">Email</label>
               <FormControl>
                 <input
+                  id="signup-email"
                   v-bind="componentField"
                   type="email"
                   placeholder="name@example.com"
@@ -70,11 +92,13 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormMessage />
             </FormItem>
           </FormField>
+
           <FormField v-slot="{ componentField }" name="password">
-            <FormItem class="auth-field">
-              <label>Password</label>
+            <FormItem class="field">
+              <label for="signup-password">Password</label>
               <FormControl>
                 <input
+                  id="signup-password"
                   v-bind="componentField"
                   type="password"
                   placeholder="Create a password"
@@ -84,11 +108,13 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormMessage />
             </FormItem>
           </FormField>
+
           <FormField v-slot="{ componentField }" name="confirmPassword">
-            <FormItem class="auth-field">
-              <label>Confirm password</label>
+            <FormItem class="field">
+              <label for="signup-confirm">Confirm password</label>
               <FormControl>
                 <input
+                  id="signup-confirm"
                   v-bind="componentField"
                   type="password"
                   placeholder="Confirm your password"
@@ -101,16 +127,17 @@ const onSubmit = form.handleSubmit(async (values) => {
 
           <p v-if="generalError" class="la-error">{{ generalError }}</p>
 
-          <button type="submit" class="auth-submit" :disabled="loading || !form.meta.value.valid">
+          <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
             {{ loading ? 'Creating…' : 'Create account' }}
             <span aria-hidden="true">→</span>
           </button>
         </form>
 
-        <p class="auth-helper">
+        <p class="signup-prompt">
           Already have an account?
-          <router-link :to="{ name: 'login' }">Sign in</router-link>
+          <router-link :to="{ name: 'login' }" :tabindex="loading ? -1 : 0">Sign in</router-link>
         </p>
+        <p class="mobile-note">Your shelf is waiting on every device.</p>
       </section>
     </template>
   </BookFrame>

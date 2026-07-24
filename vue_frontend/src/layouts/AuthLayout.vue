@@ -9,8 +9,10 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
+const isEntryAuth = computed(() => route.name === 'login' || route.name === 'signup')
+
 const rightLink = computed(() => {
-  if (route.name === 'login' || route.name === 'signup') {
+  if (isEntryAuth.value) {
     return route.name === 'login'
       ? { to: { name: 'signup' }, label: 'Sign up' }
       : { to: { name: 'login' }, label: 'Sign in' }
@@ -26,8 +28,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div :class="route.name === 'login' ? 'line-login' : 'auth-shell'">
-    <header :class="route.name === 'login' ? 'site-header' : 'auth-header'">
+  <div :class="isEntryAuth ? 'line-login' : 'auth-shell'">
+    <header :class="isEntryAuth ? 'site-header' : 'auth-header'">
       <BrandMark />
       <div class="auth-header-actions">
         <ThemeToggle />
