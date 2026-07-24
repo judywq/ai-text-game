@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest line-art login page concept" />
+    <title>GenQuest | Sign in concept</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="line-login">
+      <header class="site-header" aria-label="GenQuest">
+        <a class="brand" href="#top" aria-label="GenQuest home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span>GenQuest</span>
+        </a>
+        <p class="header-note">A story begins with a choice</p>
+      </header>
+
+      <section class="auth-book" id="top" aria-labelledby="sign-in-title">
+        <aside class="story-page" aria-labelledby="story-title">
+          <p class="eyebrow">CHAPTER 00</p>
+          <div class="story-copy">
+            <p class="chapter-label">Your reading path</p>
+            <h1 id="story-title">Your next page<br />is waiting.</h1>
+            <p class="story-description">
+              Pick up the adventure exactly where your last choice left off.
+            </p>
+          </div>
+
+          <div class="trail" aria-hidden="true">
+            <span class="trail-node node-one"></span>
+            <span class="trail-node node-two"></span>
+            <span class="trail-node node-three"></span>
+            <span class="trail-line line-one"></span>
+            <span class="trail-line line-two"></span>
+          </div>
+
+          <p class="story-footer"><span aria-hidden="true">✦</span> Continue your quest</p>
+        </aside>
+
+        <section class="form-page" aria-label="Sign in form">
+          <div class="form-heading">
+            <p class="eyebrow">WELCOME BACK</p>
+            <h2 id="sign-in-title">Sign in</h2>
+            <p>Continue building your story, one choice at a time.</p>
+          </div>
+
+          <form class="login-form" action="#" method="post">
+            <div class="field">
+              <label for="email">Email address</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required />
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="password">Password</label>
+                <a href="#forgot-password">Forgot password?</a>
+              </div>
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+            </div>
+
+            <label class="remember-me" for="remember">
+              <input id="remember" name="remember" type="checkbox" />
+              <span>Keep me signed in</span>
+            </label>
+
+            <button type="submit">Enter my story <span aria-hidden="true">→</span></button>
+          </form>
+
+          <p class="signup-prompt">New to GenQuest? <a href="#create-account">Create an account</a></p>
+        </section>
+      </section>
+
+      <p class="mobile-note">Your story is always within reach.</p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest welcome page concept" />
+    <title>GenQuest | Your next page</title>
+    <link rel="stylesheet" href="home.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="home-shell">
+      <header class="home-header">
+        <a class="home-brand" href="home.html" aria-label="GenQuest home"><span class="home-mark" aria-hidden="true"><i></i><i></i></span><span>GenQuest</span></a>
+        <nav aria-label="Primary navigation"><a class="is-current" href="game-setting.html">Stories</a><a href="library.html">My library</a><a href="profile.html">Profile</a></nav>
+        <a class="header-action" href="game-setting.html">New story <span aria-hidden="true">→</span></a>
+      </header>
+
+      <section class="home-book" aria-labelledby="welcome-title">
+        <section class="home-title-page">
+          <p class="home-kicker">A READING ADVENTURE</p>
+          <h1 id="welcome-title">Hello,<br />learner.</h1>
+          <p class="home-intro">Every choice writes the next page. Pick a spark and make this chapter yours.</p>
+          <div class="story-compass" aria-hidden="true"><i></i><b></b><span></span></div>
+          <a class="quiet-link" href="library.html">Open your library <span aria-hidden="true">→</span></a>
+          <p class="leaf-number">01</p>
+        </section>
+
+        <section class="home-prompt-page">
+          <p class="home-kicker">START A CHAPTER</p>
+          <h2>What would you like to explore?</h2>
+          <form class="story-form" action="game-setting.html">
+            <label for="prompt">Begin with an idea</label>
+            <div class="prompt-input"><input id="prompt" placeholder="A place, a feeling, a first line..."/><button type="submit" aria-label="Start a story">→</button></div>
+          </form>
+
+          <div class="prompt-seeds" aria-label="Chapter prompt ideas">
+            <p>Try a prompt</p>
+            <button type="button">A bell beneath the fog</button>
+            <button type="button">The last train arrives</button>
+            <button type="button">A letter with no name</button>
+          </div>
+
+          <a class="continue-card" href="gameplay.html"><span class="continue-mark">03</span><span><small>CONTINUE READING</small><strong>The Bell in the Mist</strong><em>You paused at the path beneath the tower.</em></span><i aria-hidden="true">→</i></a>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest game setting page concept" />
+    <title>GenQuest | New story concept</title>
+    <link rel="stylesheet" href="game-setting.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="story-settings">
+      <header class="settings-header" aria-label="GenQuest">
+        <a class="settings-brand" href="login.html" aria-label="GenQuest home">
+          <span class="settings-brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span>GenQuest</span>
+        </a>
+        <nav class="settings-nav" aria-label="Primary navigation">
+          <a class="is-current" href="#new-story">New story</a>
+          <a href="#recent-stories">My library</a>
+        </nav>
+      </header>
+
+      <section class="setting-book" id="new-story" aria-labelledby="settings-title">
+        <section class="setting-page setup-page">
+          <p class="setting-kicker">NEW ADVENTURE</p>
+          <h1 id="settings-title">Set your story<br />in motion.</h1>
+          <p class="setting-intro">Choose a world and leave a small clue. GenQuest will build the opening around it.</p>
+
+          <form class="setting-form" action="#reading-level" method="get">
+            <div class="setting-field">
+              <label for="genre">Genre</label>
+              <select id="genre" name="genre" required>
+                <option>Fantasy</option>
+                <option selected>Mystery</option>
+                <option>Adventure</option>
+                <option>Science fiction</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="setting-field">
+              <label for="theme">Theme <span>Optional</span></label>
+              <input id="theme" name="theme" type="text" value="Rumours and courage" maxlength="100" />
+            </div>
+
+            <div class="setting-field">
+              <label for="details">Scene details <span>Optional</span></label>
+              <textarea id="details" name="details" rows="4" maxlength="500">The last train arrives at an empty station. A sealed note waits beneath the clock.</textarea>
+            </div>
+
+            <button class="generate-button" type="submit">Generate scenes <span aria-hidden="true">→</span></button>
+          </form>
+        </section>
+
+        <aside class="setting-page shelf-page" id="recent-stories" aria-labelledby="shelf-title">
+          <div class="shelf-heading">
+            <p class="setting-kicker">YOUR SHELF</p>
+            <h2 id="shelf-title">Recent stories</h2>
+          </div>
+
+          <ol class="story-list">
+            <li>
+              <a href="#story-one">
+                <span class="story-index">01</span>
+                <span class="story-details"><strong>The Bell in the Mist</strong><small>Mystery · In progress</small></span>
+                <span class="story-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+            <li>
+              <a href="#story-two">
+                <span class="story-index">02</span>
+                <span class="story-details"><strong>Saltwind Letters</strong><small>Adventure · Completed</small></span>
+                <span class="story-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+            <li>
+              <a href="#story-three">
+                <span class="story-index">03</span>
+                <span class="story-details"><strong>The Glass Orchard</strong><small>Fantasy · In progress</small></span>
+                <span class="story-arrow" aria-hidden="true">→</span>
+              </a>
+            </li>
+          </ol>
+
+          <a class="library-link" href="#library">Open my library <span aria-hidden="true">→</span></a>
+          <div class="shelf-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+        </aside>
+      </section>
+
+      <section class="level-section" id="reading-level" aria-labelledby="level-title">
+        <div class="level-heading">
+          <p class="setting-kicker">GENERATED FOR YOU</p>
+          <h2 id="level-title">Choose your reading level.</h2>
+          <p>The opening changes with the level. The mystery stays the same.</p>
+        </div>
+
+        <form class="level-form" action="#start-story" method="get">
+          <fieldset>
+            <legend>Reading level</legend>
+            <div class="level-options">
+              <label class="level-choice">
+                <input type="radio" name="level" value="A2" />
+                <span class="level-option">
+                  <span class="level-code">A2</span>
+                  <span class="level-copy"><strong>Wayfarer</strong><small>The train is here. A note is under the clock.</small></span>
+                </span>
+              </label>
+
+              <label class="level-choice">
+                <input type="radio" name="level" value="B1" checked />
+                <span class="level-option">
+                  <span class="level-code">B1</span>
+                  <span class="level-copy"><strong>Storyteller</strong><small>The last train arrives, and a sealed note waits beneath the old clock.</small></span>
+                </span>
+              </label>
+
+              <label class="level-choice">
+                <input type="radio" name="level" value="B2" />
+                <span class="level-option">
+                  <span class="level-code">B2</span>
+                  <span class="level-copy"><strong>Chronicler</strong><small>The final train draws in with a sigh, revealing a sealed note beneath the station clock.</small></span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          <button class="start-button" id="start-story" type="submit">Start with B1 <span aria-hidden="true">→</span></button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest reader profile concept" />
+    <title>Profile | GenQuest</title>
+    <link rel="stylesheet" href="profile.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="profile-shell">
+      <header class="profile-header" aria-label="GenQuest">
+        <a class="profile-brand" href="login.html" aria-label="GenQuest home"><span class="profile-brand-mark" aria-hidden="true"><i></i><i></i></span><span>GenQuest</span></a>
+        <nav class="profile-nav" aria-label="Primary navigation"><a href="game-setting.html">Stories</a><a href="#how-it-works">How it works</a><a href="library.html">My library</a></nav>
+        <a class="header-library" href="library.html">Judy's library</a>
+      </header>
+
+      <section class="profile-book" aria-labelledby="profile-title">
+        <aside class="profile-sidebar">
+          <div class="profile-avatar" aria-hidden="true">J</div>
+          <p class="profile-name">Judy's library</p>
+          <p class="profile-email">reader@example.com</p>
+          <nav class="profile-sections" aria-label="Profile sections">
+            <a class="is-current" href="#profile-title">Profile</a>
+            <a href="#preferences">Reading preferences</a>
+            <a href="#password">Change password</a>
+            <a href="login.html">Sign out</a>
+          </nav>
+        </aside>
+
+        <section class="profile-content">
+          <p class="profile-kicker">READER SETTINGS</p>
+          <h1 id="profile-title">Profile</h1>
+          <p class="profile-lede" id="preferences">Choose the language used when GenQuest explains a saved phrase.</p>
+
+          <form class="preferences-form" action="#preferences" method="get">
+            <label for="language">Explanation language</label>
+            <select id="language" name="language"><option>English</option><option selected>French</option><option>Japanese</option><option>Chinese</option></select>
+            <p>Your story text stays in its original language.</p>
+            <button type="submit">Save preferences <span aria-hidden="true">→</span></button>
+          </form>
+
+          <section class="password-section" id="password" aria-labelledby="password-title">
+            <h2 id="password-title">Password</h2>
+            <p>Keep your account secure by choosing a password you do not use elsewhere.</p>
+            <a href="#change-password">Change password <span aria-hidden="true">→</span></a>
+          </section>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

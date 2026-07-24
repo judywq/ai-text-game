@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest story loading concept" />
+    <title>Preparing your story | GenQuest</title>
+    <link rel="stylesheet" href="game-loading.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="loading-shell">
+      <header class="loading-header" aria-label="GenQuest">
+        <a class="loading-brand" href="login.html" aria-label="GenQuest home">
+          <span class="loading-brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span>GenQuest</span>
+        </a>
+        <a class="cancel-link" href="game-setting.html">Back to settings</a>
+      </header>
+
+      <section class="loading-book" aria-labelledby="loading-title">
+        <div class="loading-illustration" aria-hidden="true">
+          <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+          <span class="compass"><i></i><b></b></span>
+          <span class="small-star star-one"></span><span class="small-star star-two"></span><span class="small-star star-three"></span>
+        </div>
+
+        <section class="loading-copy">
+          <p class="loading-kicker">NEW STORY</p>
+          <h1 id="loading-title">Preparing your next page.</h1>
+          <p class="loading-message" id="loading-message">Gathering the first clues for your mystery.</p>
+
+          <div class="loading-track" role="progressbar" aria-label="Story preparation" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
+            <span><i></i></span>
+          </div>
+          <p class="loading-percent">68% ready</p>
+
+          <article class="loading-tip">
+            <span class="tip-mark" aria-hidden="true">?</span>
+            <div><strong>A small reading tip</strong><p>Highlight an unfamiliar phrase during the story to save an explanation in your notes.</p></div>
+          </article>
+
+          <a class="start-story" href="gameplay.html">Start story <span aria-hidden="true">→</span></a>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

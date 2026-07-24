@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Bell in the Mist · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="gameplay-page nb-open">
+  <header class="site-header"><a class="wordmark" href="index.html">GenQuest</a><nav class="primary-nav" aria-label="Primary navigation"><a class="is-current" href="stories.html">Stories</a><a href="about.html">About</a><a href="library.html">My library</a></nav><a class="sign-in" href="library.html">Exit game</a></header>
+  <main class="gameplay-stage">
+    <img class="gameplay-scene" src="assets/game-loading-scene.png" alt="" />
+    <section class="gameplay-book" aria-label="The Bell in the Mist">
+      <article class="gameplay-art"><img src="assets/plate-forest.jpg" alt="A misty forest path leading toward a distant bell tower" /><span>Chapter III</span></article>
+      <article class="gameplay-story">
+        <div class="gameplay-story-content" aria-live="polite">
+          <section class="story-page is-current" data-story-page="1"><div class="story-page-copy"><p class="story-plane-kicker">The Bell in the Mist</p><h1>The Bell in the Mist</h1><div class="gameplay-rule">✦</div><p>The trees close in around you. Mist coils along the path, and somewhere ahead a bell tolls once.</p><p>You stop. The sound hangs in the cold air, round and low, the way a stone hangs in deep water.</p></div></section>
+          <section class="story-page story-page--continuation" data-story-page="2" hidden><div class="story-page-copy"><p>You have walked this road since you were a child. There was never a bell on it.</p><p>The second toll comes softer than the first, as though the mist itself were swallowing it.</p><p class="gameplay-prompt">What will you do?</p><div class="gameplay-choices"><a href="quiz.html">Follow the sound</a><a href="quiz.html">Search the woods</a><a href="quiz.html">Turn back</a></div></div></section>
+        </div>
+        <button class="lookup-btn" type="button" hidden aria-label="Explain the selected phrase">?</button>
+        <div class="gameplay-pages"><button type="button" class="story-prev" disabled>◀ Prev</button><span>Page <b class="story-page-number">1</b> of 2</span><button type="button" class="story-next">Next ▶</button></div>
+      </article>
+    </section>
+    <aside class="gameplay-notes" data-open="true">
+      <button class="notes-tab" type="button" aria-expanded="true">Notebook <b class="notes-count">0</b></button>
+      <div class="notes-panel">
+        <div class="notes-header">
+          <p class="story-plane-kicker">Your notes</p>
+          <div class="lang-gear">
+            <button class="lang-gear-btn" type="button" data-lang-trigger="notes" aria-label="Explanation language" aria-haspopup="listbox" aria-expanded="false" aria-controls="notesLangMenu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+            <div id="notesLangMenu" class="lang-gear-menu" role="listbox" aria-label="Explanation language" hidden></div>
+          </div>
+        </div>
+        <h2>Words you look up stay here.</h2>
+        <p class="notes-instruction">Highlight a phrase in the story and click <span class="lookup-glyph" aria-hidden="true">?</span><span class="sr-only"> the question mark </span> to view its explanation.</p>
+        <p class="notes-lang-status" data-lang-status hidden></p>
+        <ul class="notes-list"><li class="notes-empty">Nothing saved yet.</li></ul>
+      </div>
+    </aside>
+  </main>
+  <dialog class="query-dialog" aria-labelledby="queryPhrase">
+    <div class="query-sheet">
+      <div class="query-actions">
+        <div class="lang-gear">
+          <button class="lang-gear-btn" type="button" data-lang-trigger="query" aria-label="Explanation language" aria-haspopup="listbox" aria-expanded="false" aria-controls="queryLangMenu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <div id="queryLangMenu" class="lang-gear-menu" role="listbox" aria-label="Explanation language" hidden></div>
+        </div>
+        <button class="query-close" type="button" aria-label="Close explanation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <p class="story-plane-kicker">In this passage</p>
+      <h2 id="queryPhrase"></h2>
+      <p class="query-context"></p>
+      <p class="query-label">Explanation</p>
+      <p class="query-explanation"></p>
+      <p class="query-saved">Saved to your notebook.</p>
+    </div>
+  </dialog>
+  <footer class="site-footer"><span>© 2026 GenQuest</span><nav class="footer-links" aria-label="Legal"><span>Terms of Service</span><span>Privacy Policy</span></nav></footer>
+  <script>
+    (function () {
+      var current = 1;
+      var animating = false;
+      var pages = Array.from(document.querySelectorAll('.story-page'));
+      var story = document.querySelector('.gameplay-story');
+      var storyContent = document.querySelector('.gameplay-story-content');
+      var previous = document.querySelector('.story-prev');
+      var next = document.querySelector('.story-next');
+      var number = document.querySelector('.story-page-number');
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function finishPageTurn(target) {
+        current = target;
+        pages.forEach(function (item) { var active = Number(item.dataset.storyPage) === target; item.hidden = !active; item.classList.toggle('is-current', active); item.style.zIndex = ''; });
+        number.textContent = target;
+        previous.disabled = target === 1;
+        next.disabled = target === pages.length;
+        storyContent.classList.remove('is-turning');
+        storyContent.removeAttribute('data-turn');
+        animating = false;
+      }
+
+      function show(target) {
+        if (animating || target === current || target < 1 || target > pages.length) return;
+        var outgoing = pages[current - 1];
+        var incoming = pages[target - 1];
+        var forward = target > current;
+        animating = true;
+        previous.disabled = true;
+        next.disabled = true;
+        document.querySelector('.lookup-btn').hidden = true;
+        window.getSelection().removeAllRanges();
+
+        if (reduceMotion || !outgoing.animate) { finishPageTurn(target); return; }
+
+        incoming.hidden = false;
+        storyContent.classList.add('is-turning');
+        storyContent.dataset.turn = forward ? 'next' : 'previous';
+        outgoing.style.zIndex = forward ? '3' : '1';
+        incoming.style.zIndex = forward ? '1' : '3';
+        var leaf = forward ? outgoing : incoming;
+        var frames = forward ? [
+          { transform: 'rotateY(0deg)', filter: 'brightness(1)', boxShadow: '0 0 0 rgb(39 23 10 / 0)' },
+          { transform: 'rotateY(-94deg)', filter: 'brightness(.76)', boxShadow: '-24px 4px 28px rgb(39 23 10 / .38)', offset: .52 },
+          { transform: 'rotateY(-180deg)', filter: 'brightness(.96)', boxShadow: '0 0 0 rgb(39 23 10 / 0)' }
+        ] : [
+          { transform: 'rotateY(-180deg)', filter: 'brightness(.96)', boxShadow: '0 0 0 rgb(39 23 10 / 0)' },
+          { transform: 'rotateY(-86deg)', filter: 'brightness(.76)', boxShadow: '-24px 4px 28px rgb(39 23 10 / .38)', offset: .48 },
+          { transform: 'rotateY(0deg)', filter: 'brightness(1)', boxShadow: '0 0 0 rgb(39 23 10 / 0)' }
+        ];
+        var turn = leaf.animate(frames, { duration: 460, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards' });
+        turn.finished.then(function () { turn.cancel(); finishPageTurn(target); }).catch(function () { finishPageTurn(target); });
+      }
+
+      previous.addEventListener('click', function () { show(current - 1); });
+      next.addEventListener('click', function () { show(current + 1); });
+
+      var notes = document.querySelector('.gameplay-notes');
+      document.querySelector('.notes-tab').addEventListener('click', function () { var open = notes.dataset.open !== 'false'; notes.dataset.open = String(!open); document.body.classList.toggle('nb-open', !open); this.setAttribute('aria-expanded', String(!open)); });
+
+      var dictionary = {
+        'close in': 'To move nearer from every side until the space around someone becomes smaller.',
+        'coils': 'Moves in slow, winding curves, like a rope or a snake. Here the mist curls around the path.',
+        'tolls': 'Rings with the slow, deep note of a large bell.',
+        'hangs': 'Stays in one place instead of fading; the sound feels suspended in the air.',
+        'deep water': 'Water far below the surface. The comparison makes the sound feel heavy and distant.'
+      };
+      var lookupButton = document.querySelector('.lookup-btn');
+      var queryDialog = document.querySelector('.query-dialog');
+      var queryPhrase = document.querySelector('#queryPhrase');
+      var queryContext = document.querySelector('.query-context');
+      var queryExplanation = document.querySelector('.query-explanation');
+      var notesList = document.querySelector('.notes-list');
+      var notesCount = document.querySelector('.notes-count');
+      var notesLangStatus = document.querySelector('[data-lang-status]');
+      var savedNotes = [];
+      var pendingRange = null;
+      var LANG_KEY = 'gq-explanation-language';
+      var languages = ['English', 'French', 'Japanese', 'Chinese'];
+      var explanationLanguage = localStorage.getItem(LANG_KEY) || 'English';
+      if (!languages.includes(explanationLanguage)) explanationLanguage = 'English';
+
+      function languageLabel(value) { return value; }
+
+      function explain(phrase) {
+        var key = clean(phrase);
+        var match = Object.keys(dictionary).filter(function (entry) { return key.indexOf(entry) !== -1; }).sort(function (a, b) { return b.length - a.length; })[0];
+        var base = match ? dictionary[match] : 'In the finished game, GenQuest explains “' + phrase + '” in the context of this sentence and saves it for vocabulary review.';
+        return base + ' (Explained in ' + explanationLanguage + '.)';
+      }
+
+      function syncLanguageMenus() {
+        document.querySelectorAll('.lang-gear-menu').forEach(function (menu) {
+          menu.querySelectorAll('[role="option"]').forEach(function (option) {
+            var selected = option.dataset.language === explanationLanguage;
+            option.classList.toggle('is-selected', selected);
+            option.setAttribute('aria-selected', String(selected));
+            var mark = option.querySelector('[data-check]');
+            if (mark) mark.hidden = !selected;
+          });
+        });
+        if (notesLangStatus) {
+          notesLangStatus.hidden = false;
+          notesLangStatus.textContent = 'Explanations in ' + explanationLanguage + '.';
+        }
+      }
+
+      function setExplanationLanguage(value) {
+        explanationLanguage = value;
+        localStorage.setItem(LANG_KEY, value);
+        syncLanguageMenus();
+        closeAllLanguageMenus();
+        if (queryDialog.open && queryPhrase.textContent) {
+          var active = savedNotes.find(function (item) { return item.phrase === queryPhrase.textContent; });
+          if (active) {
+            active.explanation = explain(active.phrase);
+            queryExplanation.textContent = active.explanation;
+            renderNotes();
+          }
+        }
+      }
+
+      function closeAllLanguageMenus() {
+        document.querySelectorAll('.lang-gear-menu').forEach(function (menu) { menu.hidden = true; });
+        document.querySelectorAll('.lang-gear-btn').forEach(function (btn) { btn.setAttribute('aria-expanded', 'false'); });
+      }
+
+      function buildLanguageMenus() {
+        document.querySelectorAll('.lang-gear-menu').forEach(function (menu) {
+          menu.replaceChildren();
+          var heading = document.createElement('p');
+          heading.className = 'lang-gear-heading';
+          heading.textContent = 'Language for explanation';
+          menu.append(heading);
+          languages.forEach(function (value) {
+            var option = document.createElement('button');
+            option.type = 'button';
+            option.setAttribute('role', 'option');
+            option.dataset.language = value;
+            option.innerHTML = '<span></span><span data-check aria-hidden="true">✓</span>';
+            option.querySelector('span').textContent = languageLabel(value);
+            menu.append(option);
+          });
+        });
+        syncLanguageMenus();
+      }
+
+      document.querySelectorAll('.lang-gear-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.stopPropagation();
+          var menu = document.getElementById(btn.getAttribute('aria-controls'));
+          var open = btn.getAttribute('aria-expanded') === 'true';
+          closeAllLanguageMenus();
+          if (!open) {
+            menu.hidden = false;
+            btn.setAttribute('aria-expanded', 'true');
+          }
+        });
+      });
+
+      document.querySelectorAll('.lang-gear-menu').forEach(function (menu) {
+        menu.addEventListener('click', function (event) {
+          var option = event.target.closest('[role="option"]');
+          if (!option) return;
+          setExplanationLanguage(option.dataset.language || '');
+        });
+      });
+
+      document.addEventListener('pointerdown', function (event) {
+        if (!event.target.closest('.lang-gear')) closeAllLanguageMenus();
+      });
+
+      function clean(text) { return text.trim().toLowerCase().replace(/[.,;:!?"'’]/g, ''); }
+      function sentenceAround(text, phrase) { var index = text.toLowerCase().indexOf(phrase.toLowerCase()); if (index < 0) return text.trim(); var start = index; var end = index + phrase.length; while (start > 0 && '.!?'.indexOf(text[start - 1]) < 0) start--; while (end < text.length && '.!?'.indexOf(text[end]) < 0) end++; if (end < text.length) end++; return text.slice(start, end).trim(); }
+
+      function openExplanation(note) {
+        queryPhrase.textContent = note.phrase;
+        queryContext.textContent = note.context;
+        queryExplanation.textContent = note.explanation;
+        closeAllLanguageMenus();
+        if (queryDialog.showModal) queryDialog.showModal(); else queryDialog.setAttribute('open', '');
+      }
+
+      function renderNotes() {
+        notesCount.textContent = savedNotes.length;
+        notesList.replaceChildren();
+        if (!savedNotes.length) { var empty = document.createElement('li'); empty.className = 'notes-empty'; empty.textContent = 'Nothing saved yet.'; notesList.append(empty); return; }
+        savedNotes.forEach(function (note) {
+          var item = document.createElement('li');
+          var open = document.createElement('button'); open.type = 'button'; open.className = 'note-open'; open.dataset.noteId = note.id; open.innerHTML = '<span></span><small></small>'; open.querySelector('span').textContent = note.phrase; open.querySelector('small').textContent = note.explanation;
+          var remove = document.createElement('button'); remove.type = 'button'; remove.className = 'note-remove'; remove.dataset.removeNote = note.id; remove.setAttribute('aria-label', 'Remove ' + note.phrase); remove.textContent = '×';
+          item.append(open, remove); notesList.append(item);
+        });
+      }
+
+      function showLookupButton() {
+        var selection = window.getSelection();
+        if (!selection || selection.isCollapsed || !selection.toString().trim()) { lookupButton.hidden = true; return; }
+        var range = selection.getRangeAt(0);
+        if (!storyContent.contains(range.commonAncestorContainer)) { lookupButton.hidden = true; return; }
+        pendingRange = range.cloneRange();
+        var selectionRect = range.getBoundingClientRect();
+        var storyRect = story.getBoundingClientRect();
+        lookupButton.style.left = Math.max(28, Math.min(storyRect.width - 28, selectionRect.left + selectionRect.width / 2 - storyRect.left)) + 'px';
+        lookupButton.style.top = Math.max(38, selectionRect.top - storyRect.top) + 'px';
+        lookupButton.hidden = false;
+      }
+
+      storyContent.addEventListener('mouseup', function () { setTimeout(showLookupButton, 0); });
+      storyContent.addEventListener('keyup', function (event) { if (event.shiftKey) setTimeout(showLookupButton, 0); });
+      document.addEventListener('pointerdown', function (event) { if (event.target !== lookupButton) lookupButton.hidden = true; });
+
+      lookupButton.addEventListener('click', function () {
+        if (!pendingRange) return;
+        var phrase = pendingRange.toString().trim();
+        var parent = pendingRange.startContainer.nodeType === Node.TEXT_NODE ? pendingRange.startContainer.parentElement : pendingRange.startContainer;
+        var paragraph = parent.closest('p') || storyContent;
+        var note = { id: String(Date.now()), phrase: phrase, context: sentenceAround(paragraph.textContent, phrase), explanation: explain(phrase) };
+        var mark = document.createElement('mark'); mark.className = 'lookup'; mark.dataset.noteId = note.id;
+        try { pendingRange.surroundContents(mark); } catch (error) { /* Keep the note when a selection crosses elements. */ }
+        savedNotes.push(note);
+        window.getSelection().removeAllRanges();
+        pendingRange = null;
+        lookupButton.hidden = true;
+        renderNotes();
+        openExplanation(note);
+      });
+
+      storyContent.addEventListener('click', function (event) { var mark = event.target.closest('mark.lookup'); if (!mark) return; var note = savedNotes.find(function (item) { return item.id === mark.dataset.noteId; }); if (note) openExplanation(note); });
+      notesList.addEventListener('click', function (event) {
+        var open = event.target.closest('[data-note-id]');
+        var remove = event.target.closest('[data-remove-note]');
+        if (open) { var note = savedNotes.find(function (item) { return item.id === open.dataset.noteId; }); if (note) openExplanation(note); }
+        if (remove) { var id = remove.dataset.removeNote; savedNotes = savedNotes.filter(function (item) { return item.id !== id; }); document.querySelectorAll('mark.lookup[data-note-id="' + id + '"]').forEach(function (mark) { mark.replaceWith(document.createTextNode(mark.textContent)); }); renderNotes(); }
+      });
+      document.querySelector('.query-close').addEventListener('click', function () { closeAllLanguageMenus(); queryDialog.close(); });
+      queryDialog.addEventListener('click', function (event) { if (event.target === queryDialog) { closeAllLanguageMenus(); queryDialog.close(); } });
+      buildLanguageMenus();
+      renderNotes();
+    }());
+  </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4ead2" />
+  <title>Stories · GenQuest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="stories-page">
+  <header class="site-header">
+    <a class="wordmark" href="index.html" aria-label="GenQuest home">GenQuest</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a class="is-current" href="stories.html">Stories</a>
+      <a href="about.html">About</a>
+      <a href="library.html">My library</a>
+    </nav>
+    <a class="sign-in" href="profile.html">Profile</a>
+  </header>
+
+  <main>
+    <section class="stories-book-section" aria-label="Create a story">
+      <div class="stories-book-stage" id="storiesBookStage">
+        <div class="stories-book-canvas" id="storiesBookCanvas">
+          <img class="stories-book-plate" src="assets/stories-scene.png" alt="" width="1672" height="941" />
+
+          <section class="story-setup-plane" id="storySetupPlane" aria-labelledby="story-setup-title">
+            <form class="story-setup-form">
+              <p class="story-plane-kicker">New adventure</p>
+              <h1 id="story-setup-title">Set the tale in motion.</h1>
+              <p class="story-plane-lede">Choose a world and a spark. GenQuest will shape the opening around you.</p>
+              <label class="story-plane-label" for="story-genre">Genre</label>
+              <select id="story-genre" class="story-plane-control"><option>Fantasy</option><option>Mystery</option><option>Adventure</option><option>Science fiction</option></select>
+              <label class="story-plane-label" for="story-theme">Theme <span>(Optional)</span></label>
+              <input id="story-theme" class="story-plane-control" placeholder="Enter theme (e.g., friendship, loyalty)" aria-label="Theme, optional" />
+              <label class="story-plane-label" for="story-prompt">Scene details <span>(optional)</span></label>
+              <textarea id="story-prompt" class="story-plane-control story-plane-prompt">A lighthouse keeper discovers a door beneath the cliffs.</textarea>
+              <button class="story-plane-submit" id="generateBands" type="button">Generate scenes <span aria-hidden="true">→</span></button>
+            </form>
+          </section>
+
+          <section class="story-recents-plane" id="storyRecentsPlane" aria-labelledby="recent-stories-title">
+            <div class="story-recents-copy">
+              <p class="story-plane-kicker">Your shelf</p>
+              <h2 id="recent-stories-title">Recent stories</h2>
+              <ul class="story-recents-list">
+                <li><a href="gameplay.html"><span><b>The Bell in the Mist</b><small>Mystery · In progress</small></span><i aria-hidden="true">→</i></a></li>
+                <li><a href="gameplay.html"><span><b>Saltwind Letters</b><small>Adventure · Completed</small></span><i aria-hidden="true">→</i></a></li>
+                <li><a href="gameplay.html"><span><b>The Glass Orchard</b><small>Fantasy · In progress</small></span><i aria-hidden="true">→</i></a></li>
+              </ul>
+              <a class="story-history-link" href="library.html">Open my library →</a>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <section class="stories-mobile-card" aria-labelledby="mobile-stories-title">
+        <p class="story-plane-kicker">New adventure</p>
+        <h1 id="mobile-stories-title">Set the tale in motion.</h1>
+        <p>Choose a world and a spark. GenQuest will shape the opening around you.</p>
+        <label for="mobile-story-genre">Genre</label>
+        <select id="mobile-story-genre"><option>Fantasy</option><option>Mystery</option><option>Adventure</option></select>
+        <label for="mobile-story-theme">Theme (Optional)</label>
+        <input id="mobile-story-theme" type="text" placeholder="Enter theme (e.g., friendship, loyalty)" />
+        <label for="mobile-story-prompt">Scene details (optional)</label>
+        <textarea id="mobile-story-prompt">A lighthouse keeper discovers a door beneath the cliffs.</textarea>
+        <button id="mobileGenerateBands" type="button">Generate scenes →</button>
+      </section>
+    </section>
+
+    <section class="proficiency-section" id="proficiencyBands" hidden aria-labelledby="proficiency-title">
+      <div class="proficiency-heading">
+        <p class="flat-kicker">Generated for your reading level</p>
+        <h2 id="proficiency-title">Choose your proficiency band</h2>
+        <p>The same opening scene, told in a register that feels natural to you.</p>
+      </div>
+      <div class="proficiency-bands" id="proficiencyBandList"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><span>© 2026 GenQuest</span><nav class="footer-links" aria-label="Legal"><span>Terms of Service</span><span>Privacy Policy</span></nav></footer>
+  <script src="stories-perspective.js"></script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js"></script>
+<!-- impeccable-live-end -->
+</body>
+</html>

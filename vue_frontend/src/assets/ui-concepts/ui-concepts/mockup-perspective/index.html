@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4ead2" />
+  <title>GenQuest Perspective Homepage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Inter+Tight:wght@400..700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="wordmark" href="index.html" aria-label="GenQuest home">GenQuest</a>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <a href="stories.html">Stories</a>
+      <a href="about.html">About</a>
+      <a href="library.html">My library</a>
+    </nav>
+    <a class="sign-in" href="login.html">Sign in</a>
+  </header>
+
+  <main class="scene" aria-labelledby="hero-title">
+    <div class="scene-stage" id="sceneStage">
+      <div class="scene-canvas" id="sceneCanvas">
+        <img class="scene-plate" src="assets/home-scene.png" alt="" width="1600" height="900" fetchpriority="high" />
+
+        <section class="page-plane" id="pagePlane" aria-hidden="false">
+          <div class="page-copy">
+            <p class="kicker">An interactive storybook</p>
+            <h1 id="hero-title">Every choice writes the next page.</h1>
+            <div class="ornament" aria-hidden="true"><span>❖</span></div>
+            <p class="lede">Interactive stories that adapt to your language level.</p>
+            <div class="actions">
+              <a class="story-button" href="login.html">
+                <span aria-hidden="true">❧</span>
+                Begin a story
+              </a>
+              <a class="story-link" href="stories.html">Explore stories <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </section>
+
+        <div class="page-mesh" id="pageMesh" aria-hidden="true">
+          <i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+    </div>
+
+    <section class="mobile-hero">
+      <p class="kicker">An interactive storybook</p>
+      <h1>Every choice writes the next page.</h1>
+      <div class="ornament" aria-hidden="true"><span>❖</span></div>
+      <p class="lede">Interactive stories that adapt to your language level.</p>
+      <a class="story-button" href="login.html"><span aria-hidden="true">❧</span> Begin a story</a>
+      <a class="story-link" href="stories.html">Explore stories <span aria-hidden="true">→</span></a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>© 2026 GenQuest</span>
+    <nav class="footer-links" aria-label="Legal">
+      <span>Terms of Service</span>
+      <span>Privacy Policy</span>
+    </nav>
+  </footer>
+
+  <p class="perspective-note">Real HTML mapped to the page plane</p>
+  <script src="perspective.js"></script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js"></script>
+<!-- impeccable-live-end -->
+</body>
+</html>

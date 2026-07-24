@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest game history concept" />
+    <title>My library | GenQuest</title>
+    <link rel="stylesheet" href="library.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="library-shell">
+      <header class="library-header" aria-label="GenQuest">
+        <a class="library-brand" href="login.html" aria-label="GenQuest home"><span class="library-brand-mark" aria-hidden="true"><i></i><i></i></span><span>GenQuest</span></a>
+        <nav class="library-nav" aria-label="Primary navigation"><a href="game-setting.html">Stories</a><a href="#how-it-works">How it works</a><a class="is-current" href="#library">My library</a></nav>
+        <a class="new-story" href="game-setting.html">New story <span aria-hidden="true">→</span></a>
+      </header>
+
+      <section class="library-book" id="library" aria-labelledby="library-title">
+        <section class="library-list-leaf">
+          <p class="library-kicker">MY LIBRARY</p>
+          <div class="library-title-row"><div><h1 id="library-title">Game history</h1><p>Choose a story to continue reading.</p></div><label class="filter-label" for="story-filter">Show<select id="story-filter"><option>All stories</option><option>In progress</option><option>Completed</option></select></label></div>
+          <ol class="story-ledger">
+            <li><a href="gameplay.html"><span class="ledger-number">01</span><span class="ledger-main"><strong>The Bell in the Mist</strong><small>Mystery · July 17</small></span><span class="ledger-status is-active">In progress</span><span aria-hidden="true">→</span></a></li>
+            <li><a href="gameplay.html"><span class="ledger-number">02</span><span class="ledger-main"><strong>Saltwind Letters</strong><small>Adventure · July 15</small></span><span class="ledger-status is-done">Completed</span><span aria-hidden="true">→</span></a></li>
+            <li><a href="gameplay.html"><span class="ledger-number">03</span><span class="ledger-main"><strong>The Glass Orchard</strong><small>Fantasy · July 12</small></span><span class="ledger-status is-active">In progress</span><span aria-hidden="true">→</span></a></li>
+            <li><a href="gameplay.html"><span class="ledger-number">04</span><span class="ledger-main"><strong>Ashes of the Observatory</strong><small>Science fiction · July 8</small></span><span class="ledger-status is-muted">Abandoned</span><span aria-hidden="true">→</span></a></li>
+          </ol>
+        </section>
+
+        <aside class="library-detail-leaf" aria-labelledby="continue-title">
+          <p class="library-kicker">CONTINUE READING</p>
+          <h2 id="continue-title">The Bell in the Mist</h2>
+          <p class="detail-lede">You paused at the sound of a bell beyond the fog.</p>
+          <a class="continue-story" href="gameplay.html">Resume chapter 3 <span aria-hidden="true">→</span></a>
+          <div class="detail-rule" aria-hidden="true"><span></span><i></i><span></span></div>
+          <dl class="library-stats"><div><dt>In progress</dt><dd>2 stories</dd></div><div><dt>Completed</dt><dd>1 story</dd></div><div><dt>Words saved</dt><dd>14 words</dd></div></dl>
+        </aside>
+      </section>
+    </main>
+  </body>
+</html>

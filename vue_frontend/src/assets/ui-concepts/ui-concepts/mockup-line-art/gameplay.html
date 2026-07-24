@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="GenQuest story reader concept" />
+    <title>The Bell in the Mist | GenQuest</title>
+    <link rel="stylesheet" href="gameplay.css" />
+    <link rel="stylesheet" href="book-frame.css" />
+  </head>
+  <body>
+    <main class="reader-shell">
+      <header class="reader-header" aria-label="GenQuest">
+        <a class="reader-brand" href="login.html" aria-label="GenQuest home">
+          <span class="reader-brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span>GenQuest</span>
+        </a>
+        <nav class="reader-nav" aria-label="Primary navigation">
+          <a class="is-current" href="game-setting.html">Stories</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#library">My library</a>
+        </nav>
+        <a class="exit-link" href="game-setting.html">Exit story</a>
+      </header>
+
+      <section class="reader-stage" aria-label="Story reader">
+        <div class="book-stage">
+          <section class="reader-book" aria-labelledby="story-title">
+            <figure class="scene-leaf" aria-label="A simple line drawing of a misty forest path and bell tower">
+              <div class="scene-sky" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="scene-tower" aria-hidden="true"><i></i><b></b></div>
+              <div class="scene-path" aria-hidden="true"></div>
+              <div class="scene-trees scene-trees-left" aria-hidden="true"><i></i><i></i><i></i></div>
+              <div class="scene-trees scene-trees-right" aria-hidden="true"><i></i><i></i><i></i></div>
+              <figcaption>At the path beneath the old bell tower.</figcaption>
+            </figure>
+
+            <article class="story-leaf">
+              <p class="reader-kicker">THE BELL IN THE MIST</p>
+              <h1 id="story-title">The Bell in the Mist</h1>
+              <div class="story-rule" aria-hidden="true"><span></span><i></i><span></span></div>
+
+              <div class="story-prose">
+                <p>The trees <button class="lookup-term" type="button">close in</button> around you. Mist coils along the path, and somewhere ahead a bell tolls once.</p>
+                <p>You stop. The sound hangs in the cold air, round and low, the way a stone hangs in deep water.</p>
+              </div>
+
+              <nav class="page-turner" aria-label="Story pages">
+                <button type="button" disabled>← Prev</button>
+                <span>Page 1 of 2</span>
+                <button type="button">Next →</button>
+              </nav>
+            </article>
+          </section>
+        </div>
+
+        <aside class="notes-rail" aria-labelledby="notes-title">
+          <button class="notes-tab" type="button" aria-expanded="true" aria-controls="notes-panel">Notes</button>
+          <div class="notes-content" id="notes-panel">
+            <p class="reader-kicker">YOUR NOTES</p>
+            <h2 id="notes-title">Words you look up stay here.</h2>
+            <p class="notes-instruction">Select an underlined phrase in the story to save its explanation.</p>
+            <p class="notes-language">Explanations in English</p>
+
+            <ol class="note-list">
+              <li>
+                <button type="button"><strong>close in</strong><span>Move nearer from every side until the space becomes smaller.</span></button>
+              </li>
+              <li>
+                <button type="button"><strong>tolls</strong><span>Rings with the slow, deep sound of a large bell.</span></button>
+              </li>
+            </ol>
+
+            <button class="review-link" type="button">Review saved words <span aria-hidden="true">→</span></button>
+          </div>
+        </aside>
+      </section>
+    </main>
+    <script>
+      const notesTab = document.querySelector('.notes-tab');
+      const readerStage = document.querySelector('.reader-stage');
+
+      notesTab.addEventListener('click', () => {
+        const isCollapsed = readerStage.classList.toggle('notes-collapsed');
+        notesTab.setAttribute('aria-expanded', String(!isCollapsed));
+      });
+    </script>
+  </body>
+</html>
