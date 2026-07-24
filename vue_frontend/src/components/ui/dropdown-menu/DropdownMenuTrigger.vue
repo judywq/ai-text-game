@@ -7,7 +7,8 @@ const forwardedProps = useForwardProps(props)
 </script>
 
 <template>
-  <DropdownMenuTrigger class="outline-none" v-bind="forwardedProps">
+  <!-- Avoid Tailwind outline-none (transparent 2px outline) — it fights circular chrome borders -->
+  <DropdownMenuTrigger v-bind="forwardedProps">
     <slot />
   </DropdownMenuTrigger>
 </template>

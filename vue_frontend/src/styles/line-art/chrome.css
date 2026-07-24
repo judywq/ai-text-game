@@ -113,7 +113,6 @@
 }
 
 .theme-toggle,
-.la-account-trigger,
 .prompt-input button {
   position: relative;
   display: grid;
@@ -129,24 +128,98 @@
   flex: 0 0 36px;
   padding: 0;
   gap: 0;
-  border: 2px solid var(--line);
+  border: 2px solid var(--line) !important;
   border-radius: 50%;
   color: var(--ink);
   background: var(--paper);
   box-shadow: none;
   transform: none;
+  outline: none !important;
+  outline-offset: 0 !important;
   font-size: inherit;
   font-weight: inherit;
   line-height: 1;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Hit target only — visible circle lives on .la-account-face so focus/open styles can't clear it */
+.la-account-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0 !important;
+  border-radius: 50%;
+  color: var(--ink);
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.la-account-face {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  pointer-events: none;
 }
 
 .theme-toggle:hover,
-.la-account-trigger:hover {
-  background: var(--paper);
-  transform: none;
-  box-shadow: none;
+.theme-toggle:focus,
+.theme-toggle:focus-visible,
+.theme-toggle:active,
+.theme-toggle[aria-pressed='true'] {
+  border: 2px solid var(--line) !important;
+  background: var(--paper) !important;
+  color: var(--ink);
+  transform: none !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+.la-account-trigger:hover,
+.la-account-trigger:focus,
+.la-account-trigger:focus-visible,
+.la-account-trigger:active,
+.la-account-trigger[data-state='open'],
+.la-account-trigger[data-state='closed'] {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+  transform: none !important;
+}
+
+/* Kill global button:focus-visible blue outline on this control */
+button.la-account-trigger:focus-visible {
+  outline: none !important;
+  outline-offset: 0 !important;
+}
+
+.la-account-trigger:focus-visible .la-account-face,
+.la-account-trigger[data-state='open'] .la-account-face {
+  box-shadow: 0 0 0 3px rgba(53, 126, 232, 0.22);
+}
+
+.theme-toggle:focus-visible {
+  box-shadow: 0 0 0 3px rgba(53, 126, 232, 0.22) !important;
 }
 
 .theme-toggle::before {
@@ -163,6 +236,20 @@
   box-shadow: none;
 }
 
+.la-account-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--ink);
+}
+
+.la-account-initial {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+
 .prompt-input button {
   width: 42px;
   height: 42px;
@@ -174,6 +261,7 @@
   color: var(--paper);
   background: var(--ink);
   font-size: 1.15rem;
+  overflow: hidden;
 }
 
 .prompt-input button:hover {
