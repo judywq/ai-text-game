@@ -42,10 +42,29 @@ a {
 }
 
 .line-login {
+  --login-chrome: 110px;
   width: min(1160px, calc(100% - 48px));
-  min-height: 100vh;
+  min-height: 100dvh;
+  max-height: 100dvh;
   margin: 0 auto;
-  padding: 28px 0 38px;
+  padding: 20px 0 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.line-login .site-header {
+  flex: 0 0 auto;
+}
+
+.line-login .auth-main,
+.line-login > main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .site-header {
@@ -53,7 +72,8 @@ a {
   align-items: center;
   justify-content: space-between;
   min-height: 56px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .brand {
@@ -116,15 +136,18 @@ a {
 .auth-book {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.94fr) minmax(380px, 1.06fr);
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
   isolation: isolate;
-  overflow:visible;
-  min-height: 608px;
-  border:0;
-  border-radius: 54px 54px 42px 42px / 42px 42px 36px 36px;
-  padding: 0;
-  background:transparent;
-  box-shadow:none;
+  /* Let book-frame.css own overflow + silhouette padding — do not force padding:0 / overflow:visible */
+  width: min(100%, calc((100dvh - var(--login-chrome, 110px)) * 4 / 3));
+  max-height: calc(100dvh - var(--login-chrome, 110px));
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 
@@ -137,15 +160,20 @@ a {
   position: relative;
   z-index: 1;
   min-width: 0;
-  background-color: var(--paper);
-  padding: clamp(44px, 7vw, 76px);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background-color: transparent;
+  padding: clamp(8px, 1.5vw, 20px) clamp(12px, 2vw, 28px);
 }
 
 .story-page {
   display: flex;
   flex-direction: column;
   border-right: 0;
-  background: linear-gradient(124deg, rgba(53, 126, 232, 0.045), transparent 45%), var(--paper);
+  background: transparent;
+  /* Keep copy clear of the book gutter */
+  padding-right: clamp(32px, 5vw, 56px);
 }
 
 
@@ -160,7 +188,7 @@ a {
 
 .story-copy {
   max-width: 360px;
-  margin: clamp(38px, 8vh, 78px) 0 0;
+  margin: clamp(12px, 3vh, 28px) 0 0;
 }
 
 .chapter-label {
@@ -190,7 +218,7 @@ h2 {
 
 h1 {
   max-width: 390px;
-  font-size: clamp(2.35rem, 4.4vw, 4rem);
+  font-size: clamp(1.85rem, 3.2vw, 3.2rem);
   line-height: 0.99;
 }
 
@@ -205,8 +233,8 @@ h1 {
 .trail {
   position: relative;
   flex: 1;
-  min-height: 102px;
-  margin-top: 28px;
+  min-height: 48px;
+  margin-top: 16px;
 }
 
 .trail-line,
@@ -274,8 +302,8 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-right: clamp(48px, 9vw, 112px);
-  padding-left: clamp(48px, 9vw, 112px);
+  /* Keep form clear of the book gutter */
+  padding-left: clamp(32px, 5vw, 56px);
 }
 
 /* Decorative stamp removed — page curl comes from book-frame.css */
@@ -286,7 +314,7 @@ h1 {
 
 .form-heading h2 {
   margin-top: 12px;
-  font-size: clamp(2.5rem, 5vw, 3.7rem);
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
   line-height: 1;
 }
 
@@ -300,9 +328,9 @@ h1 {
 
 .login-form {
   display: grid;
-  gap: 23px;
+  gap: 16px;
   max-width: 390px;
-  margin-top: 37px;
+  margin-top: 22px;
 }
 
 .field {
@@ -397,35 +425,32 @@ a:focus-visible {
 @media (max-width: 800px) {
   .line-login {
     width: min(640px, calc(100% - 32px));
+    max-height: none;
+    min-height: 100dvh;
     padding-top: 19px;
+    overflow: visible;
   }
 
   .site-header {
     margin-bottom: 18px;
   }
 
-  .header-note {
-    display: none;
-  }
-
   .auth-book {
     grid-template-columns: 1fr;
+    width: 100%;
+    max-height: none;
+    aspect-ratio: auto;
     min-height: 0;
-    border-width: 3px;
-    border-radius: 30px;
   }
-
-  
 
   .story-page {
     min-height: 230px;
+    height: auto;
     overflow: hidden;
     border-right: 0;
     border-bottom: 2px dashed rgba(29, 34, 40, 0.58);
     padding: 35px clamp(30px, 8vw, 55px);
   }
-
-  
 
   .story-copy {
     margin: 24px 0 0;
@@ -442,7 +467,8 @@ a:focus-visible {
   }
 
   .form-page {
-    min-height: 490px;
+    min-height: 0;
+    height: auto;
     padding: 50px clamp(30px, 8vw, 70px);
   }
 

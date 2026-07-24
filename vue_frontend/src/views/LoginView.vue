@@ -46,7 +46,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         <p class="eyebrow">CHAPTER 00</p>
         <div class="story-copy">
           <span class="chapter-label">Welcome back</span>
-          <h1>Open the next page of your adventure.</h1>
+          <h1>Open the next page.</h1>
           <p class="story-description">
             Sign in to continue your stories, save new chapters, and keep learning through choice.
           </p>
@@ -58,7 +58,6 @@ const onSubmit = form.handleSubmit(async (values) => {
           <span class="trail-node node-two"></span>
           <span class="trail-node node-three"></span>
         </div>
-        <p class="story-footer"><span>→</span> Stories wait on the shelf</p>
       </section>
     </template>
 
