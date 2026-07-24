@@ -15,16 +15,12 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     showNav?: boolean
-    ctaLabel?: string
-    ctaTo?: string | object
   }>(),
   {
     showNav: true,
-    ctaLabel: 'New story',
-    ctaTo: undefined,
   },
 )
 
@@ -40,8 +36,6 @@ const navItems = [
   { label: 'Stories', name: 'game-scenarios' },
   { label: 'My library', name: 'history' },
 ]
-
-const resolvedCta = computed(() => props.ctaTo ?? { name: 'game-scenarios' })
 
 function logout() {
   authStore.logout(router)
@@ -70,14 +64,6 @@ function isCurrent(name: string) {
     <div class="la-header-actions">
       <ThemeToggle />
 
-      <router-link
-        v-if="isAuthenticated"
-        class="la-header-action"
-        :to="resolvedCta"
-      >
-        {{ ctaLabel }} <span aria-hidden="true">→</span>
-      </router-link>
-
       <Sheet v-model:open="isSheetOpen">
         <SheetTrigger as-child>
           <button type="button" class="la-mobile-menu" aria-label="Open menu">Menu</button>
@@ -95,13 +81,6 @@ function isCurrent(name: string) {
               @click="isSheetOpen = false"
             >
               {{ item.label }}
-            </router-link>
-            <router-link
-              v-if="isAuthenticated"
-              :to="resolvedCta"
-              @click="isSheetOpen = false"
-            >
-              {{ ctaLabel }}
             </router-link>
             <template v-if="isAuthenticated">
               <router-link :to="{ name: 'history' }" @click="isSheetOpen = false">My library</router-link>

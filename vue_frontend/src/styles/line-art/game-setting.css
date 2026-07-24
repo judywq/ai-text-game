@@ -52,6 +52,7 @@ a {
 }
 
 .story-settings {
+  --settings-chrome: 120px;
   width: min(1160px, calc(100% - 48px));
   min-height: 100vh;
   margin: 0 auto;
@@ -143,33 +144,41 @@ a {
 .setting-book {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.03fr) minmax(350px, 0.97fr);
+  grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
   isolation: isolate;
-  overflow:visible;
-  min-height: 626px;
-  border:0;
-  border-radius: 54px 54px 42px 42px / 42px 42px 36px 36px;
-  padding: 0;
-  background:transparent;
-  box-shadow:none;
+  /* Match signup auth-book inset so leaves sit inside the SVG silhouette */
+  padding: 12% 8% 14% 8%;
+  width: min(100%, calc((100dvh - var(--settings-chrome, 120px)) * 5 / 4));
+  max-height: calc(100dvh - var(--settings-chrome, 120px));
+  min-height: 0;
+  aspect-ratio: 5 / 4;
+  margin-inline: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
 }
-
-
-
-
-
 
 .setting-page {
   position: relative;
   z-index: 1;
   min-width: 0;
-  background-color: var(--paper);
-  padding: clamp(42px, 6vw, 70px);
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background-color: transparent;
+  padding: clamp(8px, 1.5vw, 20px) clamp(12px, 2vw, 28px);
 }
 
 .setup-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border-right: 0;
-  background: linear-gradient(128deg, rgba(53, 126, 232, 0.045), transparent 48%), var(--paper);
+  background: transparent;
+  /* Keep copy clear of the book gutter */
+  padding-right: clamp(32px, 5vw, 56px);
 }
 
 
@@ -198,23 +207,23 @@ h2 {
 
 h1 {
   margin-top: 15px;
-  font-size: clamp(2.35rem, 4.3vw, 3.9rem);
+  font-size: clamp(1.85rem, 3.2vw, 3.2rem);
   line-height: 0.99;
 }
 
 .setting-intro {
   max-width: 400px;
-  margin: 19px 0 0;
+  margin: 12px 0 0;
   color: var(--ink-soft);
-  font-size: 0.98rem;
-  line-height: 1.57;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .setting-form {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   max-width: 410px;
-  margin-top: 30px;
+  margin-top: 18px;
 }
 
 .setting-field {
@@ -253,9 +262,9 @@ h1 {
 }
 
 .setting-field textarea {
-  min-height: 100px;
+  min-height: 72px;
   resize: vertical;
-  padding: 12px 13px;
+  padding: 10px 13px;
   line-height: 1.48;
 }
 
@@ -305,13 +314,14 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding-right: clamp(43px, 7vw, 82px);
-  padding-left: clamp(43px, 7vw, 82px);
+  background: transparent;
+  /* Keep shelf clear of the book gutter */
+  padding-left: clamp(32px, 5vw, 56px);
 }
 
 .shelf-heading h2 {
   margin-top: 11px;
-  font-size: clamp(2.2rem, 3.6vw, 3.3rem);
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
   line-height: 1;
 }
 
@@ -568,26 +578,26 @@ a:focus-visible {
 
   .setting-book {
     grid-template-columns: 1fr;
+    width: 100%;
+    max-height: none;
+    aspect-ratio: auto;
     min-height: 0;
-    border-width: 3px;
-    border-radius: 30px;
   }
 
-  
-
   .setting-page {
+    height: auto;
     padding: 44px clamp(30px, 8vw, 58px);
   }
 
   .setup-page {
     border-right: 0;
     border-bottom: 2px dashed rgba(29, 34, 40, 0.58);
+    padding-right: clamp(30px, 8vw, 58px);
   }
-
-  
 
   .shelf-page {
     min-height: 390px;
+    padding-left: clamp(30px, 8vw, 58px);
   }
 
   .shelf-mark {
@@ -625,8 +635,16 @@ a:focus-visible {
     padding: 37px 24px;
   }
 
+  .setup-page {
+    padding-right: 24px;
+  }
+
+  .shelf-page {
+    padding-left: 24px;
+  }
+
   h1 {
-    font-size: clamp(2.25rem, 12vw, 3rem);
+    font-size: clamp(2rem, 7vw, 3rem);
   }
 
   .shelf-page {
