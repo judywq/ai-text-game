@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="GenQuest welcome page concept" />
     <title>GenQuest | Your next page</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("gq-line-art-theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.setAttribute("data-theme", theme);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
     <link rel="stylesheet" href="home.css" />
     <link rel="stylesheet" href="book-frame.css" />
   </head>
@@ -13,7 +29,10 @@
       <header class="home-header">
         <a class="home-brand" href="home.html" aria-label="GenQuest home"><span class="home-mark" aria-hidden="true"><i></i><i></i></span><span>GenQuest</span></a>
         <nav aria-label="Primary navigation"><a class="is-current" href="game-setting.html">Stories</a><a href="library.html">My library</a><a href="profile.html">Profile</a></nav>
-        <a class="header-action" href="game-setting.html">New story <span aria-hidden="true">→</span></a>
+        <div class="header-actions">
+          <button type="button" class="theme-toggle" aria-label="Switch to dark theme" aria-pressed="false"></button>
+          <a class="header-action" href="game-setting.html">New story <span aria-hidden="true">→</span></a>
+        </div>
       </header>
 
       <section class="home-book" aria-labelledby="welcome-title">
@@ -45,5 +64,33 @@
         </section>
       </section>
     </main>
+    <script>
+      (function () {
+        var root = document.documentElement;
+        var toggle = document.querySelector(".theme-toggle");
+        if (!toggle) return;
+
+        function syncToggle(theme) {
+          var isDark = theme === "dark";
+          toggle.setAttribute("aria-pressed", isDark ? "true" : "false");
+          toggle.setAttribute(
+            "aria-label",
+            isDark ? "Switch to light theme" : "Switch to dark theme"
+          );
+        }
+
+        syncToggle(root.getAttribute("data-theme") || "light");
+
+        toggle.addEventListener("click", function () {
+          var next =
+            root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          root.setAttribute("data-theme", next);
+          try {
+            localStorage.setItem("gq-line-art-theme", next);
+          } catch (e) {}
+          syncToggle(next);
+        });
+      })();
+    </script>
   </body>
 </html>
