@@ -234,3 +234,62 @@
     background: var(--paper) !important;
   }
 }
+
+/* Dark theme: paper + ink SVGs match --paper / --line tokens */
+html[data-theme="dark"] :is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::before {
+  background-image: url("book-outline-dark.svg");
+}
+
+html[data-theme="dark"] :is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::after {
+  background-image: url("book-outline-ink-dark.svg") !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::before {
+    background-image: url("book-outline-dark.svg");
+  }
+
+  html:not([data-theme="light"]) :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::after {
+    background-image: url("book-outline-ink-dark.svg") !important;
+  }
+}
