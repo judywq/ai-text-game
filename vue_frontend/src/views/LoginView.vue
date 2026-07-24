@@ -1,147 +1,127 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-vue-next';
-import { storeToRefs } from 'pinia';
-import { useForm } from 'vee-validate';
-import { toTypedSchema } from '@vee-validate/zod';
-import * as z from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { loginFormSchema } from '@/lib/validations'
+import BookFrame from '@/components/line-art/BookFrame.vue'
 
-const authStore = useAuthStore();
-const { loading } = storeToRefs(authStore);
-const router = useRouter();
-const route = useRoute();
+const authStore = useAuthStore()
+const { loading } = storeToRefs(authStore)
+const router = useRouter()
+const route = useRoute()
 
 const form = useForm({
   validationSchema: toTypedSchema(loginFormSchema),
-  initialValues: {
-    email: '',
-    password: '',
-  },
-});
+  initialValues: { email: '', password: '' },
+})
 
-const generalError = ref<string | null>(null);
+const generalError = ref<string | null>(null)
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
-    generalError.value = null;
-    await authStore.login(values.email, values.password);
-
+    generalError.value = null
+    await authStore.login(values.email, values.password)
     if (authStore.isAuthenticated) {
-      const redirectPath = typeof route.query.redirect === 'string'
-        ? route.query.redirect
-        : { name: 'game-scenarios' };
-      router.push(redirectPath);
+      const redirectPath =
+        typeof route.query.redirect === 'string'
+          ? route.query.redirect
+          : { name: 'game-scenarios' }
+      router.push(redirectPath)
     }
   } catch (err: any) {
-    if (err.fieldErrors) {
-      form.setErrors(err.fieldErrors)
-    }
-    if (err.nonFieldError) {
-      generalError.value = err.nonFieldError;
-    }
+    if (err.fieldErrors) form.setErrors(err.fieldErrors)
+    if (err.nonFieldError) generalError.value = err.nonFieldError
   }
-});
+})
 </script>
 
 <template>
-  <Card class="w-full mx-auto sm:w-96">
-    <CardHeader>
-      <CardTitle class="text-2xl">
-        Login
-      </CardTitle>
-      <CardDescription>
-        Enter your email below to login to your account
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <form @submit="onSubmit" class="grid gap-4">
-        <FormField
-          v-slot="{ componentField }"
-          name="email"
-        >
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="email"
-                placeholder="name@example.com"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+  <BookFrame variant="auth-book">
+    <template #left>
+      <section class="story-page">
+        <p class="eyebrow">CHAPTER 00</p>
+        <div class="story-copy">
+          <span class="chapter-label">Welcome back</span>
+          <h1>Open the next page of your adventure.</h1>
+          <p class="story-description">
+            Sign in to continue your stories, save new chapters, and keep learning through choice.
+          </p>
+        </div>
+        <div class="trail" aria-hidden="true">
+          <span class="trail-line line-one"></span>
+          <span class="trail-line line-two"></span>
+          <span class="trail-node node-one"></span>
+          <span class="trail-node node-two"></span>
+          <span class="trail-node node-three"></span>
+        </div>
+        <p class="story-footer"><span>→</span> Stories wait on the shelf</p>
+      </section>
+    </template>
 
-        <FormField
-          v-slot="{ componentField }"
-          name="password"
-        >
-          <FormItem>
-            <div class="flex items-center">
-              <FormLabel>Password</FormLabel>
-              <router-link
-                :to="{ name: 'forgot-password'}"
-                class="ml-auto inline-block text-sm underline"
-                :tabindex="loading ? -1 : 0"
-              >
-                Forgot your password?
-              </router-link>
-            </div>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="password"
-                placeholder="Enter your password"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
-
-        <Button
-          type="submit"
-          class="w-full"
-          :disabled="loading || !form.meta.value.valid"
-        >
-          <Loader2
-            v-if="loading"
-            class="mr-2 h-4 w-4 animate-spin"
-          />
-          {{ loading ? 'Logging in...' : 'Login' }}
-        </Button>
-
-        <div v-if="generalError" class="text-destructive text-sm">
-          {{ generalError }}
+    <template #right>
+      <section class="form-page">
+        <div class="form-heading">
+          <p class="eyebrow">ACCOUNT</p>
+          <h2>Sign in</h2>
+          <p>Enter your email and password to continue.</p>
         </div>
 
-        <div class="mt-4 text-center text-sm">
+        <form class="login-form" @submit="onSubmit">
+          <FormField v-slot="{ componentField }" name="email">
+            <FormItem class="field">
+              <label for="email">Email</label>
+              <FormControl>
+                <input
+                  id="email"
+                  v-bind="componentField"
+                  type="email"
+                  placeholder="name@example.com"
+                  :disabled="loading"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem class="field">
+              <div class="field-label-row">
+                <label for="password">Password</label>
+                <router-link :to="{ name: 'forgot-password' }" :tabindex="loading ? -1 : 0">
+                  Forgot password?
+                </router-link>
+              </div>
+              <FormControl>
+                <input
+                  id="password"
+                  v-bind="componentField"
+                  type="password"
+                  placeholder="Enter your password"
+                  :disabled="loading"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+
+          <p v-if="generalError" class="la-error">{{ generalError }}</p>
+
+          <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
+            {{ loading ? 'Signing in…' : 'Sign in' }}
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        <p class="signup-prompt">
           Don't have an account?
-          <router-link
-            :to="{ name: 'signup' }"
-            class="underline"
-            :tabindex="loading ? -1 : 0"
-          >
-            Sign up
-          </router-link>
-        </div>
-      </form>
-    </CardContent>
-  </Card>
+          <router-link :to="{ name: 'signup' }" :tabindex="loading ? -1 : 0">Sign up</router-link>
+        </p>
+        <p class="mobile-note">Your shelf is waiting on every device.</p>
+      </section>
+    </template>
+  </BookFrame>
 </template>

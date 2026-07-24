@@ -1,13 +1,12 @@
 <template>
-  <div class="container mx-auto max-w-md text-center py-20">
-    <h1 class="text-4xl font-bold mb-4">404</h1>
-    <p class="text-xl text-muted-foreground mb-8">Page not found</p>
-    <router-link :to="{ name: 'home' }">
-      <Button>Return Home</Button>
-    </router-link>
+  <div class="doc-shell" style="padding-top: 0">
+    <article class="document error-document">
+      <p class="error-code" aria-hidden="true">404</p>
+      <h1>Lost between chapters</h1>
+      <p>This page isn’t on the shelf. Head home and open a story that is.</p>
+      <router-link :to="{ name: 'home' }">
+        Return home <span aria-hidden="true">→</span>
+      </router-link>
+    </article>
   </div>
 </template>
-
-<script setup lang="ts">
-import { Button } from '@/components/ui/button'
-</script>

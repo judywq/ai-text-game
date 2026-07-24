@@ -1,0 +1,295 @@
+/* Shared open-book silhouette via cleaned SVG fill + ink.
+   Paper shape = book-outline.svg on ::before (no mask — masks were hiding the book).
+   Leaves stay transparent so the shaped fill shows through. */
+
+:is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  /* % of width so inset tracks silhouette at any size.
+     Top ink ~y123–152 / 900 → needs ≥~14% width (~19% of 4:3 height). */
+  padding: 15% 9% 16% 9%;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+  filter: none !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+/* Shaped paper fill */
+:is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::before {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: url("/line-art/book-outline.svg") center / 100% 100% no-repeat;
+}
+
+/* Ink outline above content */
+:is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::after {
+  position: absolute !important;
+  z-index: 6;
+  inset: 0 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  content: "" !important;
+  pointer-events: none;
+  background: url("/line-art/book-outline-ink.svg") center / 100% 100% no-repeat !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Transparent leaves so shaped SVG paper shows; no rectangular page plates */
+:is(
+  .story-page,
+  .setup-page,
+  .scene-leaf,
+  .loading-illustration,
+  .library-list-leaf,
+  .profile-sidebar,
+  .quiz-list,
+  .home-title-page,
+  .auth-aside
+),
+:is(
+  .form-page,
+  .shelf-page,
+  .story-leaf,
+  .loading-copy,
+  .library-detail-leaf,
+  .profile-content,
+  .quiz-submit,
+  .home-prompt-page,
+  .auth-content
+) {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  clip-path: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-sizing: border-box;
+}
+
+/* Suppress old geometric spine / hinge / curl / gutters */
+:is(
+  .story-page,
+  .setup-page,
+  .scene-leaf,
+  .loading-illustration,
+  .library-list-leaf,
+  .profile-sidebar,
+  .quiz-list,
+  .home-title-page,
+  .auth-aside
+)::before,
+:is(
+  .story-page,
+  .setup-page,
+  .scene-leaf,
+  .loading-illustration,
+  .library-list-leaf,
+  .profile-sidebar,
+  .quiz-list,
+  .home-title-page,
+  .auth-aside
+)::after,
+:is(
+  .form-page,
+  .shelf-page,
+  .story-leaf,
+  .loading-copy,
+  .library-detail-leaf,
+  .profile-content,
+  .quiz-submit,
+  .home-prompt-page,
+  .auth-content
+)::before,
+:is(
+  .form-page,
+  .shelf-page,
+  .story-leaf,
+  .loading-copy,
+  .library-detail-leaf,
+  .profile-content,
+  .quiz-submit,
+  .home-prompt-page,
+  .auth-content
+)::after {
+  display: none !important;
+  content: none !important;
+}
+
+@media (max-width: 800px) {
+  :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  ) {
+    padding: 0;
+    border: 3px solid var(--line) !important;
+    border-radius: 30px !important;
+    background: var(--paper) !important;
+  }
+
+  :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::before,
+  :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  :is(
+    .story-page,
+    .setup-page,
+    .scene-leaf,
+    .loading-illustration,
+    .library-list-leaf,
+    .profile-sidebar,
+    .quiz-list,
+    .home-title-page,
+    .auth-aside
+  ),
+  :is(
+    .form-page,
+    .shelf-page,
+    .story-leaf,
+    .loading-copy,
+    .library-detail-leaf,
+    .profile-content,
+    .quiz-submit,
+    .home-prompt-page,
+    .auth-content
+  ) {
+    background: var(--paper) !important;
+  }
+}
+
+/* Dark theme: paper + ink SVGs match --paper / --line tokens */
+html[data-theme="dark"] :is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::before {
+  background-image: url("/line-art/book-outline-dark.svg");
+}
+
+html[data-theme="dark"] :is(
+  .auth-book,
+  .setting-book,
+  .reader-book,
+  .loading-book,
+  .library-book,
+  .profile-book,
+  .quiz-book,
+  .home-book,
+  .auth-sheet
+)::after {
+  background-image: url("/line-art/book-outline-ink-dark.svg") !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::before {
+    background-image: url("/line-art/book-outline-dark.svg");
+  }
+
+  html:not([data-theme="light"]) :is(
+    .auth-book,
+    .setting-book,
+    .reader-book,
+    .loading-book,
+    .library-book,
+    .profile-book,
+    .quiz-book,
+    .home-book,
+    .auth-sheet
+  )::after {
+    background-image: url("/line-art/book-outline-ink-dark.svg") !important;
+  }
+}

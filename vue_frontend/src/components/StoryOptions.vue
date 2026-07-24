@@ -4,11 +4,13 @@
       <button
         v-for="option in options"
         :key="option.option_id"
+        type="button"
         class="story-option-button"
-        @click="onSelect(option.option_id)"
         :disabled="disabled"
+        @click="onSelect(option.option_id)"
       >
         {{ option.option_name }}
+        <span aria-hidden="true">→</span>
       </button>
     </div>
   </Transition>
@@ -35,47 +37,40 @@ const onSelect = (optionId: string) => {
 
 <style scoped>
 .story-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 1rem 0;
-  padding: 1rem;
-  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
-  border-radius: 0.5rem;
+  display: grid;
+  gap: 10px;
+  margin: 12px 0 0;
 }
 
 .story-option-button {
-  padding: 1rem 1.5rem;
-  border: 2px solid hsl(var(--border));
-  border-radius: 0.5rem;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 2px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--blue);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 0.95rem;
+  font-weight: 700;
   text-align: left;
-  position: relative;
-  overflow: hidden;
-}
-
-.story-option-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 0;
-  height: 100%;
-  background: hsl(var(--primary) / 0.1);
-  transition: width 0.3s ease;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
 }
 
 .story-option-button:hover:not(:disabled) {
-  border-color: hsl(var(--primary));
-  transform: translateX(4px);
-}
-
-.story-option-button:hover:not(:disabled)::before {
-  width: 100%;
+  background: var(--blue-deep);
+  color: var(--paper);
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 
 .story-option-button:disabled {
@@ -83,7 +78,6 @@ const onSelect = (optionId: string) => {
   cursor: not-allowed;
 }
 
-/* Fade in animation for options */
 .options-fade-enter-active {
   transition: all 0.5s ease-out;
 }
@@ -108,18 +102,5 @@ const onSelect = (optionId: string) => {
 
 .options-fade-leave-to {
   opacity: 0;
-}
-
-/* Responsive adjustments */
-@media (min-width: 768px) {
-  .story-options {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .story-option-button {
-    flex: 1;
-    min-width: 200px;
-  }
 }
 </style>

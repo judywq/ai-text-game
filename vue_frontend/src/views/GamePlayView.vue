@@ -4,16 +4,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import { ExplanationService } from '@/services/explanationService'
 import type { GameStory, StoryProgress, StoryOption, TextExplanation, ExplanationStatus, StoryUpdate } from '@/types/game'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/components/ui/toast/use-toast'
-import { Separator } from '@/components/ui/separator'
 import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { CircleHelp } from 'lucide-vue-next'
 import StorySegment from '@/components/StorySegment.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
+import BrandMark from '@/components/line-art/BrandMark.vue'
+import BookFrame from '@/components/line-art/BookFrame.vue'
 import {
   Dialog,
   DialogContent,
@@ -21,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -45,6 +42,7 @@ const progressEntries = ref<StoryProgress[]>([])
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
+const notesCollapsed = ref(false)
 
 const {
   connect,
@@ -681,142 +679,165 @@ function scrollToBottom() {
 </script>
 
 <template>
-  <div class="container mx-auto max-w-6xl md:pt-6 h-[calc(100vh-64px)] flex flex-col">
-    <!-- Flex container: Game area and Lookup History side by side -->
-    <div class="flex flex-col md:flex-row md:space-x-4 flex-1 overflow-hidden">
-      <div class="flex-1 flex flex-col h-full border border-transparent overflow-hidden">
-        <div class="py-4 border-b flex-shrink-0">
-          <div v-if="story">
-            <h2 class="text-2xl font-bold">{{ story.title }}</h2>
-          </div>
-        </div>
+  <div class="reader-shell">
+    <header class="reader-header">
+      <BrandMark class="reader-brand" />
+      <nav class="reader-nav" aria-label="Primary">
+        <router-link :to="{ name: 'game-scenarios' }">Stories</router-link>
+        <router-link :to="{ name: 'history' }">My library</router-link>
+      </nav>
+      <button
+        type="button"
+        class="exit-link"
+        :disabled="isLoading"
+        @click="router.push('/game')"
+      >
+        Exit
+      </button>
+    </header>
 
-        <!-- Update the Interaction Area for better mobile handling -->
-        <div
-          class="flex-1 relative overflow-y-auto"
-          ref="scrollRef"
-          @mouseup="handleTextSelection"
-          @touchend="handleTextSelection"
-        >
-          <div v-if="story" class="space-y-6 pt-4 px-4 pb-4">
-            <!-- Add loading state -->
-            <div v-if="progressEntries.length === 0" class="flex flex-col items-center justify-center h-[200px] space-y-4">
-              <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-              <p class="text-muted-foreground">Initializing your story...</p>
-            </div>
+    <div class="reader-stage" :class="{ 'notes-collapsed': notesCollapsed }">
+      <div class="book-stage">
+        <BookFrame variant="reader-book">
+          <template #left>
+            <figure class="scene-leaf">
+              <div class="scene-sky" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="scene-tower" aria-hidden="true"><i></i><b></b></div>
+              <div class="scene-path" aria-hidden="true"></div>
+              <div class="scene-trees scene-trees-left" aria-hidden="true"><i></i><i></i><i></i></div>
+              <div class="scene-trees scene-trees-right" aria-hidden="true"><i></i><i></i><i></i></div>
+              <figcaption>{{ story?.title || 'Your story' }}</figcaption>
+            </figure>
+          </template>
 
-            <!-- Story segments using new component -->
-            <div v-else>
-              <StorySegment
-                v-for="(entry, entryIndex) in progressEntries"
-                :key="entry.id"
-                :entry="entry"
-                :is-latest="entryIndex === progressEntries.length - 1"
-                :is-content-ready="isContentReady[entryIndex] || false"
-                @all-paragraphs-shown="onAllParagraphsShown"
-              />
+          <template #right>
+            <section
+              class="story-leaf"
+              ref="scrollRef"
+              @mouseup="handleTextSelection"
+              @touchend="handleTextSelection"
+              style="overflow-y: auto; position: relative"
+            >
+              <p class="reader-kicker">CHAPTER</p>
+              <h1>{{ story?.title || 'Reading…' }}</h1>
+              <div class="story-rule" aria-hidden="true"><span></span><i></i><span></span></div>
 
-              <!-- Loading spinner after option selection -->
-              <div v-if="isLoading" class="flex flex-col items-center justify-center py-8 space-y-4">
-                <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-                <p class="text-muted-foreground">Generating next part...</p>
+              <div v-if="progressEntries.length === 0" class="story-prose" style="opacity: 0.7">
+                <p>Initializing your story…</p>
               </div>
-            </div>
-          </div>
 
-          <!-- Lookup button remains within interaction area for text selection -->
-          <div v-if="showLookupButton"
-            :style="{ position: 'absolute', top: popupPosition.y + 'px', left: popupPosition.x + 'px' }">
-            <Button variant="outline" size="icon" @click="lookupExplanationSubmit" @touchend.stop="lookupExplanationSubmit">
-              <CircleHelp class="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+              <div v-else class="story-prose">
+                <StorySegment
+                  v-for="(entry, entryIndex) in progressEntries"
+                  :key="entry.id"
+                  :entry="entry"
+                  :is-latest="entryIndex === progressEntries.length - 1"
+                  :is-content-ready="isContentReady[entryIndex] || false"
+                  @all-paragraphs-shown="onAllParagraphsShown"
+                />
 
-        <!-- Story Options -->
-        <div class="px-4">
-          <StoryOptions
-            v-if="shouldShowOptions"
-            :options="currentOptions"
-            :disabled="false"
-            @select="handleOptionSelect"
-          />
-        </div>
+                <div v-if="isLoading" class="story-prose" style="opacity: 0.7; margin-top: 1rem">
+                  <p>Generating next part…</p>
+                </div>
+              </div>
 
-        <!-- Update the input area to stay fixed at bottom -->
-        <div class="py-4 border-t bg-background flex-shrink-0">
-          <!-- <Textarea
-            v-model="userInput"
-            placeholder="What would you like to do?"
-            @keydown.enter.exact.prevent="handleOptionSelect"
-            class="min-h-[80px]"
-          /> -->
-          <div class="flex justify-end space-x-2 mt-2">
-            <Button
-              class="md:hidden"
-              variant="outline"
-              @click="showHistoryPanel = true"
-            >
-              History
-            </Button>
-            <Button
-              v-if="isGameEnded"
-              variant="secondary"
-              :disabled="isLoading || !canOpenVocabularyReview"
-              :title="!canOpenVocabularyReview ? 'Look up at least one word during the game to use review.' : undefined"
-              @click="router.push({ name: 'game-quiz', params: { id: route.params.id } })"
-            >
-              Review
-            </Button>
-            <Button
-              variant="outline"
-              :disabled="isLoading"
-              @click="router.push('/game')"
-            >
-              Exit Game
-            </Button>
-            <!-- <Button
-              :disabled="isLoading || !userInput.trim()"
-              @click="handleOptionSelect"
-            >
-              Send
-            </Button> -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Desktop: Lookup History panel -->
-      <div class="hidden md:block w-[240px]">
-        <div class="bg-white rounded-lg shadow h-full overflow-auto">
-          <div class="p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h4 class="font-bold text-lg">Lookup History</h4>
-              <Button
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8"
-                title="Language settings"
-                @click="openNativeLanguageSettings"
+              <div
+                v-if="showLookupButton"
+                :style="{
+                  position: 'absolute',
+                  top: popupPosition.y + 'px',
+                  left: popupPosition.x + 'px',
+                  zIndex: 5,
+                }"
               >
-                <Settings class="h-4 w-4" />
-              </Button>
-            </div>
-            <Separator />
-            <ul>
-              <li v-for="item in lookupHistory" :key="item.id" class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
-                @click="currentExplanation = item; explanationModalVisible = true">
-                <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
-              </li>
-              <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">Select text in the story to lookup
-              </li>
-            </ul>
-          </div>
-        </div>
+                <button
+                  type="button"
+                  class="la-btn"
+                  style="min-height: 36px; padding: 0 10px; box-shadow: 2px 2px 0 var(--blue)"
+                  aria-label="Look up selection"
+                  @click="lookupExplanationSubmit"
+                  @touchend.stop="lookupExplanationSubmit"
+                >
+                  <CircleHelp class="w-4 h-4" />
+                </button>
+              </div>
+
+              <div style="margin-top: auto; padding-top: 16px">
+                <StoryOptions
+                  v-if="shouldShowOptions"
+                  :options="currentOptions"
+                  :disabled="false"
+                  @select="handleOptionSelect"
+                />
+              </div>
+            </section>
+          </template>
+        </BookFrame>
       </div>
+
+      <aside class="notes-rail">
+        <button type="button" class="notes-tab" @click="notesCollapsed = !notesCollapsed">
+          Notes
+        </button>
+        <div class="notes-content">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px">
+            <div>
+              <p class="reader-kicker">LOOKUPS</p>
+              <h2>Margin notes</h2>
+            </div>
+            <button
+              type="button"
+              class="la-btn"
+              style="min-height: 32px; padding: 0 8px; box-shadow: 2px 2px 0 var(--blue)"
+              title="Language settings"
+              aria-label="Language settings"
+              @click="openNativeLanguageSettings"
+            >
+              <Settings class="h-4 w-4" />
+            </button>
+          </div>
+          <p class="notes-instruction">Select text in the story to look up a word or phrase.</p>
+          <p class="notes-language">Vocabulary</p>
+          <ul class="note-list">
+            <li v-for="item in lookupHistory" :key="item.id">
+              <button
+                type="button"
+                @click="
+                  currentExplanation = item;
+                  explanationModalVisible = true
+                "
+              >
+                <strong>{{ item.selected_text }}</strong>
+                <span>{{ item.explanation?.slice(0, 80) || 'Tap to open' }}</span>
+              </button>
+            </li>
+            <li v-if="lookupHistory.length === 0" style="color: var(--ink-soft); font-size: 0.85rem">
+              No lookups yet.
+            </li>
+          </ul>
+          <button
+            type="button"
+            class="review-link md:hidden"
+            @click="showHistoryPanel = true"
+          >
+            Open notes <span aria-hidden="true">→</span>
+          </button>
+          <button
+            v-if="isGameEnded"
+            type="button"
+            class="review-link"
+            :disabled="isLoading || !canOpenVocabularyReview"
+            :title="!canOpenVocabularyReview ? 'Look up at least one word during the game to use review.' : undefined"
+            @click="router.push({ name: 'game-quiz', params: { id: route.params.id } })"
+          >
+            Review vocabulary <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </aside>
     </div>
 
     <Dialog :open="nativeLanguagePromptOpen" @update:open="nativeLanguagePromptOpen = $event">
-      <DialogContent>
+      <DialogContent class="bg-[var(--paper)] text-[var(--ink)] border-[var(--line)]">
         <DialogHeader>
           <DialogTitle>Choose your explanation language</DialogTitle>
           <DialogDescription>
@@ -863,67 +884,93 @@ function scrollToBottom() {
       </DialogContent>
     </Dialog>
 
-    <!-- Mobile: Modal for Lookup History -->
     <Dialog v-model:open="showHistoryPanel">
-      <DialogContent>
+      <DialogContent class="bg-[var(--paper)] text-[var(--ink)] border-[var(--line)]">
         <DialogHeader>
           <DialogTitle>Lookup History</DialogTitle>
         </DialogHeader>
-
-        <ul>
-          <li v-for="item in lookupHistory"
-              :key="item.id"
-              class="mb-2 cursor-pointer hover:bg-gray-100 p-2 rounded"
-              @click="currentExplanation = item; explanationModalVisible = true; showHistoryPanel = false">
-            <div class="text-sm font-medium truncate">{{ item.selected_text }}</div>
+        <ul class="note-list">
+          <li v-for="item in lookupHistory" :key="item.id">
+            <button
+              type="button"
+              @click="
+                currentExplanation = item;
+                explanationModalVisible = true;
+                showHistoryPanel = false
+              "
+            >
+              <strong>{{ item.selected_text }}</strong>
+            </button>
           </li>
-          <li v-if="lookupHistory.length === 0" class="text-sm text-gray-500">
+          <li v-if="lookupHistory.length === 0" style="color: var(--ink-soft)">
             Select text in the story to lookup
           </li>
         </ul>
       </DialogContent>
     </Dialog>
 
-    <!-- Explanation details -->
     <Dialog :open="explanationModalVisible" @update:open="explanationModalVisible = $event">
-      <DialogContent>
+      <DialogContent class="bg-[var(--paper)] text-[var(--ink)] border-[var(--line)]">
         <DialogHeader>
           <DialogTitle>
             <div class="flex items-center space-x-2">
               <span>Lookup</span>
-              <div v-if="currentExplanation?.status === 'streaming'" class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent"></div>
+              <div
+                v-if="currentExplanation?.status === 'streaming'"
+                class="animate-spin rounded-full h-4 w-4 border-2 border-[var(--blue)] border-t-transparent"
+              />
             </div>
           </DialogTitle>
         </DialogHeader>
 
-        <div v-if="currentExplanation?.status === 'pending'" class="mb-4 flex items-center space-x-2">
-          <span>Waiting for server response...</span>
+        <div v-if="currentExplanation?.status === 'pending'" class="mb-4">
+          Waiting for server response…
         </div>
-        <div v-else-if="currentExplanation?.status === 'streaming'" class="mb-4">
-          <!-- Show streaming content -->
-          <div class="space-y-4">
-            <div class="bg-muted p-3 rounded text-sm">
-              {{ currentExplanation?.context_text.substring(0, currentExplanation?.context_text.indexOf(currentExplanation?.selected_text)) }}
-              <strong class="text-primary">{{ currentExplanation?.selected_text }}</strong>
-              {{ currentExplanation?.context_text.substring(currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) + currentExplanation?.selected_text.length) }}
-            </div>
-            <div class="text-sm">
-              <div class="font-medium mb-1">Explanation:</div>
-              <p>{{ currentExplanation?.explanation }}<span class="animate-pulse">▋</span></p>
-            </div>
+        <div v-else-if="currentExplanation?.status === 'streaming'" class="mb-4 space-y-4">
+          <div
+            class="p-3 rounded text-sm"
+            style="background: var(--paper-muted); border: 1px solid var(--line-soft)"
+          >
+            {{
+              currentExplanation?.context_text.substring(
+                0,
+                currentExplanation?.context_text.indexOf(currentExplanation?.selected_text),
+              )
+            }}
+            <strong style="color: var(--blue-deep)">{{ currentExplanation?.selected_text }}</strong>
+            {{
+              currentExplanation?.context_text.substring(
+                currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) +
+                  currentExplanation?.selected_text.length,
+              )
+            }}
+          </div>
+          <div class="text-sm">
+            <div class="font-extrabold mb-1">Explanation</div>
+            <p>{{ currentExplanation?.explanation }}<span class="animate-pulse">▋</span></p>
           </div>
         </div>
         <div v-else class="space-y-4">
-          <!-- Context with highlighted selection -->
-          <div class="bg-muted p-3 rounded text-sm">
-            {{ currentExplanation?.context_text.substring(0, currentExplanation?.context_text.indexOf(currentExplanation?.selected_text)) }}
-            <strong class="text-primary">{{ currentExplanation?.selected_text }}</strong>
-            {{ currentExplanation?.context_text.substring(currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) + currentExplanation?.selected_text.length) }}
+          <div
+            class="p-3 rounded text-sm"
+            style="background: var(--paper-muted); border: 1px solid var(--line-soft)"
+          >
+            {{
+              currentExplanation?.context_text.substring(
+                0,
+                currentExplanation?.context_text.indexOf(currentExplanation?.selected_text),
+              )
+            }}
+            <strong style="color: var(--blue-deep)">{{ currentExplanation?.selected_text }}</strong>
+            {{
+              currentExplanation?.context_text.substring(
+                currentExplanation?.context_text.indexOf(currentExplanation?.selected_text) +
+                  currentExplanation?.selected_text.length,
+              )
+            }}
           </div>
-
-          <!-- Explanation -->
           <div class="text-sm">
-            <div class="font-medium mb-1">Explanation:</div>
+            <div class="font-extrabold mb-1">Explanation</div>
             <p>{{ currentExplanation?.explanation }}</p>
           </div>
         </div>

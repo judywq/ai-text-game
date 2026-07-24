@@ -1,0 +1,307 @@
+/* Shared line-art design tokens + base surface */
+
+:root {
+  color-scheme: light;
+  --paper: #fffefa;
+  --paper-muted: #f5f4ee;
+  --ink: #1d2228;
+  --ink-soft: #606770;
+  --line: #1d2228;
+  --line-soft: #c9ced3;
+  --blue: #357ee8;
+  --blue-deep: #1f64c7;
+  --dot: rgba(72, 91, 108, 0.16);
+  --shadow: 8px 9px 0 rgba(29, 34, 40, 0.08);
+
+  /* Bridge shadcn HSL vars toward line-art so leftover ui components match */
+  --background: 48 33% 97%;
+  --foreground: 210 16% 13%;
+  --muted: 48 20% 94%;
+  --muted-foreground: 210 8% 41%;
+  --popover: 48 60% 99%;
+  --popover-foreground: 210 16% 13%;
+  --card: 48 60% 99%;
+  --card-foreground: 210 16% 13%;
+  --border: 210 8% 80%;
+  --input: 210 8% 80%;
+  --primary: 210 16% 13%;
+  --primary-foreground: 48 60% 99%;
+  --secondary: 48 20% 94%;
+  --secondary-foreground: 210 16% 13%;
+  --accent: 215 79% 56%;
+  --accent-foreground: 48 60% 99%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 215 79% 56%;
+  --radius: 0.45rem;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --paper: #fffefa;
+  --paper-muted: #f5f4ee;
+  --ink: #1d2228;
+  --ink-soft: #606770;
+  --line: #1d2228;
+  --line-soft: #c9ced3;
+  --blue: #357ee8;
+  --blue-deep: #1f64c7;
+  --dot: rgba(72, 91, 108, 0.16);
+  --shadow: 8px 9px 0 rgba(29, 34, 40, 0.08);
+
+  --background: 48 33% 97%;
+  --foreground: 210 16% 13%;
+  --muted: 48 20% 94%;
+  --muted-foreground: 210 8% 41%;
+  --popover: 48 60% 99%;
+  --popover-foreground: 210 16% 13%;
+  --card: 48 60% 99%;
+  --card-foreground: 210 16% 13%;
+  --border: 210 8% 80%;
+  --input: 210 8% 80%;
+  --primary: 210 16% 13%;
+  --primary-foreground: 48 60% 99%;
+  --secondary: 48 20% 94%;
+  --secondary-foreground: 210 16% 13%;
+  --accent: 215 79% 56%;
+  --accent-foreground: 48 60% 99%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --ring: 215 79% 56%;
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #181c22;
+  --paper-muted: #101319;
+  --ink: #f2f4f7;
+  --ink-soft: #b9c0c8;
+  --line: #eef1f4;
+  --line-soft: #57616c;
+  --blue: #78acff;
+  --blue-deep: #9cc1ff;
+  --dot: rgba(210, 222, 236, 0.14);
+  --shadow: 8px 9px 0 rgba(0, 0, 0, 0.28);
+
+  --background: 213 20% 8%;
+  --foreground: 210 20% 96%;
+  --muted: 213 16% 14%;
+  --muted-foreground: 210 10% 75%;
+  --popover: 213 18% 12%;
+  --popover-foreground: 210 20% 96%;
+  --card: 213 18% 12%;
+  --card-foreground: 210 20% 96%;
+  --border: 210 10% 38%;
+  --input: 210 10% 38%;
+  --primary: 210 20% 96%;
+  --primary-foreground: 213 20% 8%;
+  --secondary: 213 16% 14%;
+  --secondary-foreground: 210 20% 96%;
+  --accent: 215 100% 74%;
+  --accent-foreground: 213 20% 8%;
+  --destructive: 0 55% 40%;
+  --destructive-foreground: 210 20% 96%;
+  --ring: 215 100% 74%;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']):not([data-theme='dark']) {
+    color-scheme: dark;
+    --paper: #181c22;
+    --paper-muted: #101319;
+    --ink: #f2f4f7;
+    --ink-soft: #b9c0c8;
+    --line: #eef1f4;
+    --line-soft: #57616c;
+    --blue: #78acff;
+    --blue-deep: #9cc1ff;
+    --dot: rgba(210, 222, 236, 0.14);
+    --shadow: 8px 9px 0 rgba(0, 0, 0, 0.28);
+
+    --background: 213 20% 8%;
+    --foreground: 210 20% 96%;
+    --muted: 213 16% 14%;
+    --muted-foreground: 210 10% 75%;
+    --popover: 213 18% 12%;
+    --popover-foreground: 210 20% 96%;
+    --card: 213 18% 12%;
+    --card-foreground: 210 20% 96%;
+    --border: 210 10% 38%;
+    --input: 210 10% 38%;
+    --primary: 210 20% 96%;
+    --primary-foreground: 213 20% 8%;
+    --secondary: 213 16% 14%;
+    --secondary-foreground: 210 20% 96%;
+    --accent: 215 100% 74%;
+    --accent-foreground: 213 20% 8%;
+    --destructive: 0 55% 40%;
+    --destructive-foreground: 210 20% 96%;
+    --ring: 215 100% 74%;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--paper-muted);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--ink);
+  font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle, var(--dot) 1.15px, transparent 1.35px) 0 0 / 23px 23px,
+    var(--paper-muted);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Shared primary CTA */
+.la-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 52px;
+  border: 2px solid var(--line);
+  border-radius: 7px;
+  padding: 0 20px;
+  color: var(--paper);
+  background: var(--ink);
+  box-shadow: 4px 4px 0 var(--blue);
+  font-size: 0.94rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.la-btn:hover:not(:disabled) {
+  background: var(--blue-deep);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.la-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+html[data-theme='dark'] .la-btn {
+  color: #12161c;
+  background: #f2f4f7;
+}
+
+html[data-theme='dark'] .la-btn:hover:not(:disabled) {
+  background: var(--blue);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) .la-btn {
+    color: #12161c;
+    background: #f2f4f7;
+  }
+
+  html:not([data-theme='light']) .la-btn:hover:not(:disabled) {
+    background: var(--blue);
+  }
+}
+
+.la-field {
+  display: grid;
+  gap: 8px;
+}
+
+.la-field label {
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.la-field input,
+.la-field select,
+.la-field textarea {
+  width: 100%;
+  border: 1.5px solid var(--line-soft);
+  border-radius: 7px;
+  outline: none;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.58);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.la-field input,
+.la-field select {
+  min-height: 49px;
+  padding: 0 13px;
+}
+
+.la-field textarea {
+  min-height: 100px;
+  resize: vertical;
+  padding: 12px 13px;
+  line-height: 1.48;
+}
+
+.la-field input:focus,
+.la-field select:focus,
+.la-field textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(53, 126, 232, 0.16);
+}
+
+html[data-theme='dark'] .la-field input,
+html[data-theme='dark'] .la-field select,
+html[data-theme='dark'] .la-field textarea {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.la-error {
+  margin: 0;
+  color: #c0392b;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.la-quiet-link {
+  color: var(--blue-deep);
+  font-weight: 800;
+  text-underline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

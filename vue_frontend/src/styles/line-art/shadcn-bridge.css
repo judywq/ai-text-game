@@ -1,0 +1,43 @@
+/* Soft-restyle kept shadcn overlays toward line-art tokens */
+
+[role='dialog'] {
+  color: var(--ink);
+}
+
+[data-radix-popper-content-wrapper] [role='menu'],
+[role='menu'] {
+  border: 1.5px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  box-shadow: 4px 4px 0 rgba(29, 34, 40, 0.12) !important;
+}
+
+[role='menuitem']:focus,
+[role='menuitem']:hover {
+  background: rgba(53, 126, 232, 0.1) !important;
+  color: var(--blue-deep) !important;
+}
+
+/* Toast surfaces */
+li[class*='group'][class*='pointer-events-auto'] {
+  border: 1.5px solid var(--line) !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--blue) !important;
+}
+
+/* Combobox / select triggers sitting in setting forms */
+.setting-field button[role='combobox'],
+.setting-field button {
+  border: 1.5px solid var(--line-soft) !important;
+  border-radius: 7px !important;
+  min-height: 48px;
+  background: rgba(255, 255, 255, 0.58) !important;
+  color: var(--ink) !important;
+}
+
+html[data-theme='dark'] .setting-field button[role='combobox'],
+html[data-theme='dark'] .setting-field button {
+  background: rgba(255, 255, 255, 0.035) !important;
+}

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" fill="none" preserveAspectRatio="none" aria-hidden="true">
+  <!-- 4:3 open book. Stacks terminate on outline. No folded corner. -->
+
+  <!-- Left page stacks: end controls sit above endpoints so strokes meet the bottom edge -->
+  <path stroke="#1d2228" stroke-width="2.3" stroke-linecap="butt"
+    d="M 86 144C 34 346.7 86 640 86 757.3" />
+  <path stroke="#1d2228" stroke-width="2.1" stroke-linecap="butt" opacity="0.88"
+    d="M 103 141.3C 48 340 103 646.7 103 760" />
+  <path stroke="#1d2228" stroke-width="1.9" stroke-linecap="butt" opacity="0.72"
+    d="M 121 137.3C 60 333.3 121 653.3 121 764" />
+
+  <!-- Right page stacks -->
+  <path stroke="#1d2228" stroke-width="2.3" stroke-linecap="butt"
+    d="M 1114 144C 1166 346.7 1114 640 1114 757.3" />
+  <path stroke="#1d2228" stroke-width="2.1" stroke-linecap="butt" opacity="0.88"
+    d="M 1097 141.3C 1152 340 1097 646.7 1097 760" />
+  <path stroke="#1d2228" stroke-width="1.9" stroke-linecap="butt" opacity="0.72"
+    d="M 1079 137.3C 1140 333.3 1079 653.3 1079 764" />
+
+  <!-- Outer outline -->
+  <path
+    stroke="#1d2228"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    d="M 86 144C 160 128 310 122.7 470 130.7C 530 133.3 572 144 600 152C 628 144 670 133.3 730 130.7C 890 122.7 1040 128 1114 144C 1148 193.3 1156 326.7 1154 466.7C 1152 626.7 1144 713.3 1114 757.3C 1040 773.3 890 778.7 730 770.7C 670 768 632 762.7 612 754.7C 606 752 602 757.3 600 765.3C 598 757.3 594 752 588 754.7C 568 762.7 530 768 470 770.7C 310 778.7 160 773.3 86 757.3C 52 706.7 44 626.7 46 466.7C 44 326.7 52 193.3 86 144Z"
+  />
+
+  <!-- Spine -->
+  <path stroke="#1d2228" stroke-width="2.5" stroke-linecap="round"
+    d="M 600 152C 601 333.3 599 560 600 754.7" />
+</svg>

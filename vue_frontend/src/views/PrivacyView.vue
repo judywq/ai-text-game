@@ -1,17 +1,18 @@
 <template>
-  <div class="max-w-4xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Privacy Policy</h1>
-    <div class="prose dark:prose-invert max-w-none">
-      <!-- Add your privacy policy content here -->
-      <p>Last updated: {{ new Date().toLocaleDateString() }}</p>
+  <div class="doc-shell" style="padding-top: 0">
+    <article class="document">
+      <p class="doc-kicker">LEGAL</p>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: {{ new Date().toLocaleDateString() }}</p>
 
       <h2>1. Information We Collect</h2>
-      <p>We collect information that you provide directly to us...</p>
+      <p>We collect information that you provide directly to us when you create an account or use GenQuest.</p>
 
       <h2>2. How We Use Your Information</h2>
-      <p>We use the information we collect to provide and improve our services...</p>
+      <p>We use the information we collect to provide, maintain, and improve our services.</p>
 
-      <!-- Add more sections as needed -->
-    </div>
+      <h2>3. Contact</h2>
+      <p>If you have questions about this policy, please contact us through the app support channels.</p>
+    </article>
   </div>
 </template>

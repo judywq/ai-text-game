@@ -2,23 +2,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Loader2 } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
-import * as z from 'zod'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
+import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { signupFormSchema } from '@/lib/validations'
+import BookFrame from '@/components/line-art/BookFrame.vue'
 
 const authStore = useAuthStore()
 const { loading } = storeToRefs(authStore)
@@ -27,12 +16,7 @@ const generalError = ref<string | null>(null)
 
 const form = useForm({
   validationSchema: toTypedSchema(signupFormSchema),
-  initialValues: {
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  },
+  initialValues: { name: '', email: '', password: '', confirmPassword: '' },
 })
 
 const onSubmit = form.handleSubmit(async (values) => {
@@ -40,123 +24,94 @@ const onSubmit = form.handleSubmit(async (values) => {
     generalError.value = null
     await authStore.signup(values.email, values.password, values.name, router)
   } catch (err: any) {
-    if (err.fieldErrors) {
-      form.setErrors(err.fieldErrors)
-    }
-    if (err.nonFieldError) {
-      generalError.value = err.nonFieldError
-    }
+    if (err.fieldErrors) form.setErrors(err.fieldErrors)
+    if (err.nonFieldError) generalError.value = err.nonFieldError
   }
 })
 </script>
 
 <template>
-  <Card class="w-full mx-auto sm:w-96">
-    <CardHeader>
-      <CardTitle class="text-2xl">Create an Account</CardTitle>
-      <CardDescription>Enter your details below to create your account</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <form @submit="onSubmit" class="grid gap-4">
-        <FormField
-          v-slot="{ componentField }"
-          name="name"
-        >
-          <FormItem>
-            <FormLabel>Name</FormLabel>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="text"
-                placeholder="Your name"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+  <BookFrame variant="auth-sheet">
+    <template #left>
+      <aside class="auth-aside">
+        <p>
+          <strong>Join the shelf.</strong>
+          Create an account to save stories, track progress, and pick up any chapter later.
+        </p>
+      </aside>
+    </template>
+    <template #right>
+      <section class="auth-content">
+        <p class="auth-kicker">NEW READER</p>
+        <h1>Sign up</h1>
+        <p class="auth-lede">Enter your details to start your first adventure.</p>
 
-        <FormField
-          v-slot="{ componentField }"
-          name="email"
-        >
-          <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="email"
-                placeholder="name@example.com"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+        <form class="auth-form" @submit="onSubmit">
+          <FormField v-slot="{ componentField }" name="name">
+            <FormItem class="auth-field">
+              <label>Name</label>
+              <FormControl>
+                <input v-bind="componentField" type="text" placeholder="Your name" :disabled="loading" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="email">
+            <FormItem class="auth-field">
+              <label>Email</label>
+              <FormControl>
+                <input
+                  v-bind="componentField"
+                  type="email"
+                  placeholder="name@example.com"
+                  :disabled="loading"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="password">
+            <FormItem class="auth-field">
+              <label>Password</label>
+              <FormControl>
+                <input
+                  v-bind="componentField"
+                  type="password"
+                  placeholder="Create a password"
+                  :disabled="loading"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
+          <FormField v-slot="{ componentField }" name="confirmPassword">
+            <FormItem class="auth-field">
+              <label>Confirm password</label>
+              <FormControl>
+                <input
+                  v-bind="componentField"
+                  type="password"
+                  placeholder="Confirm your password"
+                  :disabled="loading"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          </FormField>
 
-        <FormField
-          v-slot="{ componentField }"
-          name="password"
-        >
-          <FormItem>
-            <FormLabel>Password</FormLabel>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="password"
-                placeholder="Create a password"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+          <p v-if="generalError" class="la-error">{{ generalError }}</p>
 
-        <FormField
-          v-slot="{ componentField }"
-          name="confirmPassword"
-        >
-          <FormItem>
-            <FormLabel>Confirm Password</FormLabel>
-            <FormControl>
-              <Input
-                v-bind="componentField"
-                type="password"
-                placeholder="Confirm your password"
-                :disabled="loading"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        </FormField>
+          <button type="submit" class="auth-submit" :disabled="loading || !form.meta.value.valid">
+            {{ loading ? 'Creating…' : 'Create account' }}
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
 
-        <div v-if="generalError" class="text-destructive text-sm">
-          {{ generalError }}
-        </div>
-
-        <Button
-          type="submit"
-          class="w-full"
-          :disabled="loading || !form.meta.value.valid"
-        >
-          <Loader2
-            v-if="loading"
-            class="mr-2 h-4 w-4 animate-spin"
-          />
-          {{ loading ? 'Creating account...' : 'Sign Up' }}
-        </Button>
-
-        <div class="mt-4 text-center text-sm">
+        <p class="auth-helper">
           Already have an account?
-          <router-link
-            :to="{ name: 'login' }"
-            class="underline"
-            :tabindex="loading ? -1 : 0"
-          >
-            Login
-          </router-link>
-        </div>
-      </form>
-    </CardContent>
-  </Card>
+          <router-link :to="{ name: 'login' }">Sign in</router-link>
+        </p>
+      </section>
+    </template>
+  </BookFrame>
 </template>
