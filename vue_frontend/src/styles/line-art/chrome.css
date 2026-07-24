@@ -112,39 +112,34 @@
   padding: 0;
 }
 
-.theme-toggle,
 .prompt-input button {
   position: relative;
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  max-width: 36px;
-  max-height: 36px;
-  aspect-ratio: 1 / 1;
-  flex: 0 0 36px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  max-width: 42px;
+  max-height: 42px;
+  flex: 0 0 42px;
   padding: 0;
-  gap: 0;
-  border: 2px solid var(--line) !important;
+  border: 2px solid var(--line);
   border-radius: 50%;
-  color: var(--ink);
-  background: var(--paper);
-  box-shadow: none;
-  transform: none;
-  outline: none !important;
-  outline-offset: 0 !important;
-  font-size: inherit;
-  font-weight: inherit;
-  line-height: 1;
+  color: var(--paper);
+  background: var(--ink);
+  font-size: 1.15rem;
   cursor: pointer;
-  overflow: visible;
-  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  outline: none;
 }
 
-/* Hit target only — visible circle lives on .la-account-face so focus/open styles can't clear it */
+.prompt-input button:hover {
+  background: var(--blue-deep);
+}
+
+/* Hit target only — painted circle is .la-account-face (la-btn) */
 .la-account-trigger {
   position: relative;
   display: grid;
@@ -157,40 +152,12 @@
   padding: 0;
   border: 0 !important;
   border-radius: 50%;
-  color: var(--ink);
   background: transparent !important;
   box-shadow: none !important;
-  transform: none !important;
   outline: none !important;
   outline-offset: 0 !important;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-}
-
-.la-account-face {
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: 36px;
-  height: 36px;
-  border: 2px solid var(--line);
-  border-radius: 50%;
-  background: var(--paper);
-  color: var(--ink);
-  pointer-events: none;
-}
-
-.theme-toggle:hover,
-.theme-toggle:focus,
-.theme-toggle:focus-visible,
-.theme-toggle:active,
-.theme-toggle[aria-pressed='true'] {
-  border: 2px solid var(--line) !important;
-  background: var(--paper) !important;
-  color: var(--ink);
-  transform: none !important;
-  outline: none !important;
-  outline-offset: 0 !important;
 }
 
 .la-account-trigger:hover,
@@ -198,28 +165,29 @@
 .la-account-trigger:focus-visible,
 .la-account-trigger:active,
 .la-account-trigger[data-state='open'],
-.la-account-trigger[data-state='closed'] {
+.la-account-trigger[data-state='closed'],
+button.la-account-trigger:focus-visible {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   outline: none !important;
   outline-offset: 0 !important;
-  transform: none !important;
+  /* do not zero transform — hover lives on the inner .la-btn--icon */
 }
 
-/* Kill global button:focus-visible blue outline on this control */
-button.la-account-trigger:focus-visible {
+.la-account-face {
+  pointer-events: none;
+}
+
+.theme-toggle {
+  position: relative;
   outline: none !important;
   outline-offset: 0 !important;
-}
-
-.la-account-trigger:focus-visible .la-account-face,
-.la-account-trigger[data-state='open'] .la-account-face {
-  box-shadow: 0 0 0 3px rgba(53, 126, 232, 0.22);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .theme-toggle:focus-visible {
-  box-shadow: 0 0 0 3px rgba(53, 126, 232, 0.22) !important;
+  outline: none !important;
 }
 
 .theme-toggle::before {
@@ -227,19 +195,18 @@ button.la-account-trigger:focus-visible {
   height: 12px;
   border-radius: 50%;
   background: transparent;
-  box-shadow: inset -3px -2px 0 2px var(--ink);
+  box-shadow: inset -3px -2px 0 2px currentColor;
   content: '';
 }
 
 .theme-toggle[aria-pressed='true']::before {
-  background: var(--ink);
+  background: currentColor;
   box-shadow: none;
 }
 
 .la-account-icon {
   width: 18px;
   height: 18px;
-  color: var(--ink);
 }
 
 .la-account-initial {
@@ -247,27 +214,6 @@ button.la-account-trigger:focus-visible {
   font-size: 0.85rem;
   font-weight: 700;
   line-height: 1;
-  color: var(--ink);
-}
-
-.prompt-input button {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
-  max-width: 42px;
-  max-height: 42px;
-  flex-basis: 42px;
-  color: var(--paper);
-  background: var(--ink);
-  font-size: 1.15rem;
-  overflow: hidden;
-}
-
-.prompt-input button:hover {
-  background: var(--blue-deep);
-  transform: none;
-  box-shadow: none;
 }
 
 .la-mobile-menu {

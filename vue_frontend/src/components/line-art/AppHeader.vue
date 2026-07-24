@@ -123,7 +123,7 @@ function isCurrent(name: string) {
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <button type="button" class="la-account-trigger" aria-label="Account menu">
-            <span class="la-account-face" aria-hidden="true">
+            <span class="la-btn la-btn--icon la-account-face" aria-hidden="true">
               <span v-if="isAuthenticated" class="la-account-initial">
                 {{ (username[0] || 'U').toUpperCase() }}
               </span>

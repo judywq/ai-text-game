@@ -203,7 +203,10 @@ textarea:focus-visible {
     background 140ms ease;
 }
 
-.la-btn:hover:not(:disabled) {
+.la-btn:hover:not(:disabled),
+.la-account-trigger:hover .la-btn--icon,
+.la-account-trigger:active .la-btn--icon,
+.la-account-trigger[data-state='open'] .la-btn--icon {
   background: var(--blue-deep);
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
@@ -214,12 +217,29 @@ textarea:focus-visible {
   cursor: not-allowed;
 }
 
+.la-btn.la-btn--icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  max-width: 36px;
+  max-height: 36px;
+  padding: 0;
+  gap: 0;
+  border-radius: 50%;
+  flex: 0 0 36px;
+  line-height: 1;
+}
+
 html[data-theme='dark'] .la-btn {
   color: #12161c;
   background: #f2f4f7;
 }
 
-html[data-theme='dark'] .la-btn:hover:not(:disabled) {
+html[data-theme='dark'] .la-btn:hover:not(:disabled),
+html[data-theme='dark'] .la-account-trigger:hover .la-btn--icon,
+html[data-theme='dark'] .la-account-trigger:active .la-btn--icon,
+html[data-theme='dark'] .la-account-trigger[data-state='open'] .la-btn--icon {
   background: var(--blue);
 }
 
@@ -229,7 +249,10 @@ html[data-theme='dark'] .la-btn:hover:not(:disabled) {
     background: #f2f4f7;
   }
 
-  html:not([data-theme='light']) .la-btn:hover:not(:disabled) {
+  html:not([data-theme='light']) .la-btn:hover:not(:disabled),
+  html:not([data-theme='light']) .la-account-trigger:hover .la-btn--icon,
+  html:not([data-theme='light']) .la-account-trigger:active .la-btn--icon,
+  html:not([data-theme='light']) .la-account-trigger[data-state='open'] .la-btn--icon {
     background: var(--blue);
   }
 }

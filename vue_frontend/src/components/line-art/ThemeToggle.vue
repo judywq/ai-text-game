@@ -27,7 +27,7 @@ onMounted(() => {
 <template>
   <button
     type="button"
-    class="theme-toggle"
+    class="la-btn la-btn--icon theme-toggle"
     :aria-label="isDark ? 'Switch to light theme' : 'Switch to dark theme'"
     :aria-pressed="isDark"
     @click="toggle"
