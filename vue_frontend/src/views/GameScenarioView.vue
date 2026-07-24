@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import type { GameScenario, GameStory } from '@/types/game'
@@ -79,6 +79,8 @@ watch(selectedGenre, (newValue) => {
 })
 
 async function generateScenes() {
+  if (isGeneratingScenes.value) return
+
   const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
   if (!genreToUse) {
     toast({
@@ -99,14 +101,20 @@ async function generateScenes() {
 
     eventSource.addEventListener('scene', ((event: MessageEvent) => {
       const sceneData = JSON.parse(event.data)
-      scenes.value = sceneData.scenes || []
+      const nextScenes = sceneData.scenes || []
+      const isNewCard = nextScenes.length > scenes.value.length
+      scenes.value = nextScenes
+      if (isNewCard) scrollToGeneratedScenes()
     }) as EventListener)
 
     eventSource.addEventListener('complete', ((event: MessageEvent) => {
       const completeData = JSON.parse(event.data)
-      scenes.value = completeData.scenes || []
+      const nextScenes = completeData.scenes || []
+      const isNewCard = nextScenes.length > scenes.value.length
+      scenes.value = nextScenes
       isGeneratingScenes.value = false
       eventSource.close()
+      if (isNewCard) scrollToGeneratedScenes()
     }) as EventListener)
 
     eventSource.addEventListener('error', (() => {
@@ -124,6 +132,15 @@ async function generateScenes() {
     toast({ title: 'Error', description: 'Failed to generate scenes', variant: 'destructive' })
     isGeneratingScenes.value = false
   }
+}
+
+function scrollToGeneratedScenes() {
+  nextTick(() => {
+    document.querySelector('.level-section')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
 }
 
 async function startGame(sceneText?: string, languageLevel?: string, details?: string) {

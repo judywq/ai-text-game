@@ -297,15 +297,23 @@ h1 {
   margin-top: 5px;
 }
 
-.generate-button:hover,
-.start-button:hover {
+.generate-button:disabled,
+.start-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 2px 2px 0 var(--blue);
+}
+
+.generate-button:hover:not(:disabled),
+.start-button:hover:not(:disabled) {
   background: var(--blue-deep);
   transform: translate(2px, 2px);
   box-shadow: 2px 2px 0 var(--ink);
 }
 
-.generate-button:active,
-.start-button:active {
+.generate-button:active:not(:disabled),
+.start-button:active:not(:disabled) {
   transform: translate(3px, 3px);
   box-shadow: 1px 1px 0 var(--ink);
 }
