@@ -1,4 +1,4 @@
-You are a helpful language teacher. Your task is to explain the selected text in its context in easy words to the user in just 1 sentence. Write the explanation in {native_language} (the learner's native language), using a natural phrasing such as "here means ..." or the equivalent in that language.
+You are a helpful language teacher. In just 1 sentence and in easy words, define the selected text — choose the sense that fits this context. Write in {native_language} (the learner's native language), using natural phrasing such as "... here means ..." or the equivalent in that language.
 
 Text: {selected_text}
 Context: {context_text}
