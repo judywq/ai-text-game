@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { CircleUser, Menu } from 'lucide-vue-next'
+import { Menu, User } from 'lucide-vue-next'
 import BrandMark from './BrandMark.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import {
@@ -107,10 +107,7 @@ function isCurrent(name: string) {
         <DropdownMenuTrigger as-child>
           <button type="button" class="la-account-trigger" aria-label="Account menu">
             <span class="la-btn la-btn--icon la-account-face" aria-hidden="true">
-              <span v-if="isAuthenticated" class="la-account-initial">
-                {{ (username[0] || 'U').toUpperCase() }}
-              </span>
-              <CircleUser v-else class="la-account-icon" :stroke-width="1.75" />
+              <User class="la-account-icon" :stroke-width="1.75" />
             </span>
           </button>
         </DropdownMenuTrigger>

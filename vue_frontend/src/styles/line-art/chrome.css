@@ -209,13 +209,6 @@ button.la-account-trigger:focus-visible {
   height: 18px;
 }
 
-.la-account-initial {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
 .la-mobile-menu {
   display: none;
   align-items: center;
