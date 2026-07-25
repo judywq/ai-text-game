@@ -13,6 +13,7 @@ from django.core.files.storage import default_storage
 from django.http import HttpResponse
 from django.utils import timezone
 from google import genai
+from google.genai import types
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
 from langchain_deepseek import ChatDeepSeek
@@ -309,6 +310,21 @@ def _pil_image_to_upload_file(
     return (name, buffer, "image/png")
 
 
+def _aspect_ratio_to_openai_size(aspect_ratio: str | None) -> str:
+    """Map an aspect ratio like '3:4' to the nearest supported gpt-image size."""
+    if not aspect_ratio or ":" not in aspect_ratio:
+        return "1024x1024"
+    try:
+        width, height = (int(part) for part in aspect_ratio.split(":", 1))
+    except ValueError:
+        return "1024x1024"
+    if height > width:
+        return "1024x1536"  # portrait
+    if width > height:
+        return "1536x1024"  # landscape
+    return "1024x1024"  # square
+
+
 def _openai_image_response_to_bytes(response) -> bytes | None:
     """Extract image bytes from an OpenAI ImagesResponse."""
     if not response.data:
@@ -337,6 +353,7 @@ def generate_image(  # noqa: PLR0913
     progress_id: int | None = None,
     character_id: str | None = None,
     reference_image_urls: list[str] | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate an image using the configured provider and save to media storage."""
     if llm_type == "gemini":
@@ -349,6 +366,7 @@ def generate_image(  # noqa: PLR0913
             reference_image_urls=reference_image_urls,
             api_key=api_key,
             model_name=model_name,
+            aspect_ratio=aspect_ratio,
         )
     if llm_type == "openai":
         return generate_image_with_openai(
@@ -360,6 +378,7 @@ def generate_image(  # noqa: PLR0913
             reference_image_urls=reference_image_urls,
             api_key=api_key,
             model_name=model_name,
+            aspect_ratio=aspect_ratio,
         )
 
     logger.warning("Unsupported image model type: %s", llm_type)
@@ -417,6 +436,7 @@ def generate_image_with_openai(  # noqa: PLR0913
     reference_image_urls: list[str] | None = None,
     api_key: str | None = None,
     model_name: str | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate image using OpenAI and save to media folder."""
     try:
@@ -427,6 +447,7 @@ def generate_image_with_openai(  # noqa: PLR0913
 
         client = OpenAI(api_key=api_key)
         reference_images = _load_reference_images(reference_image_urls)
+        size = _aspect_ratio_to_openai_size(aspect_ratio)
 
         if reference_images:
             upload_files = [
@@ -437,12 +458,13 @@ def generate_image_with_openai(  # noqa: PLR0913
                 model=model_name,
                 image=upload_files if len(upload_files) > 1 else upload_files[0],
                 prompt=prompt,
+                size=size,
             )
         else:
             response = client.images.generate(
                 model=model_name,
                 prompt=prompt,
-                size="1024x1024",
+                size=size,
                 quality="medium",
             )
 
@@ -474,6 +496,7 @@ def generate_image_with_gemini(  # noqa: PLR0913
     reference_image_urls: list[str] | None = None,
     api_key: str | None = None,
     model_name: str | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate image using Gemini and save to media folder.
 
@@ -502,9 +525,16 @@ def generate_image_with_gemini(  # noqa: PLR0913
         )
         contents.append(prompt)
 
+        config = None
+        if aspect_ratio:
+            config = types.GenerateContentConfig(
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
+            )
+
         response = client.models.generate_content(
             model=model_name,
             contents=contents,
+            config=config,
         )
 
         for part in response.candidates[0].content.parts:

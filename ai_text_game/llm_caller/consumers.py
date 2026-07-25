@@ -533,6 +533,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 reference_image_urls=reference_images if reference_images else None,
                 api_key=image_api_key.key if image_api_key else None,
                 model_name=image_model_name,
+                aspect_ratio="3:4",
             )
 
             if image_url:
