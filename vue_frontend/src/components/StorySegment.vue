@@ -56,7 +56,28 @@ const chosenLabel = import.meta.env.VITE_PROMPT_LANGUAGE_CODE === 'French'
 
 const isImageLoaded = ref(false)
 
-const renderedContent = computed(() => marked.parse(props.entry.content) as string)
+// The LLM restates the decision options as a bullet list at the end of the segment.
+// They already appear as clickable buttons, so drop that trailing list and keep the
+// closing question. Requiring whitespace or end-of-line after the marker keeps
+// *emphasis* and a *** rule from looking like list items.
+const LIST_ITEM_PATTERN = /^ {0,3}(?:[-*+]|\d{1,9}[.)])(?:\s.*)?$/
+
+const stripTrailingOptionList = (content: string) => {
+  const lines = content.split('\n')
+  let end = lines.length
+
+  // Walk back over the trailing list items and the blank lines between them,
+  // stopping at the first line that is neither.
+  while (end > 0 && (lines[end - 1].trim() === '' || LIST_ITEM_PATTERN.test(lines[end - 1]))) {
+    end--
+  }
+
+  return lines.slice(0, end).join('\n').trimEnd()
+}
+
+const renderedContent = computed(
+  () => marked.parse(stripTrailingOptionList(props.entry.content)) as string
+)
 
 // Watch for image URL - reset loaded state when new image comes
 watch(() => props.entry.image_url, (newUrl) => {
