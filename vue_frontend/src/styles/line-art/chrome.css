@@ -218,14 +218,26 @@ button.la-account-trigger:focus-visible {
 
 .la-mobile-menu {
   display: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
   border: 2px solid var(--line);
   border-radius: 7px;
-  padding: 8px 10px;
   background: var(--paper);
   color: var(--ink);
-  font-size: 0.8rem;
-  font-weight: 800;
   cursor: pointer;
+}
+
+.la-mobile-menu:hover {
+  background: var(--blue-deep);
+  color: var(--paper);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
 @media (max-width: 800px) {
@@ -245,6 +257,10 @@ button.la-account-trigger:focus-visible {
 
   .la-mobile-menu {
     display: inline-flex;
+  }
+
+  .la-account-trigger {
+    display: none;
   }
 
   .la-brand {

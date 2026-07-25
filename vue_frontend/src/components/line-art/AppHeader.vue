@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { CircleUser } from 'lucide-vue-next'
+import { CircleUser, Menu } from 'lucide-vue-next'
 import BrandMark from './BrandMark.vue'
 import ThemeToggle from './ThemeToggle.vue'
 import {
@@ -62,11 +62,11 @@ function isCurrent(name: string) {
     </nav>
 
     <div class="la-header-actions">
-      <ThemeToggle />
-
       <Sheet v-model:open="isSheetOpen">
         <SheetTrigger as-child>
-          <button type="button" class="la-mobile-menu" aria-label="Open menu">Menu</button>
+          <button type="button" class="la-mobile-menu" aria-label="Open menu">
+            <Menu :size="18" :stroke-width="2" aria-hidden="true" />
+          </button>
         </SheetTrigger>
         <SheetContent side="left" class="bg-[var(--paper)] text-[var(--ink)] border-[var(--line)]">
           <SheetDescription class="hidden">Menu</SheetDescription>
@@ -83,7 +83,7 @@ function isCurrent(name: string) {
               {{ item.label }}
             </router-link>
             <template v-if="isAuthenticated">
-              <router-link :to="{ name: 'history' }" @click="isSheetOpen = false">My library</router-link>
+              <p class="m-0 text-sm font-bold text-[var(--ink-soft)]">{{ username }}</p>
               <router-link :to="{ name: 'change-password' }" @click="isSheetOpen = false">
                 Change password
               </router-link>
@@ -95,6 +95,10 @@ function isCurrent(name: string) {
               <router-link :to="{ name: 'login' }" @click="isSheetOpen = false">Sign in</router-link>
               <router-link :to="{ name: 'signup' }" @click="isSheetOpen = false">Sign up</router-link>
             </template>
+            <div class="flex items-center justify-between gap-3">
+              <span>Theme</span>
+              <ThemeToggle />
+            </div>
           </nav>
         </SheetContent>
       </Sheet>
@@ -125,6 +129,11 @@ function isCurrent(name: string) {
             <DropdownMenuItem @click="router.push({ name: 'login' })">Sign in</DropdownMenuItem>
             <DropdownMenuItem @click="router.push({ name: 'signup' })">Sign up</DropdownMenuItem>
           </template>
+          <DropdownMenuSeparator />
+          <div class="flex items-center justify-between gap-3 px-2 py-1.5 text-sm">
+            <span>Theme</span>
+            <ThemeToggle />
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
