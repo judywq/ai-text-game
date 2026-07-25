@@ -187,7 +187,7 @@ function pad(n: number) {
 </script>
 
 <template>
-  <div class="story-settings" style="padding-top: 0">
+  <div class="story-settings">
     <BookFrame variant="setting-book">
       <template #left>
         <section class="setting-page setup-page">

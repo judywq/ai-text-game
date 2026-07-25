@@ -48,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="home-shell" style="padding-top: 0">
+  <main class="home-shell">
     <BookFrame variant="home-book">
       <template #left>
         <section class="home-title-page">
