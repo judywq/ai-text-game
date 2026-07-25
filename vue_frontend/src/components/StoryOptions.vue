@@ -40,6 +40,9 @@ const onSelect = (optionId: string) => {
   display: grid;
   gap: 10px;
   margin: 12px 0 0;
+  /* Reserve space for hover translate(2px,2px) so overflow-y:auto parents don't flash a scrollbar */
+  padding-right: 4px;
+  padding-bottom: 4px;
 }
 
 .story-option-button {

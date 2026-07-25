@@ -202,6 +202,9 @@ a { color: inherit; }
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  /* Keep hover nudge + option button shadow inside the scrollport */
+  padding-right: 2px;
+  padding-bottom: 2px;
 }
 
 /* Compact option buttons so controls fit in the panel */
@@ -219,11 +222,9 @@ a { color: inherit; }
 
 .story-controls .page-turner {
   flex: 0 0 auto;
-  padding-top: 8px;
-  font-size: 0.82rem;
-}
-
-.story-controls .page-turner button {
+  /* Room for page-turner-btn box-shadow (2px) so overflow:hidden parents don't clip it */
+  padding-bottom: 4px;
+  padding-right: 4px;
   font-size: 0.82rem;
 }
 
@@ -232,9 +233,6 @@ h1, h2, p { text-wrap: balance; }
 h1, h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: -0.055em; }
 h1 { margin-top: 0; font-size: clamp(2.5rem, 4.7vw, 4.7rem); line-height: 0.99; }
 
-.story-rule { display: flex; align-items: center; gap: 9px; width: min(230px, 100%); margin: 0 0 28px; }
-.story-rule span { flex: 1; height: 1.5px; background: var(--line); }
-.story-rule i { display: block; width: 9px; height: 9px; border: 1.5px solid var(--blue); transform: rotate(45deg); }
 .story-prose {
   max-width: 100%;
   font-family: Georgia, "Times New Roman", serif;
@@ -251,10 +249,108 @@ h1 { margin-top: 0; font-size: clamp(2.5rem, 4.7vw, 4.7rem); line-height: 0.99; 
   margin-top: 0;
   border-top: 1.5px solid var(--line-soft);
   padding-top: 14px;
+  padding-bottom: 4px;
+  padding-right: 4px;
+  box-sizing: border-box;
 }
-.page-turner button { border: 0; padding: 0; color: var(--ink); background: transparent; font-family: Georgia, "Times New Roman", serif; font-size: 0.9rem; cursor: pointer; }
-.page-turner button:disabled { color: #aeb4ba; cursor: not-allowed; }
-.page-turner span { color: var(--ink-soft); font-family: Georgia, "Times New Roman", serif; font-size: 0.83rem; }
+
+.page-turner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  border: 2px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 12px;
+  color: var(--blue-deep);
+  background: var(--paper);
+  box-shadow: 2px 2px 0 var(--blue);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
+.page-turner-btn:hover:not(:disabled) {
+  background: var(--blue-deep);
+  color: var(--paper);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.page-turner-btn:disabled {
+  color: #aeb4ba;
+  background: var(--paper);
+  box-shadow: 2px 2px 0 #d5d9dd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.page-turner-chapter {
+  border: 0;
+  padding: 4px 2px;
+  color: var(--ink-soft);
+  background: transparent;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.83rem;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.page-turner-chapter:hover,
+.page-turner-chapter[data-state='open'] {
+  color: var(--blue-deep);
+}
+
+.chapter-picker {
+  width: min(220px, calc(100vw - 48px));
+  padding: 8px;
+  border: 2px solid var(--line) !important;
+  border-radius: 7px !important;
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  box-shadow: 4px 4px 0 var(--blue) !important;
+}
+
+.chapter-picker-list {
+  display: grid;
+  gap: 2px;
+  max-height: 240px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.chapter-picker-list button {
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: transparent;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chapter-picker-list button:hover {
+  background: color-mix(in srgb, var(--blue) 14%, transparent);
+  color: var(--blue-deep);
+}
+
+.chapter-picker-list button.is-current {
+  color: var(--blue-deep);
+  font-weight: 700;
+  background: color-mix(in srgb, var(--blue) 18%, transparent);
+}
 
 .notes-rail {
   position: relative;

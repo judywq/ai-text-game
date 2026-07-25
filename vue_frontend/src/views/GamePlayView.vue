@@ -21,6 +21,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -40,6 +45,7 @@ const authStore = useAuthStore()
 const story = ref<GameStory | null>(null)
 const progressEntries = ref<StoryProgress[]>([])
 const chapterIndex = ref(0)
+const chapterPickerOpen = ref(false)
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
@@ -154,6 +160,12 @@ function goToNextChapter() {
   if (canGoNextChapter.value) {
     chapterIndex.value += 1
   }
+}
+
+function goToChapter(index: number) {
+  if (index < 0 || index >= progressEntries.value.length) return
+  chapterIndex.value = index
+  chapterPickerOpen.value = false
 }
 
 // Computed property to determine if options should be shown
@@ -799,8 +811,6 @@ function scrollToBottom() {
               @mouseup="handleTextSelection"
               @touchend="handleTextSelection"
             >
-              <div class="story-rule" aria-hidden="true"><span></span><i></i><span></span></div>
-
               <div v-if="progressEntries.length === 0" class="story-prose" style="opacity: 0.7">
                 <p>Initializing your story…</p>
               </div>
@@ -859,14 +869,48 @@ function scrollToBottom() {
               >
                 <button
                   type="button"
+                  class="page-turner-btn"
                   :disabled="!canGoPrevChapter"
                   @click="goToPrevChapter"
                 >
                   ← Prev
                 </button>
-                <span>Chapter {{ chapterIndex + 1 }} of {{ chapterCount }}</span>
+                <Popover v-model:open="chapterPickerOpen">
+                  <PopoverTrigger as-child>
+                    <button
+                      type="button"
+                      class="page-turner-chapter"
+                      aria-haspopup="listbox"
+                      :aria-expanded="chapterPickerOpen"
+                    >
+                      Chapter {{ chapterIndex + 1 }} of {{ chapterCount }}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="top"
+                    align="center"
+                    :side-offset="8"
+                    class="chapter-picker"
+                  >
+                    <ul class="chapter-picker-list" role="listbox" aria-label="Jump to chapter">
+                      <li v-for="(_, index) in progressEntries" :key="index">
+                        <button
+                          type="button"
+                          role="option"
+                          :aria-selected="index === chapterIndex"
+                          :aria-current="index === chapterIndex ? 'page' : undefined"
+                          :class="{ 'is-current': index === chapterIndex }"
+                          @click="goToChapter(index)"
+                        >
+                          Chapter {{ index + 1 }}
+                        </button>
+                      </li>
+                    </ul>
+                  </PopoverContent>
+                </Popover>
                 <button
                   type="button"
+                  class="page-turner-btn"
                   :disabled="!canGoNextChapter"
                   @click="goToNextChapter"
                 >
