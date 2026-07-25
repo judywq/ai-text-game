@@ -107,6 +107,20 @@ a { color: inherit; }
   box-shadow: none;
 }
 
+/* Center spine between image and text (scene-leaf border is zeroed by book-frame) */
+.reader-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 3;
+  width: 1.5px;
+  background: var(--line);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 .scene-leaf, .story-leaf {
   position: relative;
   z-index: 1;
@@ -117,7 +131,7 @@ a { color: inherit; }
   margin: 0;
   background: var(--paper);
 }
-.scene-leaf { overflow: hidden; border-right: 2px solid var(--line); }
+.scene-leaf { overflow: hidden; }
 
 .scene-leaf--image {
   display: flex;
@@ -403,7 +417,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
     height: auto;
     min-height: 0;
   }
-  .scene-leaf { min-height: 220px; max-height: 320px; border-right: 0; border-bottom: 2px dashed rgba(29, 34, 40, 0.58); }
+  .reader-panel::before {
+    display: none;
+  }
+  .scene-leaf { min-height: 220px; max-height: 320px; border-bottom: 2px dashed rgba(29, 34, 40, 0.58); }
   .story-leaf { min-height: 360px; max-height: none; height: auto; padding: 24px clamp(20px, 5vw, 40px); }
   .story-scroll { max-height: 45vh; }
   .story-controls { max-height: none; }
