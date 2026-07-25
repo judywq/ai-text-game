@@ -9,7 +9,11 @@
     <!-- Normal content -->
     <template v-else>
       <!-- Image FIRST in HTML - hidden until loaded, then appears at top -->
-      <div v-if="entry.image_url" class="story-image-wrapper" :class="{ 'image-loaded': isImageLoaded }">
+      <div
+        v-if="showImage && entry.image_url"
+        class="story-image-wrapper"
+        :class="{ 'image-loaded': isImageLoaded }"
+      >
         <StoryImage
           :image-url="entry.image_url"
           :alt="`Story illustration for segment ${entry.id}`"
@@ -19,7 +23,10 @@
       </div>
 
       <!-- Text content AFTER image in HTML - slides down when image appears -->
-      <div class="story-text-container" :class="{ 'text-push-down': isImageLoaded && entry.image_url }">
+      <div
+        class="story-text-container"
+        :class="{ 'text-push-down': showImage && isImageLoaded && entry.image_url }"
+      >
         <div class="prose dark:prose-invert max-w-none">
           <div v-html="renderedContent" />
 
@@ -39,11 +46,15 @@ import { marked } from 'marked'
 import type { StoryProgress } from '@/types/game'
 import StoryImage from './StoryImage.vue'
 
-const props = defineProps<{
-  entry: StoryProgress
-  isLatest: boolean
-  isContentReady: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    entry: StoryProgress
+    isLatest: boolean
+    isContentReady: boolean
+    showImage?: boolean
+  }>(),
+  { showImage: true },
+)
 
 const emit = defineEmits<{
   (e: 'allParagraphsShown'): void

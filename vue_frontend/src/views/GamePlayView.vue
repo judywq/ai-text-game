@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/toast/use-toast'
 import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { CircleHelp } from 'lucide-vue-next'
 import StorySegment from '@/components/StorySegment.vue'
+import StoryImage from '@/components/StoryImage.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
 import BrandMark from '@/components/line-art/BrandMark.vue'
 import BookFrame from '@/components/line-art/BookFrame.vue'
@@ -39,6 +40,7 @@ const authStore = useAuthStore()
 
 const story = ref<GameStory | null>(null)
 const progressEntries = ref<StoryProgress[]>([])
+const chapterIndex = ref(0)
 const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
@@ -101,16 +103,57 @@ const isGameEnded = computed(() => story.value?.status === 'COMPLETED')
 
 const canOpenVocabularyReview = computed(() => lookupHistory.value.length > 0)
 
+const chapterCount = computed(() => progressEntries.value.length)
+
+const currentEntry = computed(() => {
+  if (progressEntries.value.length === 0) return null
+  const index = Math.min(chapterIndex.value, progressEntries.value.length - 1)
+  return progressEntries.value[index] ?? null
+})
+
+const isOnLatestChapter = computed(() => {
+  if (progressEntries.value.length === 0) return false
+  return chapterIndex.value === progressEntries.value.length - 1
+})
+
+const canGoPrevChapter = computed(() => chapterIndex.value > 0)
+
+const canGoNextChapter = computed(
+  () => chapterIndex.value < progressEntries.value.length - 1,
+)
+
+function goToLatestChapter() {
+  if (progressEntries.value.length === 0) {
+    chapterIndex.value = 0
+    return
+  }
+  chapterIndex.value = progressEntries.value.length - 1
+}
+
+function goToPrevChapter() {
+  if (canGoPrevChapter.value) {
+    chapterIndex.value -= 1
+  }
+}
+
+function goToNextChapter() {
+  if (canGoNextChapter.value) {
+    chapterIndex.value += 1
+  }
+}
+
 // Computed property to determine if options should be shown
 const shouldShowOptions = computed(() => {
   if (progressEntries.value.length === 0) return false
+  if (!isOnLatestChapter.value) return false
   const lastEntry = progressEntries.value[progressEntries.value.length - 1]
   const lastEntryIndex = progressEntries.value.length - 1
 
   // Show options only if:
-  // 1. Content is ready (streaming complete and refetch done)
-  // 2. No option has been chosen yet
-  // 3. All paragraphs have been shown
+  // 1. Viewing the latest chapter
+  // 2. Content is ready (streaming complete and refetch done)
+  // 3. No option has been chosen yet
+  // 4. All paragraphs have been shown
   return isContentReady.value[lastEntryIndex] &&
          !lastEntry.chosen_option_text &&
          allParagraphsShown.value
@@ -125,6 +168,12 @@ watch(shouldShowOptions, (show) => {
     currentOptions.value = []
   }
 }, { immediate: true })
+
+watch(chapterIndex, () => {
+  if (scrollRef.value) {
+    scrollRef.value.scrollTop = 0
+  }
+})
 
 // Handle when all paragraphs are shown in a segment
 function onAllParagraphsShown() {
@@ -175,6 +224,7 @@ function ensureStreamingEntry() {
   currentStreamingContent.value = ''
   allParagraphsShown.value = false
   isContentReady.value[activeStreamingEntryIndex.value] = false
+  goToLatestChapter()
 }
 
 function syncVisibleStreamingContent() {
@@ -488,6 +538,7 @@ async function fetchStoryAndProgress() {
   progressEntries.value.forEach((_, index) => {
     isContentReady.value[index] = true
   })
+  goToLatestChapter()
 }
 
 const loadStory = async () => {
@@ -559,6 +610,7 @@ const handleOptionSelect = async (optionId: string) => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
+    goToLatestChapter()
 
     // Send the selection to the server
     await selectOption(optionId)
@@ -700,12 +752,13 @@ function scrollToBottom() {
       <div class="book-stage">
         <BookFrame variant="reader-book">
           <template #left>
-            <figure class="scene-leaf">
-              <div class="scene-sky" aria-hidden="true"><span></span><span></span><span></span></div>
-              <div class="scene-tower" aria-hidden="true"><i></i><b></b></div>
-              <div class="scene-path" aria-hidden="true"></div>
-              <div class="scene-trees scene-trees-left" aria-hidden="true"><i></i><i></i><i></i></div>
-              <div class="scene-trees scene-trees-right" aria-hidden="true"><i></i><i></i><i></i></div>
+            <figure class="scene-leaf scene-leaf--image">
+              <StoryImage
+                v-if="currentEntry?.image_url"
+                :image-url="currentEntry.image_url"
+                :alt="`Illustration for chapter ${chapterIndex + 1}`"
+              />
+              <div v-else class="scene-image-placeholder" aria-hidden="true" />
               <figcaption>{{ story?.title || 'Your story' }}</figcaption>
             </figure>
           </template>
@@ -718,7 +771,7 @@ function scrollToBottom() {
               @touchend="handleTextSelection"
               style="overflow-y: auto; position: relative"
             >
-              <p class="reader-kicker">CHAPTER</p>
+              <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
               <h1>{{ story?.title || 'Reading…' }}</h1>
               <div class="story-rule" aria-hidden="true"><span></span><i></i><span></span></div>
 
@@ -726,17 +779,17 @@ function scrollToBottom() {
                 <p>Initializing your story…</p>
               </div>
 
-              <div v-else class="story-prose">
+              <div v-else-if="currentEntry" class="story-prose">
                 <StorySegment
-                  v-for="(entry, entryIndex) in progressEntries"
-                  :key="entry.id"
-                  :entry="entry"
-                  :is-latest="entryIndex === progressEntries.length - 1"
-                  :is-content-ready="isContentReady[entryIndex] || false"
+                  :key="currentEntry.id"
+                  :entry="currentEntry"
+                  :is-latest="isOnLatestChapter"
+                  :is-content-ready="isContentReady[chapterIndex] || false"
+                  :show-image="false"
                   @all-paragraphs-shown="onAllParagraphsShown"
                 />
 
-                <div v-if="isLoading" class="story-prose" style="opacity: 0.7; margin-top: 1rem">
+                <div v-if="isLoading && isOnLatestChapter" class="story-prose" style="opacity: 0.7; margin-top: 1rem">
                   <p>Generating next part…</p>
                 </div>
               </div>
@@ -769,6 +822,28 @@ function scrollToBottom() {
                   :disabled="false"
                   @select="handleOptionSelect"
                 />
+
+                <nav
+                  v-if="chapterCount > 0"
+                  class="page-turner"
+                  aria-label="Chapters"
+                >
+                  <button
+                    type="button"
+                    :disabled="!canGoPrevChapter"
+                    @click="goToPrevChapter"
+                  >
+                    ← Prev
+                  </button>
+                  <span>Chapter {{ chapterIndex + 1 }} of {{ chapterCount }}</span>
+                  <button
+                    type="button"
+                    :disabled="!canGoNextChapter"
+                    @click="goToNextChapter"
+                  >
+                    Next →
+                  </button>
+                </nav>
               </div>
             </section>
           </template>
