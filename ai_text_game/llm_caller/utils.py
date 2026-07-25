@@ -171,20 +171,49 @@ def generate_excel_response(rows, filename):
     return response
 
 
+def _format_character_block(characters: list[dict] | None) -> str:
+    """Build a compact character reference block for the image prompt."""
+    if not characters:
+        return ""
+
+    lines = []
+    for character in characters:
+        name = (character.get("character_name") or "").strip()
+        description = (character.get("character_description") or "").strip()
+        if not name and not description:
+            continue
+        if name and description:
+            lines.append(f"- {name}: {description}")
+        else:
+            lines.append(f"- {name or description}")
+
+    if not lines:
+        return ""
+
+    return (
+        "\n\nCHARACTERS (keep appearances consistent with the reference images):\n"
+        + "\n".join(lines)
+    )
+
+
 def generate_story_image_prompt(
     story_text: str,
     *,
     has_reference_images: bool = False,
+    characters: list[dict] | None = None,
 ) -> str:
     """Generate image prompt based on story content.
 
     Args:
         story_text: The story segment text
         has_reference_images: Whether reference images are provided
+        characters: Optional list of character dicts (name/description) to
+            describe who appears in the story, reinforcing the reference images
 
     Returns:
         Formatted prompt for image generation
     """
+    character_block = _format_character_block(characters)
     if has_reference_images:
         return (
             "Create a NEW illustration for this story scene. Use the reference "
@@ -194,14 +223,18 @@ def generate_story_image_prompt(
             "just copy the reference images. The characters should be doing DIFFERENT "
             "actions in a DIFFERENT setting based on the new story text."
             # "Style: Children's storybook illustration, colorful, engaging for ages 8-9. "
+            "The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
             "Do NOT include any text, options, or choices in the image."
+            f"{character_block}"
             f"\n\nNEW STORY SCENE TO ILLUSTRATE:\n{story_text}"
         )
     return (
         # "Create a children's storybook illustration for this story scene. Style: "
         # "Colorful, engaging, appropriate for ages 8-9, warm and inviting."
+        "The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
         "Show the characters and setting clearly. Do NOT include any text, options, or choices "
         "in the image."
+        f"{character_block}"
         f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
     )
 
@@ -360,6 +393,7 @@ def generate_character_image(
         f"Role: {character.get('role')}. "
         f"Description: {character.get('character_description')}. "
         # f"Style: Colorful, engaging, appropriate for ages 8-9. "
+        f"The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
         f"Show the character clearly with consistent features. "
         f"Plain or simple background. Do NOT include any text."
     )

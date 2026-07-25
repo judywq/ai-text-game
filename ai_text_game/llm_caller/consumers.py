@@ -485,6 +485,13 @@ class GameConsumer(AsyncWebsocketConsumer):
                 list(character_images.values()) if character_images else []
             )
 
+            # Get character descriptions to reinforce the reference images
+            characters = await database_sync_to_async(
+                lambda: story.skeleton.raw_data.get("characters", [])
+                if hasattr(story, "skeleton")
+                else [],
+            )()
+
             # # Add last progress image (uncomment to use the n-1 image as reference)
             # last_image = await database_sync_to_async(
             #     lambda: StoryProgress.objects.filter(story=story, image_url__isnull=False)
@@ -515,6 +522,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             image_prompt = await database_sync_to_async(generate_story_image_prompt)(
                 story_text=story_text,
                 has_reference_images=bool(reference_images),
+                characters=characters,
             )
             image_url = await database_sync_to_async(generate_image)(
                 llm_type=image_llm_type,
