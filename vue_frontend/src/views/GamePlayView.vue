@@ -44,6 +44,21 @@ const userInput = ref('')
 const isLoading = ref(false)
 const scrollRef = ref<HTMLElement | null>(null)
 const notesCollapsed = ref(false)
+const NOTES_MOBILE_MQ = '(max-width: 1100px)'
+let notesMobileMql: MediaQueryList | null = null
+
+function syncNotesCollapsedForViewport() {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia(NOTES_MOBILE_MQ).matches) {
+    notesCollapsed.value = true
+  }
+}
+
+function onNotesViewportChange(event: MediaQueryListEvent) {
+  if (event.matches) {
+    notesCollapsed.value = true
+  }
+}
 
 const {
   connect,
@@ -626,6 +641,10 @@ const handleOptionSelect = async (optionId: string) => {
 }
 
 onMounted(async () => {
+  syncNotesCollapsedForViewport()
+  notesMobileMql = window.matchMedia(NOTES_MOBILE_MQ)
+  notesMobileMql.addEventListener('change', onNotesViewportChange)
+
   const storyId = Number(route.params.id)
   if (!storyId) {
     router.push('/game')
@@ -717,6 +736,8 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopStreamRenderTimer()
+  notesMobileMql?.removeEventListener('change', onNotesViewportChange)
+  notesMobileMql = null
 })
 
 function scrollToBottom() {
@@ -748,6 +769,13 @@ function scrollToBottom() {
     </header>
 
     <div class="reader-stage" :class="{ 'notes-collapsed': notesCollapsed }">
+      <button
+        type="button"
+        class="notes-backdrop"
+        aria-label="Close notes"
+        tabindex="-1"
+        @click="notesCollapsed = true"
+      />
       <div class="book-stage">
         <header class="reader-title-block">
           <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
@@ -850,8 +878,14 @@ function scrollToBottom() {
         </section>
       </div>
 
-      <aside class="notes-rail">
-        <button type="button" class="notes-tab" @click="notesCollapsed = !notesCollapsed">
+      <aside class="notes-rail" id="reader-notes-panel">
+        <button
+          type="button"
+          class="notes-tab"
+          :aria-expanded="!notesCollapsed"
+          aria-controls="reader-notes-panel"
+          @click="notesCollapsed = !notesCollapsed"
+        >
           Notes
         </button>
         <div class="notes-content">
