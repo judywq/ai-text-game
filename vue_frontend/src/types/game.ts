@@ -23,7 +23,10 @@ export interface StoryProgress {
 export interface GameStory {
   id: number
   title: string
-  scenario: GameScenario
+  /** API returns a string genre; scenario kept for older clients. */
+  genre?: string
+  scenario?: GameScenario
+  details?: string
   status: 'INIT' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED'
   created_at: string
   updated_at: string

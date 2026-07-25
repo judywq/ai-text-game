@@ -4,6 +4,8 @@ import { GameService } from '@/services/gameService'
 import { useRouter } from 'vue-router'
 import type { GameStory } from '@/types/game'
 
+const LEDE_MAX = 160
+
 const router = useRouter()
 const data = ref<GameStory[]>([])
 const selectedId = ref<number | null>(null)
@@ -40,8 +42,31 @@ function statusLabel(status: GameStory['status']) {
   return status
 }
 
+function storyGenre(story: GameStory) {
+  return story.genre || story.scenario?.name || 'Story'
+}
+
 function pad(n: number) {
   return String(n).padStart(2, '0')
+}
+
+function truncate(text: string, max: number) {
+  const trimmed = text.trim().replace(/\s+/g, ' ')
+  if (trimmed.length <= max) return trimmed
+  return trimmed.slice(0, max - 1).trimEnd() + '…'
+}
+
+function openingLede(story: GameStory) {
+  const progress = story.progress
+  if (progress?.length) {
+    const earliest = [...progress].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    )[0]
+    if (earliest?.content?.trim()) return truncate(earliest.content, LEDE_MAX)
+  }
+  const genre = storyGenre(story)
+  const label = genre === 'Story' ? 'A generative adventure' : genre
+  return `${label} — ${statusLabel(story.status).toLowerCase()}.`
 }
 
 function toggleStory(story: GameStory) {
@@ -81,35 +106,37 @@ onMounted(loadData)
           :key="story.id"
           :class="{ 'is-expanded': selectedId === story.id }"
         >
-          <button
-            type="button"
-            class="ledger-row"
-            :aria-expanded="selectedId === story.id"
-            @click="toggleStory(story)"
-          >
-            <span class="ledger-number">{{ pad(idx + 1) }}</span>
-            <span class="ledger-main">
-              <strong>{{ story.title || 'Untitled story' }}</strong>
-              <small
-                >{{ story.scenario?.name || 'Story' }} ·
-                {{ new Date(story.updated_at).toLocaleDateString() }}</small
-              >
-            </span>
-            <span class="ledger-status" :class="statusClass(story.status)">
-              {{ statusLabel(story.status) }}
-            </span>
-            <span class="ledger-chevron" aria-hidden="true" />
-          </button>
+          <div class="ledger-item-bar">
+            <button
+              type="button"
+              class="ledger-row"
+              :aria-expanded="selectedId === story.id"
+              @click="toggleStory(story)"
+            >
+              <span class="ledger-number">{{ pad(idx + 1) }}</span>
+              <span class="ledger-main">
+                <strong>{{ story.title || 'Untitled story' }}</strong>
+                <small
+                  >{{ storyGenre(story) }} ·
+                  {{ new Date(story.updated_at).toLocaleDateString() }}</small
+                >
+              </span>
+              <span class="ledger-status" :class="statusClass(story.status)">
+                {{ statusLabel(story.status) }}
+              </span>
+              <span class="ledger-chevron" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              class="la-btn ledger-continue"
+              @click="continueStory(story)"
+            >
+              Continue reading <span aria-hidden="true">→</span>
+            </button>
+          </div>
 
           <div v-if="selectedId === story.id" class="ledger-detail">
-            <p class="detail-lede">
-              {{ story.scenario?.name || 'A generative adventure' }} —
-              {{ statusLabel(story.status).toLowerCase() }}.
-            </p>
-            <a class="continue-story" href="#" @click.prevent="continueStory(story)">
-              Continue reading <span aria-hidden="true">→</span>
-            </a>
-            <div class="detail-rule" aria-hidden="true"><span></span><i></i><span></span></div>
+            <p class="detail-lede">{{ openingLede(story) }}</p>
             <dl class="library-stats">
               <div>
                 <dt>Status</dt>
