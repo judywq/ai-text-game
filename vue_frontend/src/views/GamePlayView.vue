@@ -12,7 +12,6 @@ import StorySegment from '@/components/StorySegment.vue'
 import StoryImage from '@/components/StoryImage.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
 import BrandMark from '@/components/line-art/BrandMark.vue'
-import BookFrame from '@/components/line-art/BookFrame.vue'
 import {
   Dialog,
   DialogContent,
@@ -750,29 +749,28 @@ function scrollToBottom() {
 
     <div class="reader-stage" :class="{ 'notes-collapsed': notesCollapsed }">
       <div class="book-stage">
-        <BookFrame variant="reader-book">
-          <template #left>
-            <figure class="scene-leaf scene-leaf--image">
-              <StoryImage
-                v-if="currentEntry?.image_url"
-                :image-url="currentEntry.image_url"
-                :alt="`Illustration for chapter ${chapterIndex + 1}`"
-              />
-              <div v-else class="scene-image-placeholder" aria-hidden="true" />
-              <figcaption>{{ story?.title || 'Your story' }}</figcaption>
-            </figure>
-          </template>
+        <header class="reader-title-block">
+          <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
+          <h1>{{ story?.title || 'Reading…' }}</h1>
+        </header>
 
-          <template #right>
-            <section
-              class="story-leaf"
+        <section class="reader-panel">
+          <figure class="scene-leaf scene-leaf--image">
+            <StoryImage
+              v-if="currentEntry?.image_url"
+              :image-url="currentEntry.image_url"
+              :alt="`Illustration for chapter ${chapterIndex + 1}`"
+            />
+            <div v-else class="scene-image-placeholder" aria-hidden="true" />
+          </figure>
+
+          <section class="story-leaf">
+            <div
+              class="story-scroll"
               ref="scrollRef"
               @mouseup="handleTextSelection"
               @touchend="handleTextSelection"
-              style="overflow-y: auto; position: relative"
             >
-              <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
-              <h1>{{ story?.title || 'Reading…' }}</h1>
               <div class="story-rule" aria-hidden="true"><span></span><i></i><span></span></div>
 
               <div v-if="progressEntries.length === 0" class="story-prose" style="opacity: 0.7">
@@ -814,40 +812,42 @@ function scrollToBottom() {
                   <CircleHelp class="w-4 h-4" />
                 </button>
               </div>
+            </div>
 
-              <div style="margin-top: auto; padding-top: 16px">
+            <div class="story-controls">
+              <div class="story-options-wrap">
                 <StoryOptions
                   v-if="shouldShowOptions"
                   :options="currentOptions"
                   :disabled="false"
                   @select="handleOptionSelect"
                 />
-
-                <nav
-                  v-if="chapterCount > 0"
-                  class="page-turner"
-                  aria-label="Chapters"
-                >
-                  <button
-                    type="button"
-                    :disabled="!canGoPrevChapter"
-                    @click="goToPrevChapter"
-                  >
-                    ← Prev
-                  </button>
-                  <span>Chapter {{ chapterIndex + 1 }} of {{ chapterCount }}</span>
-                  <button
-                    type="button"
-                    :disabled="!canGoNextChapter"
-                    @click="goToNextChapter"
-                  >
-                    Next →
-                  </button>
-                </nav>
               </div>
-            </section>
-          </template>
-        </BookFrame>
+
+              <nav
+                v-if="chapterCount > 0"
+                class="page-turner"
+                aria-label="Chapters"
+              >
+                <button
+                  type="button"
+                  :disabled="!canGoPrevChapter"
+                  @click="goToPrevChapter"
+                >
+                  ← Prev
+                </button>
+                <span>Chapter {{ chapterIndex + 1 }} of {{ chapterCount }}</span>
+                <button
+                  type="button"
+                  :disabled="!canGoNextChapter"
+                  @click="goToNextChapter"
+                >
+                  Next →
+                </button>
+              </nav>
+            </div>
+          </section>
+        </section>
       </div>
 
       <aside class="notes-rail">
