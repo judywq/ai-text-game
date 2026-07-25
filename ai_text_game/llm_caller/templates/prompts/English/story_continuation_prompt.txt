@@ -11,7 +11,8 @@ Continue writing the story based on these elements:
 - Write in CEFR level {language_level} English
 - Keep the tone consistent
 - Write approximately 150-200 words
-- (If a previous decision was made) Open the segment by expanding ONLY on the single most recent decision — the choice the user made at the end of the previous scene. Dramatize that one action: show it unfolding through concrete events and details, then move the plot forward from there. Do NOT recap, summarize, or refer back to any earlier decisions from before the previous scene, and do NOT open with a mechanical recap such as "Because [character] had chosen to …" — weave the result of the choice into the action instead of restating the decision.
+- If this is the first scene and thus no previous decision was made, set the background of the story clearly. 
+- If a previous decision was made, open the segment by expanding ONLY on the single most recent decision — the choice the user made at the end of the previous scene. Dramatize that one action: show it unfolding through concrete events and details, then move the plot forward from there. Do NOT recap, summarize, or refer back to any earlier decisions from before the previous scene, and do NOT open with a mechanical recap such as "Because [character] had chosen to …" — weave the result of the choice into the action instead of restating the decision.
 - Stop writing by asking the user to make the Next Decision
 - Do not tell the users the consequences of their decisions
 - Generate only the new story segment, written in an engaging narrative style.
