@@ -14,6 +14,7 @@ import { useGameWebSocket } from '@/composables/useGameWebSocket'
 import { CircleHelp } from 'lucide-vue-next'
 import StorySegment from '@/components/StorySegment.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
+import { marked } from 'marked'
 import {
   Dialog,
   DialogContent,
@@ -69,6 +70,13 @@ const popupPosition = ref({ x: 0, y: 0 })
 const showLookupButton = ref(false)
 const explanationModalVisible = ref(false)
 const currentExplanation = ref<TextExplanation | null>(null)
+// Render the completed explanation as markdown so the model's bolded
+// definition shows. Streaming stays plain text to avoid mid-token flicker.
+const renderedExplanation = computed(() =>
+  currentExplanation.value?.explanation
+    ? (marked.parse(currentExplanation.value.explanation) as string)
+    : ''
+)
 const lookupHistory = ref<TextExplanation[]>([])
 const nativeLanguagePromptOpen = ref(false)
 const nativeLanguageChoiceForPrompt = ref('')
@@ -924,7 +932,7 @@ function scrollToBottom() {
           <!-- Explanation -->
           <div class="text-sm">
             <div class="font-medium mb-1">Explanation:</div>
-            <p>{{ currentExplanation?.explanation }}</p>
+            <div class="prose prose-sm dark:prose-invert max-w-none" v-html="renderedExplanation" />
           </div>
         </div>
       </DialogContent>
