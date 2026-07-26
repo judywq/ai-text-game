@@ -255,7 +255,7 @@ a { color: inherit; }
 }
 
 .reader-kicker { margin: 0; color: var(--blue-deep); font-size: 0.67rem; font-weight: 800; letter-spacing: 0.18em; }
-h1, h2, p { text-wrap: balance; }
+h1, h2 { text-wrap: balance; }
 h1, h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-weight: 700; letter-spacing: -0.055em; }
 h1 { margin-top: 0; font-size: clamp(2.5rem, 4.7vw, 4.7rem); line-height: 0.99; }
 
@@ -265,7 +265,7 @@ h1 { margin-top: 0; font-size: clamp(2.5rem, 4.7vw, 4.7rem); line-height: 0.99; 
   font-size: clamp(1.05rem, 1.5vw, 1.28rem);
   line-height: 1.75;
 }
-.story-prose p { margin: 0 0 1.35em; }
+.story-prose p { margin: 0 0 1.35em; text-wrap: wrap; }
 
 .page-turner {
   display: flex;
