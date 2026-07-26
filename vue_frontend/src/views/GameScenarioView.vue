@@ -338,7 +338,11 @@ function closeShelf() {
                   <span class="story-index">{{ pad(idx + 1) }}</span>
                   <span class="story-details">
                     <strong>{{ story.title || 'Untitled' }}</strong>
-                    <small :class="statusClass(story.status)">{{ statusLabel(story.status) }}</small>
+                    <span class="story-meta">
+                      <small :class="statusClass(story.status)">{{ statusLabel(story.status) }}</small>
+                      <small class="story-date" aria-hidden="true">·</small>
+                      <small class="story-date">{{ new Date(story.updated_at).toLocaleDateString() }}</small>
+                    </span>
                   </span>
                   <span class="story-arrow" aria-hidden="true">→</span>
                 </a>

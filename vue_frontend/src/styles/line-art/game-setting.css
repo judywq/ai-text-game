@@ -411,6 +411,19 @@ h1 {
   font-weight: 800;
 }
 
+.story-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  min-width: 0;
+}
+
+.story-date {
+  color: var(--ink-soft);
+  font-size: 0.77rem;
+  font-weight: 800;
+}
+
 .story-details small.is-active { color: var(--blue-deep); }
 .story-details small.is-done { color: #49825c; }
 .story-details small.is-muted { color: var(--ink-soft); }
