@@ -20,6 +20,19 @@ export class ExplanationService {
     return response.data
   }
 
+  public static async getLatestVocabularyQuiz(storyId: number) {
+    try {
+      const response = await api.get<VocabularyQuizSubmitResponse>(
+        `/game-stories/${storyId}/vocabulary-quiz/latest/`,
+      )
+      return response.data
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number } }
+      if (err.response?.status === 404) return null
+      throw e
+    }
+  }
+
   public static async submitVocabularyQuiz(
     storyId: number,
     answers: VocabularyQuizAnswerPayload[]

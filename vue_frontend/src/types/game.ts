@@ -76,6 +76,7 @@ export interface VocabularyQuizResultItem {
   selected_text: string
   score: number
   reason: string
+  user_explanation?: string
 }
 
 export interface VocabularyQuizSubmitResponse {

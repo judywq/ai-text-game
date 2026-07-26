@@ -101,6 +101,19 @@ class VocabularyQuizSubmitSerializer(serializers.Serializer):
         return answers
 
 
+class VocabularyQuizLatestResultSerializer(serializers.Serializer):
+    explanation_id = serializers.IntegerField()
+    selected_text = serializers.CharField()
+    score = serializers.FloatField()
+    reason = serializers.CharField()
+    user_explanation = serializers.CharField()
+
+
+class VocabularyQuizLatestSerializer(serializers.Serializer):
+    average_score = serializers.FloatField()
+    results = VocabularyQuizLatestResultSerializer(many=True)
+
+
 class StoryOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = StoryOption

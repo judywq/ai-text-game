@@ -31,6 +31,7 @@ from .serializers import GameStorySerializer
 from .serializers import LLMModelSerializer
 from .serializers import StoryProgressSerializer
 from .serializers import TextExplanationSerializer
+from .serializers import VocabularyQuizLatestSerializer
 from .serializers import VocabularyQuizSubmitSerializer
 from .utils import get_llm_model
 
@@ -152,6 +153,44 @@ class GameStoryViewSet(viewsets.ModelViewSet):
         story = self.get_object()
         progress = StoryProgress.objects.filter(story=story).order_by("created_at")
         serializer = StoryProgressSerializer(progress, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"], url_path="vocabulary-quiz/latest")
+    def latest_vocabulary_quiz(self, request, pk=None):
+        """Return the current user's latest vocabulary quiz submission for this story."""
+        story = self.get_object()
+        submission = (
+            VocabularyQuizSubmission.objects.filter(
+                story=story,
+                created_by=request.user,
+            )
+            .prefetch_related("items")
+            .first()
+        )
+        if submission is None:
+            return Response(
+                {"error": "No vocabulary quiz submission found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        results = []
+        for item in submission.items.all():
+            if item.text_explanation_id is None:
+                continue
+            results.append(
+                {
+                    "explanation_id": item.text_explanation_id,
+                    "selected_text": item.selected_text,
+                    "score": item.score,
+                    "reason": item.feedback_reason,
+                    "user_explanation": item.user_explanation,
+                },
+            )
+        serializer = VocabularyQuizLatestSerializer(
+            {
+                "average_score": submission.average_score,
+                "results": results,
+            },
+        )
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"], url_path="vocabulary-quiz/submit")

@@ -60,6 +60,23 @@ async function load() {
     for (const e of history) {
       explanationsById[e.id] = ''
     }
+    const latest = await ExplanationService.getLatestVocabularyQuiz(id)
+    if (latest) {
+      for (const row of latest.results) {
+        if (row.user_explanation != null) {
+          explanationsById[row.explanation_id] = row.user_explanation
+        }
+      }
+      quizResult.value = {
+        average_score: latest.average_score,
+        results: latest.results.map(({ explanation_id, selected_text, score, reason }) => ({
+          explanation_id,
+          selected_text,
+          score,
+          reason,
+        })),
+      }
+    }
   } catch (e: unknown) {
     toast({
       title: 'Error',

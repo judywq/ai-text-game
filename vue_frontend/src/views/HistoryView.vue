@@ -77,6 +77,10 @@ function continueStory(story: GameStory) {
   router.push(`/game/${story.id}`)
 }
 
+function openVocabularyReview(story: GameStory) {
+  router.push({ name: 'game-quiz', params: { id: story.id } })
+}
+
 onMounted(loadData)
 </script>
 
@@ -126,13 +130,23 @@ onMounted(loadData)
               </span>
               <span class="ledger-chevron" aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              class="la-btn ledger-continue"
-              @click="continueStory(story)"
-            >
-              Continue reading <span aria-hidden="true">→</span>
-            </button>
+            <div class="ledger-actions">
+              <button
+                v-if="story.status === 'COMPLETED'"
+                type="button"
+                class="la-btn la-btn--secondary ledger-continue"
+                @click="openVocabularyReview(story)"
+              >
+                Review vocabulary <span aria-hidden="true">→</span>
+              </button>
+              <button
+                type="button"
+                class="la-btn ledger-continue"
+                @click="continueStory(story)"
+              >
+                Continue reading <span aria-hidden="true">→</span>
+              </button>
+            </div>
           </div>
 
           <div v-if="selectedId === story.id" class="ledger-detail">

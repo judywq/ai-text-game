@@ -63,6 +63,14 @@
 .ledger-row:hover { color: var(--blue-deep); }
 .ledger-row:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 
+.ledger-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .ledger-continue {
   flex: 0 0 auto;
   min-height: 38px;
@@ -128,7 +136,7 @@
     overflow: visible;
     text-overflow: unset;
   }
-  .ledger-continue {
+  .ledger-actions {
     align-self: flex-start;
     margin-left: 42px;
   }
@@ -145,8 +153,10 @@
   .ledger-item-bar { padding: 14px 0; }
   .ledger-row { grid-template-columns: 25px minmax(0, 1fr) 14px; }
   .ledger-status { display: none; }
-  .ledger-continue {
+  .ledger-actions {
     margin-left: 38px;
+  }
+  .ledger-continue {
     min-height: 36px;
     padding: 0 12px;
     font-size: .74rem;
