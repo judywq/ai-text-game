@@ -167,9 +167,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             # Update the story progress with chosen option
             await self.handle_user_selection(story, option_id, option_text)
 
-            # Summarize the segment and decision
-            await self.summarize_latest_progress(story)
-
             await self.update_story_progress(story)
 
         except ValueError as e:
