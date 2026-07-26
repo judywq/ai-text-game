@@ -827,6 +827,10 @@ function scrollToBottom() {
                     :entry="currentEntry"
                     :is-latest="isOnLatestChapter"
                     :is-content-ready="isContentReady[chapterIndex] || false"
+                    :is-streaming="
+                      activeStreamingEntryIndex !== null &&
+                      chapterIndex === activeStreamingEntryIndex
+                    "
                     :show-image="false"
                     @all-paragraphs-shown="onAllParagraphsShown"
                   />

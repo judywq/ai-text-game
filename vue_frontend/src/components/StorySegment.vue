@@ -28,7 +28,18 @@
         :class="{ 'text-push-down': showImage && isImageLoaded && entry.image_url }"
       >
         <div class="prose max-w-none">
-          <div v-html="renderedContent" />
+          <!-- Streaming: word spans with blur-to-focus (effect E) -->
+          <div v-if="isStreaming && !prefersReducedMotion" class="story-stream-blur">
+            <p class="story-stream-blur__text">
+              <span
+                v-for="token in streamTokens"
+                :key="token.id"
+                :class="token.isSpace ? 'story-blur-space' : 'story-blur-word'"
+              >{{ token.text }}</span>
+            </p>
+          </div>
+          <!-- Done / reduced-motion: full markdown -->
+          <div v-else v-html="renderedContent" />
 
           <!-- Show chosen option if exists -->
           <div v-if="entry.chosen_option_text" class="text-sm text-muted-foreground mt-4 italic">
@@ -41,10 +52,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { marked } from 'marked'
 import type { StoryProgress } from '@/types/game'
 import StoryImage from './StoryImage.vue'
+
+const BLUR_MS = 420
 
 const props = withDefaults(
   defineProps<{
@@ -52,8 +65,10 @@ const props = withDefaults(
     isLatest: boolean
     isContentReady: boolean
     showImage?: boolean
+    /** When true, reveal with blur-to-focus word spans instead of markdown HTML. */
+    isStreaming?: boolean
   }>(),
-  { showImage: true },
+  { showImage: true, isStreaming: false },
 )
 
 const emit = defineEmits<{
@@ -66,6 +81,8 @@ const chosenLabel = import.meta.env.VITE_PROMPT_LANGUAGE_CODE === 'French'
   : 'You chose:'
 
 const isImageLoaded = ref(false)
+const prefersReducedMotion = ref(false)
+const blurDuration = `${BLUR_MS}ms`
 
 // The LLM restates the decision options as a bullet list at the end of the segment.
 // They already appear as clickable buttons, so drop that trailing list and keep the
@@ -86,9 +103,33 @@ const stripTrailingOptionList = (content: string) => {
   return lines.slice(0, end).join('\n').trimEnd()
 }
 
+const strippedContent = computed(() => stripTrailingOptionList(props.entry.content))
+
 const renderedContent = computed(
-  () => marked.parse(stripTrailingOptionList(props.entry.content)) as string
+  () => marked.parse(strippedContent.value) as string
 )
+
+/**
+ * Tokenize for blur reveal. Key by start offset so a growing last word
+ * updates in place without re-triggering the animation.
+ */
+const streamTokens = computed(() => {
+  const text = strippedContent.value
+  if (!text) return [] as { id: number; text: string; isSpace: boolean }[]
+  const parts = text.split(/(\s+)/)
+  const tokens: { id: number; text: string; isSpace: boolean }[] = []
+  let offset = 0
+  for (const part of parts) {
+    if (!part) continue
+    tokens.push({
+      id: offset,
+      text: part,
+      isSpace: /^\s+$/.test(part),
+    })
+    offset += part.length
+  }
+  return tokens
+})
 
 // Watch for image URL - reset loaded state when new image comes
 watch(() => props.entry.image_url, (newUrl) => {
@@ -112,6 +153,10 @@ const onImageError = () => {
   // Even on error, mark as loaded
   isImageLoaded.value = true
 }
+
+onMounted(() => {
+  prefersReducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+})
 </script>
 
 <style scoped>
@@ -125,11 +170,6 @@ const onImageError = () => {
   transform: translateY(0);
 }
 
-/* When image is loaded, text has already moved down (no additional transform needed) */
-.story-text-container.text-push-down {
-  /* No transform needed - text is already in final position */
-}
-
 .story-image-wrapper {
   width: 100%;
   max-height: 0;
@@ -141,5 +181,38 @@ const onImageError = () => {
 .story-image-wrapper.image-loaded {
   max-height: 800px;
   opacity: 1;
+}
+
+.story-stream-blur__text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.story-blur-word {
+  display: inline-block;
+  animation: story-blur-in v-bind(blurDuration) ease both;
+}
+
+.story-blur-space {
+  display: inline;
+}
+
+@keyframes story-blur-in {
+  from {
+    opacity: 0.35;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-blur-word {
+    animation: none;
+    filter: none;
+    opacity: 1;
+  }
 }
 </style>
