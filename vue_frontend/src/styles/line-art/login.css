@@ -45,13 +45,12 @@ a {
   --login-chrome: 96px;
   width: min(1240px, calc(100% - 40px));
   min-height: 100dvh;
-  max-height: 100dvh;
   margin: 0 auto;
   padding: 14px 0 18px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .line-login .site-header {
@@ -140,10 +139,12 @@ a {
   isolation: isolate;
   /* Slightly tighter than shared book-frame % so login/signup leaves fit forms */
   padding: 11% 8% 12% 8%;
-  width: min(100%, calc((100dvh - var(--login-chrome, 96px)) * 5 / 4));
-  max-height: calc(100dvh - var(--login-chrome, 96px));
-  min-height: 0;
-  aspect-ratio: 5 / 4;
+  /* Stable max width — do not tie to viewport height. Height grows with
+     content; page scrolls when needed. */
+  width: min(100%, 980px);
+  height: auto;
+  max-height: none;
+  min-height: calc(100dvh - var(--login-chrome, 96px));
   margin-inline: auto;
   border: 0;
   border-radius: 0;
@@ -162,7 +163,7 @@ a {
   z-index: 1;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   overflow: hidden;
   background-color: transparent;
   padding: clamp(8px, 1.5vw, 20px) clamp(12px, 2vw, 28px);
