@@ -144,7 +144,8 @@ a {
   width: min(100%, 980px);
   height: auto;
   max-height: none;
-  min-height: calc(100dvh - var(--login-chrome, 96px));
+  /* Cap viewport-fill at 4:3 of max width (980×3/4) so tall screens don't stretch */
+  min-height: min(calc(100dvh - var(--login-chrome, 96px)), 735px);
   margin-inline: auto;
   border: 0;
   border-radius: 0;

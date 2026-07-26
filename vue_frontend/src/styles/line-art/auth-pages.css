@@ -16,7 +16,8 @@
   width: min(100%, 980px);
   height: auto;
   max-height: none;
-  min-height: calc(100dvh - 110px);
+  /* Cap viewport-fill at 4:3 of max width (980×3/4) so tall screens don't stretch */
+  min-height: min(calc(100dvh - 110px), 735px);
   margin-inline: auto;
 }
 
