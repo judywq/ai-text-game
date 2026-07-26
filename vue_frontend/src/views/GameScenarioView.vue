@@ -268,7 +268,6 @@ function pad(n: number) {
           <router-link class="library-link" :to="{ name: 'history' }">
             Open full library <span aria-hidden="true">→</span>
           </router-link>
-          <div class="shelf-mark" aria-hidden="true"><span></span><span></span><span></span></div>
         </section>
       </template>
     </BookFrame>
