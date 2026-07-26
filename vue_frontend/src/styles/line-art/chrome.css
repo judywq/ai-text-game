@@ -29,42 +29,11 @@
 }
 
 .la-mark {
-  position: relative;
-  display: inline-flex;
+  display: block;
   width: 39px;
-  height: 30px;
-  border: 2px solid var(--line);
-  border-radius: 3px 3px 6px 6px;
-  background: var(--paper);
-}
-
-.la-mark::before {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  left: 50%;
-  width: 2px;
-  content: '';
-  background: var(--line);
-  transform: translateX(-50%);
-}
-
-.la-mark i {
-  position: absolute;
-  top: 9px;
-  width: 9px;
-  height: 2px;
-  background: var(--blue);
-}
-
-.la-mark i:first-child {
-  left: 5px;
-  transform: rotate(-10deg);
-}
-
-.la-mark i:last-child {
-  right: 5px;
-  transform: rotate(10deg);
+  height: 39px;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .la-nav {
@@ -263,7 +232,7 @@ button.la-account-trigger:focus-visible {
 
   .la-mark {
     width: 34px;
-    height: 27px;
+    height: 34px;
   }
 }
 
