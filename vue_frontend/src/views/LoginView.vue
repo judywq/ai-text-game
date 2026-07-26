@@ -62,65 +62,67 @@ const onSubmit = form.handleSubmit(async (values) => {
     </template>
 
     <template #right>
-      <section class="form-page">
-        <div class="form-heading">
-          <p class="eyebrow">ACCOUNT</p>
-          <h2>Sign in</h2>
-          <p>Enter your email and password to continue.</p>
-        </div>
+      <Transition name="la-fade" appear>
+        <section class="form-page">
+          <div class="form-heading">
+            <p class="eyebrow">ACCOUNT</p>
+            <h2>Sign in</h2>
+            <p>Enter your email and password to continue.</p>
+          </div>
 
-        <form class="login-form" @submit="onSubmit">
-          <FormField v-slot="{ componentField }" name="email">
-            <FormItem class="field">
-              <label for="email">Email</label>
-              <FormControl>
-                <input
-                  id="email"
-                  v-bind="componentField"
-                  type="email"
-                  placeholder="name@example.com"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+          <form class="login-form" @submit="onSubmit">
+            <FormField v-slot="{ componentField }" name="email">
+              <FormItem class="field">
+                <label for="email">Email</label>
+                <FormControl>
+                  <input
+                    id="email"
+                    v-bind="componentField"
+                    type="email"
+                    placeholder="name@example.com"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <FormField v-slot="{ componentField }" name="password">
-            <FormItem class="field">
-              <div class="field-label-row">
-                <label for="password">Password</label>
-                <router-link :to="{ name: 'forgot-password' }" :tabindex="loading ? -1 : 0">
-                  Forgot password?
-                </router-link>
-              </div>
-              <FormControl>
-                <input
-                  id="password"
-                  v-bind="componentField"
-                  type="password"
-                  placeholder="Enter your password"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+            <FormField v-slot="{ componentField }" name="password">
+              <FormItem class="field">
+                <div class="field-label-row">
+                  <label for="password">Password</label>
+                  <router-link :to="{ name: 'forgot-password' }" :tabindex="loading ? -1 : 0">
+                    Forgot password?
+                  </router-link>
+                </div>
+                <FormControl>
+                  <input
+                    id="password"
+                    v-bind="componentField"
+                    type="password"
+                    placeholder="Enter your password"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <p v-if="generalError" class="la-error">{{ generalError }}</p>
+            <p v-if="generalError" class="la-error">{{ generalError }}</p>
 
-          <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
-            {{ loading ? 'Signing in…' : 'Sign in' }}
-            <span aria-hidden="true">→</span>
-          </button>
-        </form>
+            <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
+              {{ loading ? 'Signing in…' : 'Sign in' }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
 
-        <p class="signup-prompt">
-          Don't have an account?
-          <router-link :to="{ name: 'signup' }" :tabindex="loading ? -1 : 0">Sign up</router-link>
-        </p>
-        <p class="mobile-note">Your shelf is waiting on every device.</p>
-      </section>
+          <p class="signup-prompt">
+            Don't have an account?
+            <router-link :to="{ name: 'signup' }" :tabindex="loading ? -1 : 0">Sign up</router-link>
+          </p>
+          <p class="mobile-note">Your shelf is waiting on every device.</p>
+        </section>
+      </Transition>
     </template>
   </BookFrame>
 </template>

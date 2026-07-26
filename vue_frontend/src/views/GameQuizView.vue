@@ -144,78 +144,86 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="isLoading" class="quiz-loading">
-        <div class="quiz-spinner" aria-hidden="true" />
-        <p>Loading lookups…</p>
-      </div>
+      <Transition name="la-fade" mode="out-in">
+        <div v-if="isLoading" key="loading" class="quiz-loading">
+          <div class="quiz-spinner" aria-hidden="true" />
+          <p>Loading lookups…</p>
+        </div>
 
-      <template v-else>
-        <p v-if="quizItems.length === 0" class="quiz-empty">
-          There are no completed word lookups for this story yet. Use lookups during the game, wait
-          until each explanation finishes, then open this page again.
-        </p>
-
-        <div v-else class="quiz-body">
-          <p class="quiz-intro">
-            For each expression you looked up, explain in your own words what it means in the story.
+        <div v-else key="content">
+          <p v-if="quizItems.length === 0" class="quiz-empty">
+            There are no completed word lookups for this story yet. Use lookups during the game, wait
+            until each explanation finishes, then open this page again.
           </p>
 
-          <article v-for="item in quizItems" :key="item.id" class="quiz-term">
-            <strong>{{ item.selected_text }}</strong>
-            <small>
-              <span class="quiz-context-label">Context:</span>
-              {{ item.context_text }}
-            </small>
-            <div class="la-field">
-              <label :for="`explain-${item.id}`">Your explanation</label>
-              <textarea
-                :id="`explain-${item.id}`"
-                v-model="explanationsById[item.id]"
-                placeholder="Explain the meaning in your own words…"
-                rows="4"
-                :disabled="!!quizResult || isSubmitting"
-              />
-            </div>
-          </article>
-
-          <div class="quiz-actions">
-            <button
-              type="button"
-              class="la-btn"
-              :disabled="!canSubmit || isSubmitting || !!quizResult"
-              @click="submitQuiz"
-            >
-              <span v-if="isSubmitting" class="quiz-submit-busy">
-                <span class="quiz-spinner quiz-spinner--sm" aria-hidden="true" />
-                Checking…
-              </span>
-              <span v-else>Submit review <span aria-hidden="true">→</span></span>
-            </button>
-          </div>
-
-          <div v-if="quizResult" ref="resultsSectionRef" class="quiz-results">
-            <h2>Results</h2>
-            <p class="quiz-score-line">
-              Average score:
-              <strong>{{ quizResult.average_score.toFixed(2) }}</strong>
+          <div v-else class="quiz-body">
+            <p class="quiz-intro">
+              For each expression you looked up, explain in your own words what it means in the story.
             </p>
-            <p class="quiz-scale">0 = incorrect · 0.5 = partial · 1 = correct</p>
-            <div
-              v-for="row in quizResult.results"
-              :key="row.explanation_id"
-              class="quiz-result-row"
-            >
-              <div class="quiz-result-head">
-                <strong>{{ row.selected_text }}</strong>
-                <span class="quiz-score-badge" :class="scoreClass(row.score)">
-                  {{ scoreLabel(row.score) }} ({{ row.score }})
+
+            <TransitionGroup name="la-fade" tag="div" class="quiz-terms">
+              <article v-for="item in quizItems" :key="item.id" class="quiz-term">
+                <strong>{{ item.selected_text }}</strong>
+                <small>
+                  <span class="quiz-context-label">Context:</span>
+                  {{ item.context_text }}
+                </small>
+                <div class="la-field">
+                  <label :for="`explain-${item.id}`">Your explanation</label>
+                  <textarea
+                    :id="`explain-${item.id}`"
+                    v-model="explanationsById[item.id]"
+                    placeholder="Explain the meaning in your own words…"
+                    rows="4"
+                    :disabled="!!quizResult || isSubmitting"
+                  />
+                </div>
+              </article>
+            </TransitionGroup>
+
+            <div class="quiz-actions">
+              <button
+                type="button"
+                class="la-btn"
+                :disabled="!canSubmit || isSubmitting || !!quizResult"
+                @click="submitQuiz"
+              >
+                <span v-if="isSubmitting" class="quiz-submit-busy">
+                  <span class="quiz-spinner quiz-spinner--sm" aria-hidden="true" />
+                  Checking…
                 </span>
-              </div>
-              <p><span class="quiz-feedback-label">Feedback:</span> {{ row.reason }}</p>
+                <span v-else>Submit review <span aria-hidden="true">→</span></span>
+              </button>
             </div>
+
+            <Transition name="la-fade">
+              <div v-if="quizResult" ref="resultsSectionRef" class="quiz-results">
+                <h2>Results</h2>
+                <p class="quiz-score-line">
+                  Average score:
+                  <strong>{{ quizResult.average_score.toFixed(2) }}</strong>
+                </p>
+                <p class="quiz-scale">0 = incorrect · 0.5 = partial · 1 = correct</p>
+                <TransitionGroup name="la-fade" tag="div" class="quiz-result-list">
+                  <div
+                    v-for="row in quizResult.results"
+                    :key="row.explanation_id"
+                    class="quiz-result-row"
+                  >
+                    <div class="quiz-result-head">
+                      <strong>{{ row.selected_text }}</strong>
+                      <span class="quiz-score-badge" :class="scoreClass(row.score)">
+                        {{ scoreLabel(row.score) }} ({{ row.score }})
+                      </span>
+                    </div>
+                    <p><span class="quiz-feedback-label">Feedback:</span> {{ row.reason }}</p>
+                  </div>
+                </TransitionGroup>
+              </div>
+            </Transition>
           </div>
         </div>
-      </template>
+      </Transition>
     </section>
   </div>
 </template>

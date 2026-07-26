@@ -332,7 +332,7 @@ function closeShelf() {
               <p class="setting-kicker">RECENT</p>
               <h2>On your shelf</h2>
             </div>
-            <ul class="story-list">
+            <TransitionGroup name="la-fade" tag="ul" class="story-list">
               <li v-for="(story, idx) in recentGames" :key="story.id">
                 <a href="#" @click.prevent="handleGameClick(story)">
                   <span class="story-index">{{ pad(idx + 1) }}</span>
@@ -343,10 +343,14 @@ function closeShelf() {
                   <span class="story-arrow" aria-hidden="true">→</span>
                 </a>
               </li>
-              <li v-if="recentGames.length === 0" style="padding: 18px 0; color: var(--ink-soft)">
+              <li
+                v-if="recentGames.length === 0"
+                key="empty"
+                style="padding: 18px 0; color: var(--ink-soft)"
+              >
                 No recent stories yet.
               </li>
-            </ul>
+            </TransitionGroup>
             <router-link class="library-link" :to="{ name: 'history' }">
               Open full library <span aria-hidden="true">→</span>
             </router-link>
@@ -355,49 +359,51 @@ function closeShelf() {
       </template>
     </BookFrame>
 
-    <section v-if="scenes.length" class="level-section">
-      <div class="level-heading">
-        <p class="setting-kicker">READING LEVEL</p>
-        <h2>Pick a difficulty</h2>
-        <p>Choose the scene that matches how you want to read today.</p>
-      </div>
+    <Transition name="la-fade">
+      <section v-if="scenes.length" class="level-section">
+        <div class="level-heading">
+          <p class="setting-kicker">READING LEVEL</p>
+          <h2>Pick a difficulty</h2>
+          <p>Choose the scene that matches how you want to read today.</p>
+        </div>
 
-      <div class="level-form">
-        <fieldset>
-          <legend>Reading level</legend>
-          <div class="level-options">
-            <label
-              v-for="(scene, index) in scenes"
-              :key="index"
-              class="level-choice"
-            >
-              <input
-                v-model="selectedLevelIndex"
-                type="radio"
-                name="level"
-                :value="index"
-              />
-              <span class="level-option">
-                <span class="level-code">{{ scene.level || `L${index + 1}` }}</span>
-                <span class="level-copy">
-                  <strong>Level {{ index + 1 }}</strong>
-                  <small>{{ scene.text }}</small>
+        <div class="level-form">
+          <fieldset>
+            <legend>Reading level</legend>
+            <TransitionGroup name="la-fade" tag="div" class="level-options">
+              <label
+                v-for="(scene, index) in scenes"
+                :key="index"
+                class="level-choice"
+              >
+                <input
+                  v-model="selectedLevelIndex"
+                  type="radio"
+                  name="level"
+                  :value="index"
+                />
+                <span class="level-option">
+                  <span class="level-code">{{ scene.level || `L${index + 1}` }}</span>
+                  <span class="level-copy">
+                    <strong>Level {{ index + 1 }}</strong>
+                    <small>{{ scene.text }}</small>
+                  </span>
                 </span>
-              </span>
-            </label>
-          </div>
-        </fieldset>
+              </label>
+            </TransitionGroup>
+          </fieldset>
 
-        <button
-          type="button"
-          class="start-button"
-          :disabled="isLoading"
-          @click="startSelectedLevel"
-        >
-          {{ isLoading ? 'Starting…' : 'Start story' }}
-          <span aria-hidden="true">→</span>
-        </button>
-      </div>
-    </section>
+          <button
+            type="button"
+            class="start-button"
+            :disabled="isLoading"
+            @click="startSelectedLevel"
+          >
+            {{ isLoading ? 'Starting…' : 'Start story' }}
+            <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+    </Transition>
   </div>
 </template>

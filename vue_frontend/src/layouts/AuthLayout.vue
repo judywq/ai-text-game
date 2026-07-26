@@ -39,7 +39,7 @@ onMounted(() => {
 
     <main class="auth-main">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in" appear>
+        <transition name="la-fade" mode="out-in" appear>
           <component :is="Component" />
         </transition>
       </router-view>
@@ -53,15 +53,5 @@ onMounted(() => {
   align-items: center;
   gap: 14px;
   margin-left: auto;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

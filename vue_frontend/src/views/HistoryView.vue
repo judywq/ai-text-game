@@ -156,7 +156,7 @@ onMounted(loadData)
         </label>
       </div>
 
-      <ul class="story-ledger">
+      <TransitionGroup name="la-fade" tag="ul" class="story-ledger">
         <li
           v-for="(story, idx) in filtered"
           :key="story.id"
@@ -220,13 +220,13 @@ onMounted(loadData)
             </dl>
           </div>
         </li>
-        <li v-if="filtered.length === 0" class="ledger-empty">
+        <li v-if="filtered.length === 0" key="empty" class="ledger-empty">
           <p>No stories yet. Start a new chapter.</p>
           <router-link class="continue-story" :to="{ name: 'game-scenarios' }">
             New story <span aria-hidden="true">→</span>
           </router-link>
         </li>
-      </ul>
+      </TransitionGroup>
     </section>
 
     <Dialog

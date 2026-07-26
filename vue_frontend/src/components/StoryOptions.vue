@@ -1,5 +1,5 @@
 <template>
-  <Transition name="options-fade">
+  <Transition name="la-fade">
     <div v-if="options.length > 0 && !disabled" class="story-options">
       <button
         v-for="option in options"
@@ -79,31 +79,5 @@ const onSelect = (optionId: string) => {
 .story-option-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.options-fade-enter-active {
-  transition: all 0.5s ease-out;
-}
-
-.options-fade-enter-from {
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.options-fade-enter-to {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.options-fade-leave-active {
-  transition: all 0.3s ease-in;
-}
-
-.options-fade-leave-from {
-  opacity: 1;
-}
-
-.options-fade-leave-to {
-  opacity: 0;
 }
 </style>

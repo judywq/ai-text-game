@@ -1,5 +1,6 @@
 import './assets/index.css'
 import './styles/line-art/tokens.css'
+import './styles/line-art/motion.css'
 import './styles/line-art/chrome.css'
 import './styles/line-art/book-frame.css'
 import './styles/line-art/home.css'

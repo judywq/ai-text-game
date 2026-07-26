@@ -94,6 +94,10 @@
   line-height: 1.55;
 }
 
+.quiz-terms {
+  display: grid;
+}
+
 .quiz-term {
   display: grid;
   gap: 8px;

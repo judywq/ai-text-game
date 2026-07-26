@@ -821,14 +821,16 @@ function scrollToBottom() {
               </div>
 
               <div v-else-if="currentEntry" class="story-prose">
-                <StorySegment
-                  :key="currentEntry.id"
-                  :entry="currentEntry"
-                  :is-latest="isOnLatestChapter"
-                  :is-content-ready="isContentReady[chapterIndex] || false"
-                  :show-image="false"
-                  @all-paragraphs-shown="onAllParagraphsShown"
-                />
+                <Transition name="la-fade" mode="out-in">
+                  <StorySegment
+                    :key="currentEntry.id"
+                    :entry="currentEntry"
+                    :is-latest="isOnLatestChapter"
+                    :is-content-ready="isContentReady[chapterIndex] || false"
+                    :show-image="false"
+                    @all-paragraphs-shown="onAllParagraphsShown"
+                  />
+                </Transition>
 
                 <div v-if="isLoading && isOnLatestChapter" class="story-prose" style="opacity: 0.7; margin-top: 1rem">
                   <p>Generating next part…</p>

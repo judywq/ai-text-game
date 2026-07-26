@@ -53,92 +53,94 @@ const onSubmit = form.handleSubmit(async (values) => {
     </template>
 
     <template #right>
-      <section class="form-page form-page--signup">
-        <div class="form-heading">
-          <p class="eyebrow">NEW READER</p>
-          <h2>Sign up</h2>
-          <p>Enter your details to start your first adventure.</p>
-        </div>
+      <Transition name="la-fade" appear>
+        <section class="form-page form-page--signup">
+          <div class="form-heading">
+            <p class="eyebrow">NEW READER</p>
+            <h2>Sign up</h2>
+            <p>Enter your details to start your first adventure.</p>
+          </div>
 
-        <form class="login-form login-form--dense" @submit="onSubmit">
-          <FormField v-slot="{ componentField }" name="name">
-            <FormItem class="field">
-              <label for="signup-name">Name</label>
-              <FormControl>
-                <input
-                  id="signup-name"
-                  v-bind="componentField"
-                  type="text"
-                  placeholder="Your name"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+          <form class="login-form login-form--dense" @submit="onSubmit">
+            <FormField v-slot="{ componentField }" name="name">
+              <FormItem class="field">
+                <label for="signup-name">Name</label>
+                <FormControl>
+                  <input
+                    id="signup-name"
+                    v-bind="componentField"
+                    type="text"
+                    placeholder="Your name"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <FormField v-slot="{ componentField }" name="email">
-            <FormItem class="field">
-              <label for="signup-email">Email</label>
-              <FormControl>
-                <input
-                  id="signup-email"
-                  v-bind="componentField"
-                  type="email"
-                  placeholder="name@example.com"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+            <FormField v-slot="{ componentField }" name="email">
+              <FormItem class="field">
+                <label for="signup-email">Email</label>
+                <FormControl>
+                  <input
+                    id="signup-email"
+                    v-bind="componentField"
+                    type="email"
+                    placeholder="name@example.com"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <FormField v-slot="{ componentField }" name="password">
-            <FormItem class="field">
-              <label for="signup-password">Password</label>
-              <FormControl>
-                <input
-                  id="signup-password"
-                  v-bind="componentField"
-                  type="password"
-                  placeholder="Create a password"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+            <FormField v-slot="{ componentField }" name="password">
+              <FormItem class="field">
+                <label for="signup-password">Password</label>
+                <FormControl>
+                  <input
+                    id="signup-password"
+                    v-bind="componentField"
+                    type="password"
+                    placeholder="Create a password"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <FormField v-slot="{ componentField }" name="confirmPassword">
-            <FormItem class="field">
-              <label for="signup-confirm">Confirm password</label>
-              <FormControl>
-                <input
-                  id="signup-confirm"
-                  v-bind="componentField"
-                  type="password"
-                  placeholder="Confirm your password"
-                  :disabled="loading"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          </FormField>
+            <FormField v-slot="{ componentField }" name="confirmPassword">
+              <FormItem class="field">
+                <label for="signup-confirm">Confirm password</label>
+                <FormControl>
+                  <input
+                    id="signup-confirm"
+                    v-bind="componentField"
+                    type="password"
+                    placeholder="Confirm your password"
+                    :disabled="loading"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            </FormField>
 
-          <p v-if="generalError" class="la-error">{{ generalError }}</p>
+            <p v-if="generalError" class="la-error">{{ generalError }}</p>
 
-          <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
-            {{ loading ? 'Creating…' : 'Create account' }}
-            <span aria-hidden="true">→</span>
-          </button>
-        </form>
+            <button type="submit" class="la-btn" :disabled="loading || !form.meta.value.valid">
+              {{ loading ? 'Creating…' : 'Create account' }}
+              <span aria-hidden="true">→</span>
+            </button>
+          </form>
 
-        <p class="signup-prompt">
-          Already have an account?
-          <router-link :to="{ name: 'login' }" :tabindex="loading ? -1 : 0">Sign in</router-link>
-        </p>
-        <p class="mobile-note">Your shelf is waiting on every device.</p>
-      </section>
+          <p class="signup-prompt">
+            Already have an account?
+            <router-link :to="{ name: 'login' }" :tabindex="loading ? -1 : 0">Sign in</router-link>
+          </p>
+          <p class="mobile-note">Your shelf is waiting on every device.</p>
+        </section>
+      </Transition>
     </template>
   </BookFrame>
 </template>

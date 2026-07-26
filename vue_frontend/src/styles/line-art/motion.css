@@ -1,0 +1,51 @@
+/* Shared opacity-only fades for Vue Transition / TransitionGroup (name="la-fade") */
+
+.la-fade-enter-active,
+.la-fade-leave-active {
+  transition: opacity 220ms ease;
+}
+
+.la-fade-enter-from,
+.la-fade-leave-to {
+  opacity: 0;
+}
+
+.la-fade-move {
+  transition: opacity 220ms ease;
+}
+
+/* Keep list layout stable while items leave (TransitionGroup children only) */
+.story-ledger,
+.story-list,
+.level-options,
+.quiz-terms,
+.quiz-result-list {
+  position: relative;
+}
+
+.story-ledger > .la-fade-leave-active,
+.story-list > .la-fade-leave-active,
+.level-options > .la-fade-leave-active,
+.quiz-terms > .la-fade-leave-active,
+.quiz-result-list > .la-fade-leave-active {
+  position: absolute;
+  width: 100%;
+  left: 0;
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .la-fade-enter-active,
+  .la-fade-leave-active,
+  .la-fade-move {
+    transition-duration: 0.01ms !important;
+  }
+
+  .story-ledger > .la-fade-leave-active,
+  .story-list > .la-fade-leave-active,
+  .level-options > .la-fade-leave-active,
+  .quiz-terms > .la-fade-leave-active,
+  .quiz-result-list > .la-fade-leave-active {
+    position: static;
+  }
+}
