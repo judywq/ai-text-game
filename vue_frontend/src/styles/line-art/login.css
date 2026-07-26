@@ -584,4 +584,10 @@ a:focus-visible {
   }
 }
 
+html[data-theme='dark'] input[type="text"],
+html[data-theme='dark'] input[type="email"],
+html[data-theme='dark'] input[type="password"] {
+  background: rgba(255, 255, 255, 0.035);
+}
+
 /* prefers-color-scheme dark handled in tokens.css */
