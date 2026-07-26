@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { GameService } from '@/services/gameService'
 import type { GameScenario, GameStory } from '@/types/game'
@@ -22,6 +22,22 @@ const details = ref('')
 const theme = ref('')
 const recentGames = ref<GameStory[]>([])
 const selectedLevelIndex = ref(0)
+const shelfCollapsed = ref(false)
+const SHELF_MOBILE_MQ = '(max-width: 760px)'
+let shelfMobileMql: MediaQueryList | null = null
+
+function syncShelfCollapsedForViewport() {
+  if (typeof window === 'undefined') return
+  if (window.matchMedia(SHELF_MOBILE_MQ).matches) {
+    shelfCollapsed.value = true
+  }
+}
+
+function onShelfViewportChange(event: MediaQueryListEvent) {
+  if (event.matches) {
+    shelfCollapsed.value = true
+  }
+}
 
 const genres = computed(() =>
   scenarios.value
@@ -63,6 +79,10 @@ const loadRecentGames = async () => {
 }
 
 onMounted(async () => {
+  syncShelfCollapsedForViewport()
+  shelfMobileMql = window.matchMedia(SHELF_MOBILE_MQ)
+  shelfMobileMql.addEventListener('change', onShelfViewportChange)
+
   const prompt = typeof route.query.prompt === 'string' ? route.query.prompt : ''
   if (prompt) details.value = prompt
 
@@ -71,6 +91,11 @@ onMounted(async () => {
   } catch {
     toast({ title: 'Error', description: 'Failed to load data', variant: 'destructive' })
   }
+})
+
+onUnmounted(() => {
+  shelfMobileMql?.removeEventListener('change', onShelfViewportChange)
+  shelfMobileMql = null
 })
 
 watch(selectedGenre, (newValue) => {
@@ -184,10 +209,25 @@ const handleGameClick = (story: GameStory) => {
 function pad(n: number) {
   return String(n).padStart(2, '0')
 }
+
+function toggleShelf() {
+  shelfCollapsed.value = !shelfCollapsed.value
+}
+
+function closeShelf() {
+  shelfCollapsed.value = true
+}
 </script>
 
 <template>
-  <div class="story-settings">
+  <div class="story-settings" :class="{ 'shelf-collapsed': shelfCollapsed }">
+    <button
+      type="button"
+      class="shelf-backdrop"
+      aria-label="Close shelf"
+      tabindex="-1"
+      @click="closeShelf"
+    />
     <BookFrame variant="setting-book">
       <template #left>
         <section class="setting-page setup-page">
@@ -245,29 +285,40 @@ function pad(n: number) {
       </template>
 
       <template #right>
-        <section class="setting-page shelf-page">
-          <div class="shelf-heading">
-            <p class="setting-kicker">RECENT</p>
-            <h2>On your shelf</h2>
+        <section class="setting-page shelf-page" id="settings-shelf-panel">
+          <button
+            type="button"
+            class="shelf-tab"
+            :aria-expanded="!shelfCollapsed"
+            aria-controls="settings-shelf-panel"
+            @click="toggleShelf"
+          >
+            Shelf
+          </button>
+          <div class="shelf-content">
+            <div class="shelf-heading">
+              <p class="setting-kicker">RECENT</p>
+              <h2>On your shelf</h2>
+            </div>
+            <ul class="story-list">
+              <li v-for="(story, idx) in recentGames" :key="story.id">
+                <a href="#" @click.prevent="handleGameClick(story)">
+                  <span class="story-index">{{ pad(idx + 1) }}</span>
+                  <span class="story-details">
+                    <strong>{{ story.title || 'Untitled' }}</strong>
+                    <small>{{ story.status }}</small>
+                  </span>
+                  <span class="story-arrow" aria-hidden="true">→</span>
+                </a>
+              </li>
+              <li v-if="recentGames.length === 0" style="padding: 18px 0; color: var(--ink-soft)">
+                No recent stories yet.
+              </li>
+            </ul>
+            <router-link class="library-link" :to="{ name: 'history' }">
+              Open full library <span aria-hidden="true">→</span>
+            </router-link>
           </div>
-          <ul class="story-list">
-            <li v-for="(story, idx) in recentGames" :key="story.id">
-              <a href="#" @click.prevent="handleGameClick(story)">
-                <span class="story-index">{{ pad(idx + 1) }}</span>
-                <span class="story-details">
-                  <strong>{{ story.title || 'Untitled' }}</strong>
-                  <small>{{ story.status }}</small>
-                </span>
-                <span class="story-arrow" aria-hidden="true">→</span>
-              </a>
-            </li>
-            <li v-if="recentGames.length === 0" style="padding: 18px 0; color: var(--ink-soft)">
-              No recent stories yet.
-            </li>
-          </ul>
-          <router-link class="library-link" :to="{ name: 'history' }">
-            Open full library <span aria-hidden="true">→</span>
-          </router-link>
         </section>
       </template>
     </BookFrame>
