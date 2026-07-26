@@ -63,6 +63,15 @@ function storyGenre(story: GameStory) {
   return story.genre || story.scenario?.name || 'Story'
 }
 
+function storyHeading(story: GameStory) {
+  const genre = story.genre || story.scenario?.name || ''
+  const theme = (story.theme || '').trim()
+  if (genre && theme) return `${genre} - ${theme}`
+  if (genre) return genre
+  if (theme) return theme
+  return story.title || 'Untitled story'
+}
+
 function pad(n: number) {
   return String(n).padStart(2, '0')
 }
@@ -171,11 +180,8 @@ onMounted(loadData)
             >
               <span class="ledger-number">{{ pad(idx + 1) }}</span>
               <span class="ledger-main">
-                <strong>{{ story.title || 'Untitled story' }}</strong>
-                <small
-                  >{{ storyGenre(story) }} ·
-                  {{ new Date(story.updated_at).toLocaleDateString() }}</small
-                >
+                <strong>{{ storyHeading(story) }}</strong>
+                <small>{{ new Date(story.updated_at).toLocaleDateString() }}</small>
               </span>
               <span class="ledger-status" :class="statusClass(story.status)">
                 {{ statusLabel(story.status) }}
