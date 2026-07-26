@@ -66,8 +66,8 @@ const loadingAssets = ref<LoadingAsset[]>([])
 const loadAssets = async () => {
   const assets: LoadingAsset[] = []
 
-  // Load 3 image/text pairs
-  for (let i = 1; i <= 3; i++) {
+  // Load remaining image/text pairs (asset 2 removed)
+  for (const i of [1, 3]) {
     try {
       const imageUrl = `/loading-assets/image${i}.png`
       const textResponse = await fetch(`/loading-assets/text${i}.txt`)
