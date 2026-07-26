@@ -147,12 +147,12 @@ a {
   isolation: isolate;
   /* Match signup auth-book inset so leaves sit inside the SVG silhouette */
   padding: 12% 8% 14% 8%;
-  /* Cap width by viewport or by 5:4 of available height — do not lock aspect-ratio,
-     so a narrow viewport can shrink width only while height stays full. */
-  width: min(100%, calc((100dvh - var(--settings-chrome, 110px)) * 5 / 4));
-  height: calc(100dvh - var(--settings-chrome, 110px));
-  max-height: calc(100dvh - var(--settings-chrome, 110px));
-  min-height: 0;
+  /* Stable max width — do not tie to viewport height (short windows would
+     shrink columns). Height grows with content; page scrolls when needed. */
+  width: min(100%, 980px);
+  height: auto;
+  max-height: none;
+  min-height: calc(100dvh - var(--settings-chrome, 110px));
   margin-inline: auto;
   border: 0;
   border-radius: 0;
@@ -166,7 +166,7 @@ a {
   z-index: 1;
   min-width: 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   overflow: hidden;
   background-color: transparent;
   padding: clamp(8px, 1.5vw, 20px) clamp(12px, 2vw, 28px);
@@ -207,6 +207,12 @@ h2 {
 }
 
 h1 {
+  margin-top: 15px;
+  font-size: clamp(1.85rem, 3.2vw, 3.2rem);
+  line-height: 0.99;
+}
+
+.setup-page h1 {
   margin-top: 15px;
   font-size: clamp(1.85rem, 3.2vw, 3.2rem);
   line-height: 0.99;
