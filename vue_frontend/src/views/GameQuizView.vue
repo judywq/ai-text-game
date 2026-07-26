@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ExplanationService } from '@/services/explanationService'
 import { GameService } from '@/services/gameService'
@@ -20,6 +20,7 @@ const explanationsById = reactive<Record<number, string>>({})
 const isLoading = ref(true)
 const isSubmitting = ref(false)
 const quizResult = ref<VocabularyQuizSubmitResponse | null>(null)
+const resultsSectionRef = ref<HTMLElement | null>(null)
 
 const storyId = computed(() => Number(route.params.id))
 
@@ -82,6 +83,12 @@ async function submitQuiz() {
   quizResult.value = null
   try {
     quizResult.value = await ExplanationService.submitVocabularyQuiz(id, answers)
+    await nextTick()
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    resultsSectionRef.value?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'start',
+    })
   } catch (e: unknown) {
     const err = e as { response?: { data?: { error?: string } } }
     const msg = err.response?.data?.error || (e instanceof Error ? e.message : 'Submit failed')
@@ -162,7 +169,7 @@ onMounted(() => {
           </Button>
         </div>
 
-        <template v-if="quizResult">
+        <div v-if="quizResult" ref="resultsSectionRef">
           <Separator class="my-8" />
           <h2 class="text-xl font-bold mb-4">Results</h2>
           <p class="text-sm text-muted-foreground mb-4">
@@ -192,7 +199,7 @@ onMounted(() => {
               </CardContent>
             </Card>
           </div>
-        </template>
+        </div>
       </div>
     </template>
   </div>
