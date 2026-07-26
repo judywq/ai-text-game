@@ -1,6 +1,6 @@
 .home-shell {
   --home-chrome: 110px;
-  width: min(1320px, calc(100% - 32px));
+  width: min(1320px, calc(100% - 48px));
   margin: 0 auto;
   padding: 0 0 28px;
 }
@@ -17,7 +17,7 @@
 }
 
 .home-hero h1 {
-  max-width: 18ch;
+  max-width: 22ch;
   margin: 0;
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
@@ -29,13 +29,25 @@
   overflow-wrap: anywhere;
 }
 
+.home-hero .home-lede {
+  max-width: 28ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
 .home-hero .la-btn {
   flex: 0 0 auto;
 }
 
 @media (max-width: 800px) {
   .home-shell {
-    width: min(640px, calc(100% - 32px));
+    width: min(640px, calc(100% - 48px));
     padding-top: 8px;
   }
 
@@ -48,15 +60,24 @@
     max-width: none;
     font-size: clamp(2.25rem, 9vw, 3.5rem);
   }
+
+  .home-hero .home-lede {
+    max-width: none;
+    font-size: clamp(1.05rem, 3.2vw, 1.35rem);
+  }
 }
 
 @media (max-width: 430px) {
   .home-shell {
-    width: min(100% - 24px, 640px);
+    width: min(640px, calc(100% - 40px));
   }
 
   .home-hero h1 {
     font-size: clamp(2.1rem, 10vw, 2.85rem);
+  }
+
+  .home-hero .home-lede {
+    font-size: clamp(1rem, 4vw, 1.2rem);
   }
 }
 

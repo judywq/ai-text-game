@@ -11,7 +11,8 @@ function startStory() {
 <template>
   <main class="home-shell">
     <section class="home-hero">
-      <h1>Every choice writes the next page. Pick a spark and make this chapter yours.</h1>
+      <h1>An AI-driven Interactive narrative game.</h1>
+      <p class="home-lede">Your choice writes the next page.</p>
       <button type="button" class="la-btn" @click="startStory">Begin a story</button>
     </section>
   </main>
