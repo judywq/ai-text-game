@@ -422,10 +422,7 @@ def format_decision_option(decision_option: DecisionOption) -> str:
 
 
 def format_progress_with_decisions(state: dict) -> str:
-    """Format story progress with decisions for prompt context.
-
-    Uses summaries if available, otherwise falls back to full content.
-    """
+    """Format story progress with decisions for prompt context."""
     story_progress = state["story_progress"]
     if len(story_progress) <= 0:
         return ""
@@ -433,15 +430,7 @@ def format_progress_with_decisions(state: dict) -> str:
     decisions = state["chosen_decisions"]
     formatted_progress = ""
     for i, progress in enumerate(story_progress):
-        # Use summary if available, otherwise use full content
-        if progress.get("summary"):
-            text = progress["summary"]
-        else:
-            text = progress["content"]
-            logger.info(
-                "Using full content for progress entry %s (summary not available)",
-                i,
-            )
+        text = progress["content"]
 
         formatted_progress += f"{text}\n"
 

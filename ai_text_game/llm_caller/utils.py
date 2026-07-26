@@ -13,6 +13,7 @@ from django.core.files.storage import default_storage
 from django.http import HttpResponse
 from django.utils import timezone
 from google import genai
+from google.genai import types
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import AIMessage
 from langchain_deepseek import ChatDeepSeek
@@ -171,37 +172,72 @@ def generate_excel_response(rows, filename):
     return response
 
 
+def _format_character_block(characters: list[dict] | None) -> str:
+    """Build a compact character reference block for the image prompt."""
+    if not characters:
+        return ""
+
+    lines = []
+    for character in characters:
+        name = (character.get("character_name") or "").strip()
+        description = (character.get("character_description") or "").strip()
+        if not name and not description:
+            continue
+        if name and description:
+            lines.append(f"- {name}: {description}")
+        else:
+            lines.append(f"- {name or description}")
+
+    if not lines:
+        return ""
+
+    return (
+        "\n\nCHARACTERS (keep appearances consistent with the reference images):\n"
+        + "\n".join(lines)
+    )
+
+
 def generate_story_image_prompt(
     story_text: str,
     *,
     has_reference_images: bool = False,
+    characters: list[dict] | None = None,
 ) -> str:
     """Generate image prompt based on story content.
 
     Args:
         story_text: The story segment text
         has_reference_images: Whether reference images are provided
+        characters: Optional list of character dicts (name/description) to
+            describe who appears in the story, reinforcing the reference images
 
     Returns:
         Formatted prompt for image generation
     """
+    character_block = _format_character_block(characters)
+    layout = (
+        "Create a 4-panel storyboard illustration arranged in a 2x2 grid "
+        "(2 columns, 2 rows). Each panel captures a key moment from the scene "
+        "in sequence, reading left-to-right, top-to-bottom. "
+    )
     if has_reference_images:
         return (
-            "Create a NEW illustration for this story scene. Use the reference "
-            "images provided to maintain CONSISTENT character appearances (same "
-            "faces, colors, body types) and the same art style. However, create a "
-            "DIFFERENT scene showing the NEW story events described below. Do not "
-            "just copy the reference images. The characters should be doing DIFFERENT "
-            "actions in a DIFFERENT setting based on the new story text."
-            # "Style: Children's storybook illustration, colorful, engaging for ages 8-9. "
-            "Do NOT include any text, options, or choices in the image."
-            f"\n\nNEW STORY SCENE TO ILLUSTRATE:\n{story_text}"
+            f"{layout}"
+            "Use the reference images provided to maintain CONSISTENT character "
+            "appearances (same faces, colors, body types) and the same art style. "
+            "The style must be an illustration, NOT a realistic or photographic image, "
+            "and NOT realistic human faces. "
+            "Do NOT include any text, options, or choices in the image unless the text is part of the environment in the picture."
+            f"{character_block}"
+            f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
         )
     return (
-        # "Create a children's storybook illustration for this story scene. Style: "
-        # "Colorful, engaging, appropriate for ages 8-9, warm and inviting."
+        f"{layout}"
+        "The style must be an illustration, NOT a realistic or photographic image, "
+        "and NOT realistic human faces. "
         "Show the characters and setting clearly. Do NOT include any text, options, or choices "
         "in the image."
+        f"{character_block}"
         f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
     )
 
@@ -276,6 +312,21 @@ def _pil_image_to_upload_file(
     return (name, buffer, "image/png")
 
 
+def _aspect_ratio_to_openai_size(aspect_ratio: str | None) -> str:
+    """Map an aspect ratio like '3:4' to the nearest supported gpt-image size."""
+    if not aspect_ratio or ":" not in aspect_ratio:
+        return "1024x1024"
+    try:
+        width, height = (int(part) for part in aspect_ratio.split(":", 1))
+    except ValueError:
+        return "1024x1024"
+    if height > width:
+        return "1024x1536"  # portrait
+    if width > height:
+        return "1536x1024"  # landscape
+    return "1024x1024"  # square
+
+
 def _openai_image_response_to_bytes(response) -> bytes | None:
     """Extract image bytes from an OpenAI ImagesResponse."""
     if not response.data:
@@ -304,6 +355,7 @@ def generate_image(  # noqa: PLR0913
     progress_id: int | None = None,
     character_id: str | None = None,
     reference_image_urls: list[str] | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate an image using the configured provider and save to media storage."""
     if llm_type == "gemini":
@@ -316,6 +368,7 @@ def generate_image(  # noqa: PLR0913
             reference_image_urls=reference_image_urls,
             api_key=api_key,
             model_name=model_name,
+            aspect_ratio=aspect_ratio,
         )
     if llm_type == "openai":
         return generate_image_with_openai(
@@ -327,6 +380,7 @@ def generate_image(  # noqa: PLR0913
             reference_image_urls=reference_image_urls,
             api_key=api_key,
             model_name=model_name,
+            aspect_ratio=aspect_ratio,
         )
 
     logger.warning("Unsupported image model type: %s", llm_type)
@@ -360,6 +414,7 @@ def generate_character_image(
         f"Role: {character.get('role')}. "
         f"Description: {character.get('character_description')}. "
         # f"Style: Colorful, engaging, appropriate for ages 8-9. "
+        f"The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
         f"Show the character clearly with consistent features. "
         f"Plain or simple background. Do NOT include any text."
     )
@@ -383,6 +438,7 @@ def generate_image_with_openai(  # noqa: PLR0913
     reference_image_urls: list[str] | None = None,
     api_key: str | None = None,
     model_name: str | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate image using OpenAI and save to media folder."""
     try:
@@ -393,6 +449,7 @@ def generate_image_with_openai(  # noqa: PLR0913
 
         client = OpenAI(api_key=api_key)
         reference_images = _load_reference_images(reference_image_urls)
+        size = _aspect_ratio_to_openai_size(aspect_ratio)
 
         if reference_images:
             upload_files = [
@@ -403,12 +460,13 @@ def generate_image_with_openai(  # noqa: PLR0913
                 model=model_name,
                 image=upload_files if len(upload_files) > 1 else upload_files[0],
                 prompt=prompt,
+                size=size,
             )
         else:
             response = client.images.generate(
                 model=model_name,
                 prompt=prompt,
-                size="1024x1024",
+                size=size,
                 quality="medium",
             )
 
@@ -440,6 +498,7 @@ def generate_image_with_gemini(  # noqa: PLR0913
     reference_image_urls: list[str] | None = None,
     api_key: str | None = None,
     model_name: str | None = None,
+    aspect_ratio: str | None = None,
 ) -> str:
     """Generate image using Gemini and save to media folder.
 
@@ -468,9 +527,16 @@ def generate_image_with_gemini(  # noqa: PLR0913
         )
         contents.append(prompt)
 
+        config = None
+        if aspect_ratio:
+            config = types.GenerateContentConfig(
+                image_config=types.ImageConfig(aspect_ratio=aspect_ratio),
+            )
+
         response = client.models.generate_content(
             model=model_name,
             contents=contents,
+            config=config,
         )
 
         for part in response.candidates[0].content.parts:

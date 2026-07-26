@@ -9,6 +9,15 @@ The story doesn't have to end well and bad consequences and endings are allowed.
 The story should be structured like this example:
 {{
 "story_background": "", // a background of the story
+"characters": [
+    {{
+    "character_id": "", // a unique identifier for the character (e.g. C1)
+    "character_name": "", // a name for the character
+    "character_gender": "", // female, male, no gender, others
+    "character_description": "", // a description of appearance and personality traits
+    "role": "protagonist | helper | obstacle | collective"
+    }}
+],
 "milestones": [
     {{
     "milestone_id": "M1", // a unique identifier for the milestone
@@ -45,4 +54,5 @@ Requirements:
   - 3 options in each decision point
   - 2~3 possible endings
 - The story should be engaging and have multiple meaningful choice points that affect the story's direction.
+- Include the main recurring characters with distinct, concrete visual descriptions (appearance, clothing, colors).
 - Format the output as a valid JSON object matching the example structure. DO NOT RETURN ANYTHING ELSE.
