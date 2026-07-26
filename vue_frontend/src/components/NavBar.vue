@@ -19,6 +19,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const username = computed(() => authStore.user?.username || '')
+const isAdmin = computed(() => !!authStore.user?.is_staff)
 const logout = () => {
   authStore.logout(router)
 }
@@ -49,7 +50,8 @@ const isSheetOpen = ref(false)
         <span>{{ item.label }}</span>
       </router-link>
       <a
-        href="/admin"
+        v-if="isAdmin"
+        href="/admin/"
         target="_blank"
         class="text-muted-foreground transition-colors hover:text-foreground"
       >
@@ -82,7 +84,8 @@ const isSheetOpen = ref(false)
             <span>{{ item.label }}</span>
           </router-link>
           <a
-            href="/admin"
+            v-if="isAdmin"
+            href="/admin/"
             target="_blank"
             class="text-muted-foreground transition-colors hover:text-foreground"
           >

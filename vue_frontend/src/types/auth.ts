@@ -9,6 +9,7 @@ export interface User {
   must_change_password: boolean;
   /** Present after backend supports it; may be missing in older cached auth state. */
   native_language?: NativeLanguageCode | null;
+  is_staff?: boolean;
 }
 
 export interface AuthState {

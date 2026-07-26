@@ -59,8 +59,8 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
         if hasattr(UserModel, "last_name"):
             extra_fields.append("last_name")
         model = UserModel
-        fields = ("pk", *extra_fields, "must_change_password", "native_language")
-        read_only_fields = ("email",)
+        fields = ("pk", *extra_fields, "must_change_password", "native_language", "is_staff")
+        read_only_fields = ("email", "is_staff")
 
     def get_must_change_password(self, obj):
         # Return False if no profile exists (shouldn't happen)

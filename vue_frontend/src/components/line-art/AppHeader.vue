@@ -31,6 +31,7 @@ const isSheetOpen = ref(false)
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 const username = computed(() => authStore.user?.username || '')
+const isAdmin = computed(() => !!authStore.user?.is_staff)
 
 const navItems = [
   { label: 'Stories', name: 'game-scenarios' },
@@ -59,6 +60,7 @@ function isCurrent(name: string) {
       >
         {{ item.label }}
       </router-link>
+      <a v-if="isAdmin" href="/admin/">Admin</a>
     </nav>
 
     <div class="la-header-actions">
@@ -82,6 +84,7 @@ function isCurrent(name: string) {
             >
               {{ item.label }}
             </router-link>
+            <a v-if="isAdmin" href="/admin/" @click="isSheetOpen = false">Admin</a>
             <template v-if="isAuthenticated">
               <p class="m-0 text-sm font-bold text-[var(--ink-soft)]">{{ username }}</p>
               <router-link :to="{ name: 'change-password' }" @click="isSheetOpen = false">
