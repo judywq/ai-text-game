@@ -9,10 +9,13 @@ import { changePasswordFormSchema } from '@/lib/validations'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
 import BookFrame from '@/components/line-art/BookFrame.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const isSubmitting = ref(false)
 const generalError = ref<string | null>(null)
 const success = ref(false)
+const showOldPassword = ref(false)
+const showNewPassword = ref(false)
 const { toast } = useToast()
 const authStore = useAuthStore()
 const router = useRouter()
@@ -69,9 +72,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
               <FormItem class="auth-field">
                 <label>Current password</label>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showOldPassword"
                     placeholder="Current password"
                     :disabled="isSubmitting || success"
                   />
@@ -83,9 +86,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
               <FormItem class="auth-field">
                 <label>New password</label>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showNewPassword"
                     placeholder="New password"
                     :disabled="isSubmitting || success"
                   />
@@ -97,9 +100,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
               <FormItem class="auth-field">
                 <label>Confirm new password</label>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showNewPassword"
                     placeholder="Confirm new password"
                     :disabled="isSubmitting || success"
                   />

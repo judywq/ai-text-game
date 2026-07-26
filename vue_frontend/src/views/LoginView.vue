@@ -8,6 +8,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { loginFormSchema } from '@/lib/validations'
 import BookFrame from '@/components/line-art/BookFrame.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const authStore = useAuthStore()
 const { loading } = storeToRefs(authStore)
@@ -20,6 +21,7 @@ const form = useForm({
 })
 
 const generalError = ref<string | null>(null)
+const showPassword = ref(false)
 
 const onSubmit = form.handleSubmit(async (values) => {
   try {
@@ -96,10 +98,10 @@ const onSubmit = form.handleSubmit(async (values) => {
                   </router-link>
                 </div>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     id="password"
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showPassword"
                     placeholder="Enter your password"
                     :disabled="loading"
                   />

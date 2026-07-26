@@ -7,12 +7,14 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { resetPasswordFormSchema } from '@/lib/validations'
 import BookFrame from '@/components/line-art/BookFrame.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const router = useRouter()
 const route = useRoute()
 const isSubmitting = ref(false)
 const generalError = ref<string | null>(null)
 const success = ref(false)
+const showPassword = ref(false)
 
 const form = useForm({
   validationSchema: toTypedSchema(resetPasswordFormSchema),
@@ -60,9 +62,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
             <FormItem class="auth-field">
               <label>New password</label>
               <FormControl>
-                <input
+                <PasswordInput
                   v-bind="componentField"
-                  type="password"
+                  v-model:visible="showPassword"
                   placeholder="Enter your new password"
                   :disabled="isSubmitting || success"
                 />
@@ -74,9 +76,9 @@ const handleSubmit = form.handleSubmit(async (values) => {
             <FormItem class="auth-field">
               <label>Confirm password</label>
               <FormControl>
-                <input
+                <PasswordInput
                   v-bind="componentField"
-                  type="password"
+                  v-model:visible="showPassword"
                   placeholder="Confirm your new password"
                   :disabled="isSubmitting || success"
                 />

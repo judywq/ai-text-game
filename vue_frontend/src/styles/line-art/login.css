@@ -429,6 +429,47 @@ input[type="password"]:focus {
   min-height: 38px;
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.password-field input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  background: transparent;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-toggle:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.password-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.login-form--dense .password-toggle {
+  min-width: 38px;
+  min-height: 38px;
+}
+
 .remember-me {
   display: inline-flex;
   align-items: center;
@@ -589,6 +630,14 @@ html[data-theme='dark'] input[type="text"],
 html[data-theme='dark'] input[type="email"],
 html[data-theme='dark'] input[type="password"] {
   background: rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme='dark'] .password-toggle {
+  color: var(--ink-soft);
+}
+
+html[data-theme='dark'] .password-toggle:hover:not(:disabled) {
+  color: var(--ink);
 }
 
 /* prefers-color-scheme dark handled in tokens.css */

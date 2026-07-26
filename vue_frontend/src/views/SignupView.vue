@@ -8,11 +8,13 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { signupFormSchema } from '@/lib/validations'
 import BookFrame from '@/components/line-art/BookFrame.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const authStore = useAuthStore()
 const { loading } = storeToRefs(authStore)
 const router = useRouter()
 const generalError = ref<string | null>(null)
+const showPassword = ref(false)
 
 const form = useForm({
   validationSchema: toTypedSchema(signupFormSchema),
@@ -98,10 +100,10 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormItem class="field">
                 <label for="signup-password">Password</label>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     id="signup-password"
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showPassword"
                     placeholder="Create a password"
                     :disabled="loading"
                   />
@@ -114,10 +116,10 @@ const onSubmit = form.handleSubmit(async (values) => {
               <FormItem class="field">
                 <label for="signup-confirm">Confirm password</label>
                 <FormControl>
-                  <input
+                  <PasswordInput
                     id="signup-confirm"
                     v-bind="componentField"
-                    type="password"
+                    v-model:visible="showPassword"
                     placeholder="Confirm your password"
                     :disabled="loading"
                   />
