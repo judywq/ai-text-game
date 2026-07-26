@@ -936,7 +936,6 @@ function scrollToBottom() {
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px">
             <div>
               <p class="reader-kicker">LOOKUPS</p>
-              <h2>Margin notes</h2>
             </div>
             <button
               type="button"
@@ -950,7 +949,6 @@ function scrollToBottom() {
             </button>
           </div>
           <p class="notes-instruction">Select text in the story to look up a word or phrase.</p>
-          <p class="notes-language">Vocabulary</p>
           <ul class="note-list">
             <li v-for="item in lookupHistory" :key="item.id">
               <button
@@ -978,12 +976,12 @@ function scrollToBottom() {
           <button
             v-if="isGameEnded"
             type="button"
-            class="review-link"
+            class="la-btn review-vocab-btn"
             :disabled="isLoading || !canOpenVocabularyReview"
             :title="!canOpenVocabularyReview ? 'Look up at least one word during the game to use review.' : undefined"
             @click="router.push({ name: 'game-quiz', params: { id: route.params.id } })"
           >
-            Review vocabulary <span aria-hidden="true">→</span>
+            Review vocabulary
           </button>
         </div>
       </aside>
