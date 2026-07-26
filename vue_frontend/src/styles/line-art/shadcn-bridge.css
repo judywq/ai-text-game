@@ -41,3 +41,13 @@ html[data-theme='dark'] .setting-field button[role='combobox'],
 html[data-theme='dark'] .setting-field button {
   background: rgba(255, 255, 255, 0.035) !important;
 }
+
+/* Combobox search inside portaled popover */
+[data-radix-popper-content-wrapper] input[role='combobox'] {
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+
+[data-radix-popper-content-wrapper] input[role='combobox']::placeholder {
+  color: var(--ink-soft) !important;
+}

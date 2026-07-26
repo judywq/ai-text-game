@@ -796,4 +796,18 @@ a:focus-visible {
   }
 }
 
+html[data-theme='dark'] .setting-field input,
+html[data-theme='dark'] .setting-field select,
+html[data-theme='dark'] .setting-field textarea {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme='dark'] .level-option {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+html[data-theme='dark'] .level-choice input:checked + .level-option {
+  background: var(--paper);
+}
+
 /* prefers-color-scheme dark handled in tokens.css */
