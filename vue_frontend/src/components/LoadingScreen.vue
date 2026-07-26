@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 flex items-center justify-center bg-background">
+  <div class="fixed inset-0 flex items-center justify-center">
     <div class="max-w-4xl w-full px-8 flex flex-col items-center space-y-8">
       <!-- Image and Text Display -->
       <div class="relative w-full aspect-video rounded-lg overflow-hidden shadow-2xl">
