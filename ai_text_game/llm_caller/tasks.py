@@ -113,7 +113,17 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
             skeleton.status = "COMPLETED"
             skeleton.save()
 
-            # Generate character base images
+            # Notify clients immediately so story text can start before
+            # character base images finish (those can take a minute+).
+            async_to_sync(channel_layer.group_send)(
+                f"game_{story_id}",
+                {
+                    "type": "skeleton_generation_completed",
+                    "skeleton": json.dumps(skeleton_data),
+                },
+            )
+
+            # Generate character base images after story start is unblocked
             try:
                 image_config = LLMConfig.get_active_config_with_demo_fallback(
                     purpose="image_generation",
@@ -140,15 +150,6 @@ def generate_story_skeleton(self, story_id: int, initial_state: dict) -> None:  
                 logger.info("Generated %d character images", len(character_images))
             except Exception:
                 logger.exception("Failed to generate character images")
-
-            # Send completion notification
-            async_to_sync(channel_layer.group_send)(
-                f"game_{story_id}",
-                {
-                    "type": "skeleton_generation_completed",
-                    "skeleton": json.dumps(skeleton_data),
-                },
-            )
         else:
             logger.warning(
                 "No skeleton data received, skipping completion notification",

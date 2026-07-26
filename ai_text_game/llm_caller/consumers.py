@@ -451,103 +451,90 @@ class GameConsumer(AsyncWebsocketConsumer):
         return llms
 
     async def save_story_progress(self, story, state):
-        """Save story progress to database"""
-        if story_text := state.get("story_text"):
-            # Create the progress entry
-            progress = await database_sync_to_async(StoryProgress.objects.create)(
-                story=story,
-                content=story_text,
-                decision_point_id=state.get("current_decision_point"),
-            )
+        """Persist story text/options/status. Returns progress for image generation."""
+        story_text = state.get("story_text")
+        if not story_text:
+            return None
 
-            options = self.get_options(state)
-            if options:
-                # Create option objects
-                for option in options:
-                    await database_sync_to_async(StoryOption.objects.create)(
-                        progress=progress,
-                        option_id=option["option_id"],
-                        option_name=option["option_name"],
-                    )
+        progress = await database_sync_to_async(StoryProgress.objects.create)(
+            story=story,
+            content=story_text,
+            decision_point_id=state.get("current_decision_point"),
+        )
 
-            story.status = state["status"]
-
-            # Get character base images for reference
-            character_images = await database_sync_to_async(
-                lambda: story.skeleton.character_base_images
-                if hasattr(story, "skeleton")
-                else {},
-            )()
-            reference_images = (
-                list(character_images.values()) if character_images else []
-            )
-
-            # Get character descriptions to reinforce the reference images
-            characters = await database_sync_to_async(
-                lambda: story.skeleton.raw_data.get("characters", [])
-                if hasattr(story, "skeleton")
-                else [],
-            )()
-
-            # # Add last progress image (uncomment to use the n-1 image as reference)
-            # last_image = await database_sync_to_async(
-            #     lambda: StoryProgress.objects.filter(story=story, image_url__isnull=False)
-            #     .exclude(id=progress.id)
-            #     .order_by("-created_at")
-            #     .values_list("image_url", flat=True)
-            #     .first(),
-            # )()
-            # if last_image:
-            #     reference_images.append(last_image)
-
-            # Get image generation config
-            image_config = await database_sync_to_async(
-                LLMConfig.get_active_config_with_demo_fallback,
-            )(purpose="image_generation", is_demo=False)
-
-            image_model_name = await database_sync_to_async(
-                lambda: image_config.model.name,
-            )()
-            image_llm_type = await database_sync_to_async(
-                lambda: image_config.model.llm_type,
-            )()
-            image_api_key = await database_sync_to_async(
-                lambda: APIKey.get_available_key(image_model_name),
-            )()
-
-            # Generate image for this segment
-            image_prompt = await database_sync_to_async(generate_story_image_prompt)(
-                story_text=story_text,
-                has_reference_images=bool(reference_images),
-                characters=characters,
-            )
-            image_url = await database_sync_to_async(generate_image)(
-                llm_type=image_llm_type,
-                prompt=image_prompt,
-                story_id=story.id,
-                image_type="progress",
-                progress_id=progress.id,
-                reference_image_urls=reference_images if reference_images else None,
-                api_key=image_api_key.key if image_api_key else None,
-                model_name=image_model_name,
-                aspect_ratio="3:4",
-            )
-
-            if image_url:
-                progress.image_url = image_url
-                await database_sync_to_async(progress.save)()
-
-                # Send image_ready message to frontend
-                await self.send(
-                    text_data=json.dumps(
-                        {
-                            "type": "image_ready",
-                            "progress_id": progress.id,
-                            "image_url": image_url,
-                        }
-                    ),
+        options = self.get_options(state)
+        if options:
+            for option in options:
+                await database_sync_to_async(StoryOption.objects.create)(
+                    progress=progress,
+                    option_id=option["option_id"],
+                    option_name=option["option_name"],
                 )
-            await database_sync_to_async(story.save)()
+
+        story.status = state["status"]
+        await database_sync_to_async(story.save)()
+        return progress
+
+    async def generate_progress_image(self, story, progress, story_text: str):
+        """Generate and broadcast the illustration for a saved progress entry."""
+        character_images = await database_sync_to_async(
+            lambda: story.skeleton.character_base_images
+            if hasattr(story, "skeleton")
+            else {},
+        )()
+        reference_images = list(character_images.values()) if character_images else []
+
+        characters = await database_sync_to_async(
+            lambda: story.skeleton.raw_data.get("characters", [])
+            if hasattr(story, "skeleton")
+            else [],
+        )()
+
+        image_config = await database_sync_to_async(
+            LLMConfig.get_active_config_with_demo_fallback,
+        )(purpose="image_generation", is_demo=False)
+
+        image_model_name = await database_sync_to_async(
+            lambda: image_config.model.name,
+        )()
+        image_llm_type = await database_sync_to_async(
+            lambda: image_config.model.llm_type,
+        )()
+        image_api_key = await database_sync_to_async(
+            lambda: APIKey.get_available_key(image_model_name),
+        )()
+
+        image_prompt = await database_sync_to_async(generate_story_image_prompt)(
+            story_text=story_text,
+            has_reference_images=bool(reference_images),
+            characters=characters,
+        )
+        image_url = await database_sync_to_async(generate_image)(
+            llm_type=image_llm_type,
+            prompt=image_prompt,
+            story_id=story.id,
+            image_type="progress",
+            progress_id=progress.id,
+            reference_image_urls=reference_images if reference_images else None,
+            api_key=image_api_key.key if image_api_key else None,
+            model_name=image_model_name,
+            aspect_ratio="3:4",
+        )
+
+        if not image_url:
+            return
+
+        progress.image_url = image_url
+        await database_sync_to_async(progress.save)()
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                "type": "image_ready",
+                "progress_id": progress.id,
+                "image_url": image_url,
+            },
+        )
 
     def get_options(self, state):
         options = []
@@ -768,11 +755,17 @@ class GameConsumer(AsyncWebsocketConsumer):
                 msg = "Failed to generate story content, please try again later"
                 raise ValueError(msg)  # noqa: TRY301
 
-            # Save progress
-            await self.save_story_progress(story, new_state)
-
-            # Send response to client
+            # Persist text/options first so clients can start reading before the image
+            progress = await self.save_story_progress(story, new_state)
             await self.send_decision_point(new_state)
+
+            if progress is not None:
+                await self.generate_progress_image(
+                    story,
+                    progress,
+                    new_state.get("story_text", ""),
+                )
+
             logger.info("Completed update_story_progress for story %s", story.id)
 
         except Exception as e:
@@ -802,6 +795,21 @@ class GameConsumer(AsyncWebsocketConsumer):
             latest_progress.chosen_option_id = ""
             latest_progress.chosen_option_text = ""
             latest_progress.save()
+
+    async def image_ready(self, event):
+        """Forward image_ready group events to this socket."""
+        try:
+            await self.send(
+                text_data=json.dumps(
+                    {
+                        "type": "image_ready",
+                        "progress_id": event["progress_id"],
+                        "image_url": event["image_url"],
+                    },
+                ),
+            )
+        except RuntimeError:
+            logger.exception("Cannot send image_ready, connection closed")
 
     async def skeleton_generation_progress(self, event):
         """Handle skeleton generation progress."""

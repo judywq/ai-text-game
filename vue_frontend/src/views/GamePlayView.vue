@@ -119,6 +119,10 @@ const STREAM_REVEAL_CHUNK_SIZE = Math.max(
   1,
   Math.round((STREAM_REVEAL_CHARS_PER_SECOND * STREAM_REVEAL_INTERVAL_MS) / 1000)
 )
+const IMAGE_POLL_INTERVAL_MS = 2000
+const IMAGE_POLL_TIMEOUT_MS = 120000
+let imagePollTimer: number | null = null
+let imagePollDeadline = 0
 let streamRenderTimer: number | null = null
 
 // Track which entries are ready to display (after refetch completes)
@@ -276,6 +280,82 @@ function syncVisibleStreamingContent() {
   activeEntry.updated_at = new Date().toISOString()
 }
 
+function stopPendingImagePoll() {
+  if (imagePollTimer !== null) {
+    window.clearInterval(imagePollTimer)
+    imagePollTimer = null
+  }
+  imagePollDeadline = 0
+}
+
+function applyImageUrlToEntry(progressId: number, imageUrl: string) {
+  const byId = progressEntries.value.find((entry) => entry.id === progressId)
+  if (byId) {
+    byId.image_url = imageUrl
+    stopPendingImagePoll()
+    return
+  }
+
+  const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+  if (latestEntry) {
+    latestEntry.image_url = imageUrl
+    latestEntry.id = progressId
+    stopPendingImagePoll()
+  }
+}
+
+async function pollMissingImageOnce() {
+  if (!story.value) {
+    stopPendingImagePoll()
+    return
+  }
+
+  const latestIndex = progressEntries.value.length - 1
+  const latestEntry = progressEntries.value[latestIndex]
+  if (!latestEntry || latestEntry.image_url || latestEntry.content === 'LOADING') {
+    stopPendingImagePoll()
+    return
+  }
+
+  if (Date.now() >= imagePollDeadline) {
+    stopPendingImagePoll()
+    return
+  }
+
+  try {
+    const serverEntries = await GameService.getStoryProgress(story.value.id)
+    const serverEntry = serverEntries[latestIndex]
+    if (serverEntry?.image_url) {
+      progressEntries.value[latestIndex] = {
+        ...latestEntry,
+        ...serverEntry,
+      }
+      stopPendingImagePoll()
+    }
+  } catch (error) {
+    console.error('Failed to poll for story image', error)
+  }
+}
+
+function startPendingImagePoll() {
+  const latestEntry = progressEntries.value[progressEntries.value.length - 1]
+  if (
+    !latestEntry ||
+    latestEntry.image_url ||
+    !latestEntry.content ||
+    latestEntry.content === 'LOADING'
+  ) {
+    return
+  }
+
+  stopPendingImagePoll()
+  imagePollDeadline = Date.now() + IMAGE_POLL_TIMEOUT_MS
+  imagePollTimer = window.setInterval(() => {
+    void pollMissingImageOnce()
+  }, IMAGE_POLL_INTERVAL_MS)
+  void pollMissingImageOnce()
+}
+
 async function syncCompletedStoryEntry(entryIndex: number) {
   if (!story.value || !progressEntries.value[entryIndex]) {
     return
@@ -293,6 +373,7 @@ async function syncCompletedStoryEntry(entryIndex: number) {
   } finally {
     isContentReady.value[entryIndex] = true
     scrollToBottom()
+    startPendingImagePoll()
   }
 }
 
@@ -573,6 +654,7 @@ async function fetchStoryAndProgress() {
     isContentReady.value[index] = true
   })
   goToLatestChapter()
+  startPendingImagePoll()
 }
 
 const loadStory = async () => {
@@ -729,12 +811,7 @@ onMounted(async () => {
 
     // Add handler for image_ready message
     onImageReady.value = (progressId: number, imageUrl: string) => {
-      // Update the latest progress entry (images arrive in order)
-      const latestEntry = progressEntries.value[progressEntries.value.length - 1]
-      if (latestEntry) {
-        latestEntry.image_url = imageUrl
-        latestEntry.id = progressId // Update to real database ID
-      }
+      applyImageUrlToEntry(progressId, imageUrl)
     }
 
     // Load initial story data and establish WebSocket connection
@@ -756,6 +833,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopStreamRenderTimer()
+  stopPendingImagePoll()
   notesMobileMql?.removeEventListener('change', onNotesViewportChange)
   notesMobileMql = null
 })
