@@ -215,24 +215,26 @@ def generate_story_image_prompt(
         Formatted prompt for image generation
     """
     character_block = _format_character_block(characters)
+    layout = (
+        "Create a 4-panel storyboard illustration arranged in a 2x2 grid "
+        "(2 columns, 2 rows). Each panel captures a key moment from the scene "
+        "in sequence, reading left-to-right, top-to-bottom. "
+    )
     if has_reference_images:
         return (
-            "Create a NEW illustration for this story scene. Use the reference "
-            "images provided to maintain CONSISTENT character appearances (same "
-            "faces, colors, body types) and the same art style. However, create a "
-            "DIFFERENT scene showing the NEW story events described below. Do not "
-            "just copy the reference images. The characters should be doing DIFFERENT "
-            "actions in a DIFFERENT setting based on the new story text."
-            # "Style: Children's storybook illustration, colorful, engaging for ages 8-9. "
-            "The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
-            "Do NOT include any text, options, or choices in the image."
+            f"{layout}"
+            "Use the reference images provided to maintain CONSISTENT character "
+            "appearances (same faces, colors, body types) and the same art style. "
+            "The style must be an illustration, NOT a realistic or photographic image, "
+            "and NOT realistic human faces. "
+            "Do NOT include any text, options, or choices in the image unless the text is part of the environment in the picture."
             f"{character_block}"
-            f"\n\nNEW STORY SCENE TO ILLUSTRATE:\n{story_text}"
+            f"\n\nSTORY SCENE TO ILLUSTRATE:\n{story_text}"
         )
     return (
-        # "Create a children's storybook illustration for this story scene. Style: "
-        # "Colorful, engaging, appropriate for ages 8-9, warm and inviting."
-        "The style must be an illustration, NOT a realistic or photographic image, and NOT realistic human faces. "
+        f"{layout}"
+        "The style must be an illustration, NOT a realistic or photographic image, "
+        "and NOT realistic human faces. "
         "Show the characters and setting clearly. Do NOT include any text, options, or choices "
         "in the image."
         f"{character_block}"
