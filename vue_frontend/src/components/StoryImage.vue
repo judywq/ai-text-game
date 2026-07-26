@@ -2,26 +2,26 @@
   <div class="story-image-container relative">
     <!-- Loading skeleton while image is loading -->
     <div v-if="isLoading && !hasError" class="image-skeleton">
-      <div class="animate-pulse bg-muted rounded-lg w-full h-64 flex items-center justify-center">
+      <div class="animate-pulse bg-muted rounded-lg aspect-[3/4] w-full max-h-full flex items-center justify-center">
         <span class="text-muted-foreground">Loading image...</span>
       </div>
     </div>
 
-    <!-- Actual image - always in DOM so it can load, but hidden while loading -->
+    <!-- Actual image - always in DOM so it can load, but out of layout while loading -->
     <img
       v-if="imageUrl && !hasError"
       :src="imageUrl"
       :alt="alt"
       :class="[
         'story-image rounded-lg w-full transition-opacity duration-600',
-        isLoading ? 'opacity-0 absolute top-0 left-0' : 'opacity-100'
+        isLoading ? 'hidden' : 'opacity-100'
       ]"
       @load="onImageLoad"
       @error="onImageError"
     />
 
     <!-- Error state -->
-    <div v-if="hasError" class="image-error bg-muted rounded-lg w-full h-64 flex items-center justify-center">
+    <div v-if="hasError" class="image-error bg-muted rounded-lg aspect-[3/4] w-full max-h-full flex items-center justify-center">
       <span class="text-destructive">Failed to load image</span>
     </div>
   </div>
