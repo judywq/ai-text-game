@@ -9,6 +9,11 @@ const routes = [
     component: () => import('@/views/MockupView.vue'),
   },
   {
+    path: '/debug/story-fade',
+    name: 'debug-story-fade',
+    component: () => import('@/views/debug/StoryFadeDebugView.vue'),
+  },
+  {
     path: '/',
     component: () => import('@/layouts/BaseLayout.vue'),
     children: [
