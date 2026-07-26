@@ -1,15 +1,29 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { GameService } from '@/services/gameService'
+import { ExplanationService } from '@/services/explanationService'
 import { useRouter } from 'vue-router'
 import type { GameStory } from '@/types/game'
+import { useToast } from '@/components/ui/toast/use-toast'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const LEDE_MAX = 160
 
 const router = useRouter()
+const { toast } = useToast()
 const data = ref<GameStory[]>([])
 const selectedId = ref<number | null>(null)
 const filter = ref<'all' | 'IN_PROGRESS' | 'COMPLETED' | 'ABANDONED'>('all')
+const emptyReviewOpen = ref(false)
+const pendingReviewStoryId = ref<number | null>(null)
+const isCheckingReview = ref(false)
 
 const filtered = computed(() => {
   if (filter.value === 'all') return data.value
@@ -77,8 +91,43 @@ function continueStory(story: GameStory) {
   router.push(`/game/${story.id}`)
 }
 
-function openVocabularyReview(story: GameStory) {
-  router.push({ name: 'game-quiz', params: { id: story.id } })
+async function openVocabularyReview(story: GameStory) {
+  if (isCheckingReview.value) return
+  isCheckingReview.value = true
+  try {
+    const history = await ExplanationService.getLookupHistory(story.id)
+    const hasCompletedLookups = history.some(
+      (e) => e.status === 'completed' && (e.explanation || '').trim().length > 0,
+    )
+    if (!hasCompletedLookups) {
+      pendingReviewStoryId.value = story.id
+      emptyReviewOpen.value = true
+      return
+    }
+    router.push({ name: 'game-quiz', params: { id: story.id } })
+  } catch (e: unknown) {
+    const err = e as { message?: string }
+    toast({
+      title: 'Error',
+      description: err.message || (e instanceof Error ? e.message : 'Failed to check vocabulary lookups'),
+      variant: 'destructive',
+    })
+  } finally {
+    isCheckingReview.value = false
+  }
+}
+
+function closeEmptyReviewDialog() {
+  emptyReviewOpen.value = false
+  pendingReviewStoryId.value = null
+}
+
+function openStoryFromEmptyReview() {
+  const id = pendingReviewStoryId.value
+  closeEmptyReviewDialog()
+  if (id != null) {
+    router.push({ name: 'game-play', params: { id } })
+  }
 }
 
 onMounted(loadData)
@@ -135,6 +184,7 @@ onMounted(loadData)
                 v-if="story.status === 'COMPLETED'"
                 type="button"
                 class="la-btn la-btn--secondary ledger-continue"
+                :disabled="isCheckingReview"
                 @click="openVocabularyReview(story)"
               >
                 Review vocabulary <span aria-hidden="true">→</span>
@@ -175,5 +225,27 @@ onMounted(loadData)
         </li>
       </ul>
     </section>
+
+    <Dialog
+      :open="emptyReviewOpen"
+      @update:open="(open) => (open ? (emptyReviewOpen = true) : closeEmptyReviewDialog())"
+    >
+      <DialogContent class="bg-[var(--paper)] text-[var(--ink)] border-[var(--line)]">
+        <DialogHeader>
+          <DialogTitle>No vocabulary to review</DialogTitle>
+          <DialogDescription>
+            You haven’t looked up any words in this story yet. Open the story to look some up?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" class="la-btn la-btn--secondary" @click="closeEmptyReviewDialog">
+            Cancel
+          </button>
+          <button type="button" class="la-btn" @click="openStoryFromEmptyReview">
+            Open story
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

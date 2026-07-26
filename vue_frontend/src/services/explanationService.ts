@@ -27,8 +27,8 @@ export class ExplanationService {
       )
       return response.data
     } catch (e: unknown) {
-      const err = e as { response?: { status?: number } }
-      if (err.response?.status === 404) return null
+      const err = e as { response?: { status?: number }; code?: string | number }
+      if (err.response?.status === 404 || Number(err.code) === 404) return null
       throw e
     }
   }
