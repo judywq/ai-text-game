@@ -5,9 +5,13 @@
 @media (max-width:430px) { .auth-shell { width:min(100% - 24px,640px); }.auth-brand { gap:9px; font-size:1.45rem; }.auth-brand-mark { width:34px; height:27px; }.auth-header > a:last-child { font-size:.78rem; }.auth-aside,.auth-content { padding-right:24px; padding-left:24px; }.auth-aside { min-height:165px; }.auth-content h1 { font-size:2.7rem; } }.auth-content .auth-submit { width:100%; }
 @media (prefers-reduced-motion:reduce) { *,*::before,*::after { transition-duration:.01ms!important; } } /* prefers-color-scheme dark handled in tokens.css */
 /* The secondary account flows use the same open-book construction as the main entry page. */
-.auth-sheet { isolation:isolate; overflow:visible; border:0; border-radius:54px 54px 42px 42px / 42px 42px 36px 36px; box-shadow:none; }
-
-
+.auth-sheet {
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
 
 /* Align leaf split with the book spine, then keep copy clear of the gutter */
 .auth-sheet {
@@ -32,12 +36,22 @@
   padding-left: clamp(48px, 7vw, 72px);
 }
 
-@media (max-width:700px) {
+/* Light centering under BaseLayout (change-password) — not full auth-shell */
+.auth-sheet-page {
+  width: min(1160px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 0 0 48px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+/* Stack with book-frame SVG cutover (800px), matching login/signup */
+@media (max-width: 800px) {
   .auth-sheet {
+    grid-template-columns: 1fr;
     width: 100%;
     min-height: 0;
-    border-width: 3px;
-    border-radius: 30px;
   }
 
   .auth-aside {
@@ -46,5 +60,9 @@
 
   .auth-content {
     padding-left: clamp(28px, 8vw, 60px);
+  }
+
+  .auth-sheet-page {
+    width: min(640px, calc(100% - 32px));
   }
 }

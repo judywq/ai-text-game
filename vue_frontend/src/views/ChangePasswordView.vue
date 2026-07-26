@@ -51,7 +51,7 @@ const handleSubmit = form.handleSubmit(async (values) => {
 </script>
 
 <template>
-  <div class="auth-shell" style="padding-top: 0; min-height: 0">
+  <div class="auth-sheet-page">
     <BookFrame variant="auth-sheet">
       <template #left>
         <aside class="auth-aside">
