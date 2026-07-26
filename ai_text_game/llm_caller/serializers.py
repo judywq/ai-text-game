@@ -73,7 +73,7 @@ class GameStorySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Create the story
         return GameStory.objects.create(
-            title=f"A {validated_data['genre']} Story",  # Use genre in title
+            title=f"A {validated_data.get('theme') or validated_data['genre']} Story",
             **validated_data,
         )
 
