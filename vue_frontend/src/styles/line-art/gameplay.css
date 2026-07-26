@@ -27,30 +27,30 @@ body {
 button, a { font: inherit; }
 a { color: inherit; }
 
-.reader-shell { min-height: 100dvh; }
-
-.reader-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  min-height: 74px;
-  border-bottom: 2px solid var(--line);
-  padding: 0 clamp(24px, 4.4vw, 70px);
-  background: var(--paper);
+.reader-shell {
+  --reader-chrome: 0px;
+  min-height: 0;
 }
 
-.reader-brand { display: inline-flex; align-items: center; gap: 12px; width: fit-content; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: clamp(1.55rem, 2.4vw, 2rem); font-weight: 700; letter-spacing: -0.055em; text-decoration: none; }
-
-.reader-nav { display: flex; align-items: center; gap: clamp(21px, 4vw, 48px); font-size: 0.9rem; font-weight: 800; }
-.reader-nav a { position: relative; text-decoration: none; }
-.reader-nav .is-current::after { position: absolute; right: 0; bottom: -11px; left: 0; height: 2px; content: ""; background: var(--blue); }
-.exit-link { justify-self: end; border: 1.5px solid var(--line); border-radius: 5px; padding: 10px 16px; color: var(--ink); font-size: 0.84rem; font-weight: 800; text-decoration: none; transition: color 150ms ease, background 150ms ease; }
-.exit-link:hover { color: var(--paper); background: var(--ink); }
+.exit-link {
+  border: 1.5px solid var(--line);
+  border-radius: 5px;
+  padding: 10px 16px;
+  color: var(--ink);
+  background: var(--paper);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 150ms ease, background 150ms ease;
+}
+.exit-link:hover:not(:disabled) { color: var(--paper); background: var(--ink); }
+.exit-link:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .reader-stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(286px, 0.24fr);
-  height: calc(100dvh - 74px);
+  height: calc(100dvh - var(--reader-chrome));
   min-height: 0;
 }
 
@@ -67,11 +67,27 @@ a { color: inherit; }
 }
 
 .reader-title-block {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
   align-self: stretch;
   width: 100%;
   padding: 0 clamp(8px, 1.5vw, 20px);
+}
+
+.reader-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-self: start;
+}
+
+.reader-title-copy {
+  grid-column: 2;
   text-align: center;
+  min-width: 0;
 }
 
 .reader-title-block .reader-kicker {
@@ -414,13 +430,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
 
 /* Stacked reader when the two-column panel gets too narrow with notes */
 @media (max-width: 1100px) {
-  .reader-header { grid-template-columns: 1fr auto; min-height: 67px; padding: 0 18px; }
-  .reader-nav { display: none; }
   .exit-link { padding: 8px 12px; font-size: 0.78rem; }
   .reader-stage {
     grid-template-columns: 1fr;
     height: auto;
-    min-height: calc(100dvh - 67px);
+    min-height: calc(100dvh - var(--reader-chrome));
   }
   .book-stage {
     height: auto;
@@ -458,7 +472,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
   }
   .notes-rail {
     position: fixed;
-    top: 67px;
+    top: var(--reader-chrome);
     right: 0;
     bottom: 0;
     z-index: 50;
@@ -499,7 +513,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-
 }
 
 @media (max-width: 450px) {
-  .reader-brand { gap: 8px; font-size: 1.42rem; }
   .scene-leaf { min-height: 200px; max-height: 280px; }
   .reader-title-block h1 { font-size: clamp(1.55rem, 8vw, 2.2rem); }
   .story-prose { font-size: 1.12rem; }

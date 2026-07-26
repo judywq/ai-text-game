@@ -11,7 +11,7 @@ import { CircleHelp } from 'lucide-vue-next'
 import StorySegment from '@/components/StorySegment.vue'
 import StoryImage from '@/components/StoryImage.vue'
 import StoryOptions from '@/components/StoryOptions.vue'
-import BrandMark from '@/components/line-art/BrandMark.vue'
+import ThemeToggle from '@/components/line-art/ThemeToggle.vue'
 import { marked } from 'marked'
 import {
   Dialog,
@@ -772,22 +772,6 @@ function scrollToBottom() {
 
 <template>
   <div class="reader-shell">
-    <header class="reader-header">
-      <BrandMark class="reader-brand" />
-      <nav class="reader-nav" aria-label="Primary">
-        <router-link :to="{ name: 'game-scenarios' }">Stories</router-link>
-        <router-link :to="{ name: 'history' }">My library</router-link>
-      </nav>
-      <button
-        type="button"
-        class="exit-link"
-        :disabled="isLoading"
-        @click="router.push('/game')"
-      >
-        Exit
-      </button>
-    </header>
-
     <div class="reader-stage" :class="{ 'notes-collapsed': notesCollapsed }">
       <button
         type="button"
@@ -798,8 +782,21 @@ function scrollToBottom() {
       />
       <div class="book-stage">
         <header class="reader-title-block">
-          <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
-          <h1>{{ story?.title || 'Reading…' }}</h1>
+          <div class="reader-title-actions">
+            <button
+              type="button"
+              class="exit-link"
+              :disabled="isLoading"
+              @click="router.push('/game')"
+            >
+              Exit
+            </button>
+            <ThemeToggle />
+          </div>
+          <div class="reader-title-copy">
+            <p class="reader-kicker">CHAPTER {{ chapterCount ? chapterIndex + 1 : '—' }}</p>
+            <h1>{{ story?.title || 'Reading…' }}</h1>
+          </div>
         </header>
 
         <section class="reader-panel">
