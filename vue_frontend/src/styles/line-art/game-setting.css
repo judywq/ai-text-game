@@ -400,7 +400,12 @@ h1 {
 .story-details small {
   color: var(--ink-soft);
   font-size: 0.77rem;
+  font-weight: 800;
 }
+
+.story-details small.is-active { color: var(--blue-deep); }
+.story-details small.is-done { color: #49825c; }
+.story-details small.is-muted { color: var(--ink-soft); }
 
 .story-arrow {
   color: var(--blue-deep);

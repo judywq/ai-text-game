@@ -240,6 +240,19 @@ function pad(n: number) {
   return String(n).padStart(2, '0')
 }
 
+function statusLabel(status: GameStory['status']) {
+  if (status === 'IN_PROGRESS' || status === 'INIT') return 'In progress'
+  if (status === 'COMPLETED') return 'Completed'
+  if (status === 'ABANDONED') return 'Abandoned'
+  return status
+}
+
+function statusClass(status: GameStory['status']) {
+  if (status === 'IN_PROGRESS' || status === 'INIT') return 'is-active'
+  if (status === 'COMPLETED') return 'is-done'
+  return 'is-muted'
+}
+
 function toggleShelf() {
   shelfCollapsed.value = !shelfCollapsed.value
 }
@@ -325,7 +338,7 @@ function closeShelf() {
                   <span class="story-index">{{ pad(idx + 1) }}</span>
                   <span class="story-details">
                     <strong>{{ story.title || 'Untitled' }}</strong>
-                    <small>{{ story.status }}</small>
+                    <small :class="statusClass(story.status)">{{ statusLabel(story.status) }}</small>
                   </span>
                   <span class="story-arrow" aria-hidden="true">→</span>
                 </a>

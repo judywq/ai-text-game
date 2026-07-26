@@ -27,6 +27,9 @@ const isCheckingReview = ref(false)
 
 const filtered = computed(() => {
   if (filter.value === 'all') return data.value
+  if (filter.value === 'IN_PROGRESS') {
+    return data.value.filter((s) => s.status === 'IN_PROGRESS' || s.status === 'INIT')
+  }
   return data.value.filter((s) => s.status === filter.value)
 })
 
@@ -44,13 +47,13 @@ async function loadData() {
 }
 
 function statusClass(status: GameStory['status']) {
-  if (status === 'IN_PROGRESS') return 'is-active'
+  if (status === 'IN_PROGRESS' || status === 'INIT') return 'is-active'
   if (status === 'COMPLETED') return 'is-done'
   return 'is-muted'
 }
 
 function statusLabel(status: GameStory['status']) {
-  if (status === 'IN_PROGRESS') return 'In progress'
+  if (status === 'IN_PROGRESS' || status === 'INIT') return 'In progress'
   if (status === 'COMPLETED') return 'Completed'
   if (status === 'ABANDONED') return 'Abandoned'
   return status
