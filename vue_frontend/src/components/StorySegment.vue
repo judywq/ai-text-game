@@ -27,7 +27,7 @@
         class="story-text-container"
         :class="{ 'text-push-down': showImage && isImageLoaded && entry.image_url }"
       >
-        <div class="prose dark:prose-invert max-w-none">
+        <div class="prose max-w-none">
           <div v-html="renderedContent" />
 
           <!-- Show chosen option if exists -->
