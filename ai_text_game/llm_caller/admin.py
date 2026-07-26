@@ -165,7 +165,9 @@ class GameScenarioAdmin(admin.ModelAdmin):
     list_display = [
         "id",
         "category",
+        "parent",
         "name",
+        "description",
         "example",
         "order",
         "is_active",
@@ -173,9 +175,10 @@ class GameScenarioAdmin(admin.ModelAdmin):
         "updated_at",
     ]
     list_display_links = ["name"]
-    list_filter = ["is_active"]
-    search_fields = ["name", "example"]
-    ordering = ["order"]
+    list_filter = ["category", "is_active", "parent"]
+    search_fields = ["name", "description", "example"]
+    ordering = ["order", "name"]
+    raw_id_fields = ["parent"]
 
 
 @admin.register(GameStory)

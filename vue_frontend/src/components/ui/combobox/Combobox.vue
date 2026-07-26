@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 interface Option {
   value: string
   label: string
+  description?: string
   example?: string
 }
 
@@ -32,6 +33,7 @@ const props = defineProps<{
   modelValue: string
   options: OptionGroup[]
   placeholder?: string
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -64,6 +66,7 @@ watch(open, (newValue) => {
         variant="outline"
         role="combobox"
         :aria-expanded="open"
+        :disabled="disabled"
         class="w-full justify-between"
       >
         {{ getCurrentLabel() || placeholder }}
@@ -83,6 +86,7 @@ watch(open, (newValue) => {
               v-for="option in group.options"
               :key="option.value"
               :value="option.value"
+              class="group"
               @select="() => {
                 emit('update:modelValue', option.value)
                 open = false
@@ -94,10 +98,13 @@ watch(open, (newValue) => {
                   modelValue === option.value ? 'opacity-100' : 'opacity-0'
                 )"
               />
-              <div>
+              <div class="min-w-0 flex-1">
                 <div>{{ option.label }}</div>
-                <div v-if="option.example" class="text-sm text-muted-foreground">
-                  {{ option.example }}
+                <div
+                  v-if="option.description"
+                  class="text-xs italic text-muted-foreground group-data-[highlighted]:text-accent-foreground/80"
+                >
+                  {{ option.description }}
                 </div>
               </div>
             </CommandItem>

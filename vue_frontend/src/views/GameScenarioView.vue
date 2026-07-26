@@ -12,14 +12,12 @@ const router = useRouter()
 const route = useRoute()
 const { toast } = useToast()
 const selectedGenre = ref('')
+const selectedTheme = ref('')
 const isLoading = ref(false)
 const scenarios = ref<GameScenario[]>([])
 const scenes = ref<Array<{ level: string; text: string }>>([])
 const isGeneratingScenes = ref(false)
-const customGenre = ref('')
-const showCustomGenreInput = ref(false)
 const details = ref('')
-const theme = ref('')
 const recentGames = ref<GameStory[]>([])
 const selectedLevelIndex = ref(0)
 const shelfCollapsed = ref(false)
@@ -39,24 +37,44 @@ function onShelfViewportChange(event: MediaQueryListEvent) {
   }
 }
 
-const genres = computed(() =>
+const genreScenarios = computed(() =>
   scenarios.value
     .filter((s) => s.category === 'genre')
-    .map((s) => ({ value: s.name, label: s.name, example: s.example })),
+    .slice()
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)),
 )
 
-const subGenres = computed(() =>
-  scenarios.value
-    .filter((s) => s.category === 'sub-genre')
-    .map((s) => ({ value: s.name, label: s.name, example: s.example })),
-)
+const selectedGenreId = computed(() => {
+  const match = genreScenarios.value.find((s) => s.name === selectedGenre.value)
+  return match?.id ?? null
+})
+
+const themeScenarios = computed(() => {
+  if (selectedGenreId.value == null) return []
+  return scenarios.value
+    .filter((s) => s.category === 'theme' && s.parent === selectedGenreId.value)
+    .slice()
+    .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
+})
 
 const genreOptions = computed(() => [
-  { label: 'Main Genres', options: genres.value },
-  { label: 'Sub-Genres', options: subGenres.value },
   {
-    label: 'Other',
-    options: [{ value: 'other', label: 'Other (Custom Genre)', example: 'Type your own genre' }],
+    label: 'Genres',
+    options: genreScenarios.value.map((s) => ({
+      value: s.name,
+      label: s.name,
+    })),
+  },
+])
+
+const themeOptions = computed(() => [
+  {
+    label: 'Themes',
+    options: themeScenarios.value.map((s) => ({
+      value: s.name,
+      label: s.name,
+      description: s.description,
+    })),
   },
 ])
 
@@ -98,20 +116,25 @@ onUnmounted(() => {
   shelfMobileMql = null
 })
 
-watch(selectedGenre, (newValue) => {
-  showCustomGenreInput.value = newValue === 'other'
-  if (newValue !== 'other') customGenre.value = ''
+watch(selectedGenre, () => {
+  selectedTheme.value = ''
 })
 
 async function generateScenes() {
   if (isGeneratingScenes.value) return
 
-  const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
-  if (!genreToUse) {
+  if (!selectedGenre.value) {
     toast({
       title: 'Error',
-      description:
-        selectedGenre.value === 'other' ? 'Please enter a custom genre' : 'Please select a genre first',
+      description: 'Please select a genre first',
+      variant: 'destructive',
+    })
+    return
+  }
+  if (!selectedTheme.value) {
+    toast({
+      title: 'Error',
+      description: 'Please select a theme first',
       variant: 'destructive',
     })
     return
@@ -122,7 +145,11 @@ async function generateScenes() {
   selectedLevelIndex.value = 0
 
   try {
-    const eventSource = await GameService.generateScenesStream(genreToUse, details.value, theme.value || undefined)
+    const eventSource = await GameService.generateScenesStream(
+      selectedGenre.value,
+      details.value,
+      selectedTheme.value,
+    )
 
     eventSource.addEventListener('scene', ((event: MessageEvent) => {
       const sceneData = JSON.parse(event.data)
@@ -169,20 +196,23 @@ function scrollToGeneratedScenes() {
 }
 
 async function startGame(sceneText?: string, languageLevel?: string, details?: string) {
-  const genreToUse = selectedGenre.value === 'other' ? customGenre.value : selectedGenre.value
-  if (!genreToUse) {
+  if (!selectedGenre.value) {
     toast({ title: 'Error', description: 'Please select a genre', variant: 'destructive' })
+    return
+  }
+  if (!selectedTheme.value) {
+    toast({ title: 'Error', description: 'Please select a theme', variant: 'destructive' })
     return
   }
 
   isLoading.value = true
   try {
     const story = await GameService.createStory(
-      genreToUse,
+      selectedGenre.value,
       sceneText,
       languageLevel,
       details,
-      theme.value || undefined,
+      selectedTheme.value,
     )
     router.push(`/game/${story.id}/loading`)
   } catch {
@@ -233,28 +263,21 @@ function closeShelf() {
         <section class="setting-page setup-page">
           <p class="setting-kicker">STORY SETUP</p>
           <h1>Start a chapter</h1>
-          <p class="setting-intro">Choose a genre, add a detail if you like, then generate reading levels.</p>
+          <p class="setting-intro">Choose a genre and theme, add a detail if you like, then generate reading levels.</p>
 
           <div class="setting-form">
             <div class="setting-field">
               <label>Genre</label>
               <Combobox v-model="selectedGenre" :options="genreOptions" placeholder="Select a genre" />
-              <input
-                v-if="showCustomGenreInput"
-                v-model="customGenre"
-                type="text"
-                placeholder="Enter your genre"
-                style="margin-top: 8px"
-              />
             </div>
 
             <div class="setting-field">
-              <label>Theme <span>(optional)</span></label>
-              <input
-                v-model="theme"
-                type="text"
-                placeholder="e.g., friendship, loyalty"
-                maxlength="100"
+              <label>Theme</label>
+              <Combobox
+                v-model="selectedTheme"
+                :options="themeOptions"
+                placeholder="Select a theme"
+                :disabled="!selectedGenre"
               />
             </div>
 
@@ -270,11 +293,7 @@ function closeShelf() {
             <button
               type="button"
               class="generate-button"
-              :disabled="
-                isGeneratingScenes ||
-                !selectedGenre ||
-                (selectedGenre === 'other' && !customGenre)
-              "
+              :disabled="isGeneratingScenes || !selectedGenre || !selectedTheme"
               @click="generateScenes"
             >
               {{ isGeneratingScenes ? 'Generating…' : 'Generate scenes' }}

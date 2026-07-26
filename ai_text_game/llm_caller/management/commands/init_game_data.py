@@ -24,23 +24,44 @@ class Command(BaseCommand):
             GameScenario.objects.all().delete()
             self.stdout.write(self.style.WARNING("Cleared existing game scenarios"))
 
-        # Create scenarios from INIT_GAME_GENRE
-        for order, genre in enumerate(settings.INIT_GAME_GENRE):
-            _, created = GameScenario.objects.get_or_create(
-                category=genre[
-                    "category"
-                ].lower(),  # Convert to lowercase to match model choices
+        for genre in settings.INIT_GAME_GENRE:
+            parent, created = GameScenario.objects.get_or_create(
+                category="genre",
+                parent=None,
                 name=genre["name"],
-                example=genre["example"],
-                order=order,
-                is_active=True,
+                defaults={
+                    "order": genre["order"],
+                    "is_active": True,
+                },
             )
-            if created:
-                msg = f'Created scenario: {genre["name"]}'
-                self.stdout.write(self.style.SUCCESS(msg))
-            else:
+            if not created:
+                parent.order = genre["order"]
+                parent.is_active = True
+                parent.save(update_fields=["order", "is_active", "updated_at"])
                 msg = f'Scenario already exists: {genre["name"]}'
                 self.stdout.write(self.style.WARNING(msg))
+            else:
+                msg = f'Created genre: {genre["name"]}'
+                self.stdout.write(self.style.SUCCESS(msg))
+
+            for theme in genre.get("themes", []):
+                _, theme_created = GameScenario.objects.update_or_create(
+                    category="theme",
+                    parent=parent,
+                    name=theme["name"],
+                    defaults={
+                        "description": theme.get("description", ""),
+                        "example": theme.get("example", ""),
+                        "order": theme["order"],
+                        "is_active": True,
+                    },
+                )
+                if theme_created:
+                    msg = f'Created theme: {genre["name"]} / {theme["name"]}'
+                    self.stdout.write(self.style.SUCCESS(msg))
+                else:
+                    msg = f'Theme already exists: {genre["name"]} / {theme["name"]}'
+                    self.stdout.write(self.style.WARNING(msg))
 
     def init_llm_models(self, force=False):  # noqa: FBT002
         if force:

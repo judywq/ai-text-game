@@ -38,7 +38,9 @@ class GameScenarioSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "category",
+            "parent",
             "name",
+            "description",
             "example",
             "order",
         ]

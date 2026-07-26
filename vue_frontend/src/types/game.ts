@@ -1,10 +1,12 @@
 export interface GameScenario {
   id: number
-  category: 'genre' | 'sub-genre'
+  category: 'genre' | 'theme'
+  parent: number | null
   name: string
+  description: string
   example: string
   order: number
-  created_at: string
+  created_at?: string
 }
 
 export interface StoryProgress {

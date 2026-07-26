@@ -648,163 +648,248 @@ INIT_LLM_CONFIGS = {
     },
 }
 
-# Init Game Genre
+# Init Game Genre (parent genres with nested themes)
 # ------------------------------------------------------------------------------
 INIT_GAME_GENRE = [
     {
-        "category": "Genre",
-        "name": "Fable",
-        "example": "The Tortoise and the Hare",
+        "name": "Drama",
+        "order": 1,
+        "themes": [
+            {
+                "name": "Slice of Life",
+                "order": 1,
+                "description": "Everyday, character-focused stories with low-stakes conflict.",
+                "example": "My Dinner with Andre",
+            },
+            {
+                "name": "Teen Drama",
+                "order": 2,
+                "description": "Drama centered on adolescence, school, identity, and peer relationships.",
+                "example": "Gossip Girl",
+            },
+            {
+                "name": "Family Drama",
+                "order": 3,
+                "description": "Emotional conflict within families and close relationships.",
+                "example": "This Is Us",
+            },
+            {
+                "name": "Medical Drama",
+                "order": 4,
+                "description": "Stories set in healthcare environments and centered on medical professionals.",
+                "example": "Grey's Anatomy",
+            },
+        ],
     },
     {
-        "category": "Genre",
-        "name": "Fantasy",
-        "example": "The Lord of the Rings, Game of Thrones",
-    },
-    {
-        "category": "Genre",
-        "name": "Science Fiction",
-        "example": "Star Wars, Star Trek",
-    },
-    {
-        "category": "Genre",
         "name": "Mystery",
-        "example": "Sherlock Holmes, Knives Out",
+        "order": 2,
+        "themes": [
+            {
+                "name": "Whodunit",
+                "order": 1,
+                "description": "A puzzle mystery focused on identifying the culprit.",
+                "example": "Knives Out",
+            },
+            {
+                "name": "Detective Mystery",
+                "order": 2,
+                "description": "A detective investigates a crime or unexplained event.",
+                "example": "Sherlock Holmes",
+            },
+            {
+                "name": "Cozy Mystery",
+                "order": 3,
+                "description": "A low-violence mystery, often set in a close-knit community.",
+                "example": "Murder, She Wrote",
+            },
+        ],
     },
     {
-        "category": "Genre",
         "name": "Romance",
-        "example": "Pride and Prejudice, The Notebook",
+        "order": 3,
+        "themes": [
+            {
+                "name": "Contemporary Romance",
+                "order": 1,
+                "description": "Love stories set in the present day.",
+                "example": "The Notebook",
+            },
+            {
+                "name": "Romantic Comedy",
+                "order": 2,
+                "description": "A romance told with a humorous, usually upbeat tone.",
+                "example": "When Harry Met Sally...",
+            },
+            {
+                "name": "Historical Romance",
+                "order": 3,
+                "description": "Love stories set in a past historical period.",
+                "example": "Pride and Prejudice",
+            },
+        ],
     },
     {
-        "category": "Genre",
-        "name": "Superhero",
-        "example": "Marvel Cinematic Universe, DC Extended Universe",
+        "name": "Comedy",
+        "order": 4,
+        "themes": [
+            {
+                "name": "Romantic Comedy",
+                "order": 1,
+                "description": "A humorous story whose central plot is a romantic relationship.",
+                "example": "Notting Hill",
+            },
+            {
+                "name": "Corporate Satire",
+                "order": 2,
+                "description": "Comedy criticizing workplace culture or corporate behavior.",
+                "example": "Office Space",
+            },
+        ],
     },
     {
-        "category": "Genre",
+        "name": "Science Fiction",
+        "order": 5,
+        "themes": [
+            {
+                "name": "Time Travel",
+                "order": 1,
+                "description": "Stories in which characters move between different times.",
+                "example": "Back to the Future",
+            },
+            {
+                "name": "Space Opera",
+                "order": 2,
+                "description": "Grand, adventure-driven science fiction set across space and planets.",
+                "example": "Star Wars",
+            },
+            {
+                "name": "Cyberpunk",
+                "order": 3,
+                "description": "High-tech stories about social decay, corporate power, and cybernetic life.",
+                "example": "Blade Runner",
+            },
+        ],
+    },
+    {
+        "name": "Fantasy",
+        "order": 6,
+        "themes": [
+            {
+                "name": "Urban Fantasy",
+                "order": 1,
+                "description": "Fantasy elements existing in a modern or city-based setting.",
+                "example": "The Dresden Files",
+            },
+            {
+                "name": "Portal Fantasy",
+                "order": 2,
+                "description": "Characters enter another world through a gateway or portal.",
+                "example": "The Chronicles of Narnia",
+            },
+            {
+                "name": "Steampunk",
+                "order": 3,
+                "description": "Speculative fiction using Victorian-era aesthetics and imagined steam technology.",
+                "example": "The League of Extraordinary Gentlemen",
+            },
+        ],
+    },
+    {
+        "name": "Action & Adventure",
+        "order": 7,
+        "themes": [
+            {
+                "name": "Superhero",
+                "order": 1,
+                "description": "Stories about people with extraordinary abilities protecting others.",
+                "example": "The Avengers",
+            },
+            {
+                "name": "Survival Adventure",
+                "order": 2,
+                "description": "Stories focused on enduring extreme danger or isolation.",
+                "example": "Cast Away",
+            },
+            {
+                "name": "Western",
+                "order": 3,
+                "description": "Stories set in the American frontier or using its conventions.",
+                "example": "The Good, the Bad and the Ugly",
+            },
+        ],
+    },
+    {
+        "name": "Folklore & Moral Tales",
+        "order": 8,
+        "themes": [
+            {
+                "name": "Fable",
+                "order": 1,
+                "description": "A short moral tale, often featuring talking animals.",
+                "example": "The Tortoise and the Hare",
+            },
+            {
+                "name": "Fairy Tale",
+                "order": 2,
+                "description": "A magical traditional tale, often involving quests, royalty, or enchantment.",
+                "example": "Cinderella",
+            },
+            {
+                "name": "Trickster Tale",
+                "order": 3,
+                "description": "A tale about a clever, rule-breaking character who outwits others.",
+                "example": "Anansi the Spider",
+            },
+        ],
+    },
+    {
         "name": "Historical Fiction",
-        "example": "Gladiator, The Last Samurai",
+        "order": 9,
+        "themes": [
+            {
+                "name": "Alternate History",
+                "order": 1,
+                "description": "Fiction imagining history unfolding differently from reality.",
+                "example": "The Man in the High Castle",
+            },
+            {
+                "name": "Period Romance",
+                "order": 2,
+                "description": "A romantic story set in a specific historical era.",
+                "example": "Bridgerton",
+            },
+            {
+                "name": "Epic Historical Drama",
+                "order": 3,
+                "description": "A sweeping historical story about major events, leaders, or conflicts.",
+                "example": "Lawrence of Arabia",
+            },
+        ],
     },
     {
-        "category": "Genre",
-        "name": "Legal Drama",
-        "example": "Suits, The Practice",
-    },
-    {
-        "category": "Genre",
-        "name": "Medical Drama",
-        "example": "House M.D., Grey's Anatomy",
-    },
-    {
-        "category": "Genre",
-        "name": "Political Thriller",
-        "example": "House of Cards, The Manchurian Candidate",
-    },
-    {
-        "category": "Genre",
-        "name": "Slice of Life",
-        "example": "My Dinner with Andre, Melrose Place",
-    },
-    {
-        "category": "Genre",
-        "name": "Epic Historical Drama",
-        "example": "Braveheart, Lawrence of Arabia",
-    },
-    {
-        "category": "Genre",
-        "name": "Western",
-        "example": "The Good, the Bad, and the Ugly, Deadwood",
-    },
-    {
-        "category": "Genre",
-        "name": "Espionage/Spy Thriller",
-        "example": "James Bond, Tinker Tailor Soldier Spy",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Cyberpunk",
-        "example": "Blade Runner, Neuromancer",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Steampunk",
-        "example": "The League of Extraordinary Gentlemen, Wild Wild West",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Post-Apocalyptic",
-        "example": "Mad Max, The Road",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Gothic Horror",
-        "example": "Dracula, Crimson Peak",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Film Noir",
-        "example": "The Maltese Falcon, Sin City",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Space Opera",
-        "example": "Dune, The Expanse",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Time Travel",
-        "example": "Back to the Future, 12 Monkeys",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Anthology Horror",
-        "example": "The Twilight Zone, Black Mirror",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Psychological Thriller",
-        "example": "Fight Club, Black Swan",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Corporate Satire",
-        "example": "Office Space, The Office",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Dark Comedy",
-        "example": "Fargo, The Death of Stalin",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "1980s Soap Opera",
-        "example": "Dallas, Dynasty",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Teen Drama",
-        "example": "Beverly Hills, 90210, Gossip Girl",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Lovecraftian Horror",
-        "example": "The Call of Cthulhu, The Thing",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Kaiju/Monster Movie",
-        "example": "Godzilla, Pacific Rim",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Alien Invasion",
-        "example": "War of the Worlds, Independence Day",
-    },
-    {
-        "category": "Sub-Genre",
-        "name": "Dystopian Fiction",
-        "example": "The Handmaid's Tale, 1984, The Hunger Games",
+        "name": "Thriller",
+        "order": 10,
+        "themes": [
+            {
+                "name": "Espionage / Spy Thriller",
+                "order": 1,
+                "description": "Suspense centered on spies, intelligence agencies, and covert missions.",
+                "example": "Tinker Tailor Soldier Spy",
+            },
+            {
+                "name": "Legal Thriller",
+                "order": 2,
+                "description": "Suspense built around a legal case, courtroom, or legal danger.",
+                "example": "The Firm",
+            },
+            {
+                "name": "Political Thriller",
+                "order": 3,
+                "description": "Suspense involving governments, power, elections, or conspiracy.",
+                "example": "House of Cards",
+            },
+        ],
     },
 ]
 

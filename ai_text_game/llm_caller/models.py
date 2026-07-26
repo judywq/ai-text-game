@@ -364,17 +364,29 @@ class GameScenario(TimestampedBase):
         max_length=100,
         choices=[
             ("genre", "Genre"),
-            ("sub-genre", "Sub-Genre"),
+            ("theme", "Theme"),
         ],
         help_text="Category of the scenario",
         default="genre",
+    )
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="themes",
+        help_text="Parent genre for theme rows; null for top-level genres",
     )
     name = models.CharField(
         max_length=100,
         help_text="Name of the scenario (e.g., Fantasy, Sci-Fi)",
     )
+    description = models.TextField(
+        blank=True,
+        help_text="Short description of what this theme is",
+    )
     example = models.TextField(
-        help_text="Example movies/books/etc. of this genre/sub-genre",
+        help_text="Example movies/books/etc. of this genre/theme",
         blank=True,
     )
     order = models.IntegerField(
@@ -387,7 +399,13 @@ class GameScenario(TimestampedBase):
     )
 
     class Meta:
-        ordering = ["order"]
+        ordering = ["order", "name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["parent", "name"],
+                name="unique_gamescenario_parent_name",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.name} ({'Active' if self.is_active else 'Inactive'})"
@@ -557,7 +575,7 @@ class GameStory(CreatableBase, TimestampedBase):
     )
     theme = models.TextField(
         blank=True,
-        help_text="Theme of the story (e.g., friendship, loyalty)",
+        help_text="Theme of the story (e.g., Slice of Life, Cyberpunk)",
     )
     title = models.CharField(
         max_length=200,
