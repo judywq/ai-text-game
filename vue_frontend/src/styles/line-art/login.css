@@ -137,8 +137,8 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
   isolation: isolate;
-  /* Slightly tighter than shared book-frame % so login/signup leaves fit forms */
-  padding: 11% 8% 12% 8%;
+  /* Match shared book-frame inset so leaves stay inside the SVG silhouette */
+  padding: 15% 9% 16% 9%;
   /* Stable max width — do not tie to viewport height. Height grows with
      content; page scrolls when needed. */
   width: min(100%, 980px);
@@ -172,6 +172,7 @@ a {
 .story-page {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   border-right: 0;
   background: transparent;
   /* Keep copy clear of the book gutter */
@@ -234,8 +235,8 @@ h1 {
 
 .trail {
   position: relative;
-  flex: 1;
-  min-height: 48px;
+  flex: 0 0 auto;
+  height: 100px;
   margin-top: 16px;
 }
 
