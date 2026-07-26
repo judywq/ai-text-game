@@ -52,8 +52,8 @@ a {
 }
 
 .story-settings {
-  --settings-chrome: 160px;
-  width: min(1160px, calc(100% - 48px));
+  --settings-chrome: 110px;
+  width: min(1360px, calc(100% - 32px));
   margin: 0 auto;
   padding: 0 0 28px;
 }
@@ -147,8 +147,8 @@ a {
   isolation: isolate;
   /* Match signup auth-book inset so leaves sit inside the SVG silhouette */
   padding: 12% 8% 14% 8%;
-  width: min(100%, calc((100dvh - var(--settings-chrome, 160px)) * 5 / 4));
-  max-height: calc(100dvh - var(--settings-chrome, 160px));
+  width: min(100%, calc((100dvh - var(--settings-chrome, 110px)) * 5 / 4));
+  max-height: calc(100dvh - var(--settings-chrome, 110px));
   min-height: 0;
   aspect-ratio: 5 / 4;
   margin-inline: auto;
