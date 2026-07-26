@@ -28,9 +28,13 @@ const {
   onSkeletonGenerationStarted,
 } = useGameWebSocket()
 
-onStoryUpdate.value = () => {
+const markStoryReady = () => {
   isStoryReady.value = true
   initMessage.value = 'Your story is ready!'
+}
+
+onStoryUpdate.value = () => {
+  markStoryReady()
 }
 
 onSkeletonGenerationStarted.value = (message: string) => {
@@ -38,6 +42,10 @@ onSkeletonGenerationStarted.value = (message: string) => {
 }
 
 onError.value = (error: Error) => {
+  if (error.message === 'Story already started.') {
+    markStoryReady()
+    return
+  }
   console.error('WebSocket error:', error)
   initMessage.value = 'Error initializing story. Please try again.'
 }
@@ -47,7 +55,12 @@ const initializeStory = async () => {
     const id = parseInt(route.params.id as string)
     storyId.value = id
 
-    await GameService.getStory(id)
+    const story = await GameService.getStory(id)
+    if (story.status !== 'INIT') {
+      markStoryReady()
+      return
+    }
+
     await connect(id)
     await startStory()
   } catch (error) {
