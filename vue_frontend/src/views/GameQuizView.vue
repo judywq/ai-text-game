@@ -4,10 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { ExplanationService } from '@/services/explanationService'
 import { GameService } from '@/services/gameService'
 import type { TextExplanation, VocabularyQuizSubmitResponse } from '@/types/game'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/components/ui/toast/use-toast'
 
 const route = useRoute()
@@ -39,6 +35,16 @@ function scoreLabel(score: number) {
   if (score >= 1) return 'Correct'
   if (score >= 0.5) return 'Partial'
   return 'Incorrect'
+}
+
+function scoreClass(score: number) {
+  if (score >= 1) return 'is-correct'
+  if (score >= 0.5) return 'is-partial'
+  return 'is-incorrect'
+}
+
+function goBackToStory() {
+  router.push({ name: 'game-play', params: { id: storyId.value } })
 }
 
 async function load() {
@@ -125,99 +131,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="container mx-auto max-w-3xl md:pt-6 pb-10 px-4">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl font-bold">Vocabulary review</h1>
-        <p v-if="storyTitle" class="text-muted-foreground text-sm mt-1">{{ storyTitle }}</p>
+  <div class="library-shell" style="padding-top: 0">
+    <section class="library-panel quiz-panel">
+      <button type="button" class="quiz-back-link" @click="goBackToStory">
+        ← Back to story
+      </button>
+      <div class="library-title-row">
+        <div>
+          <h1>Vocabulary review</h1>
+          <p v-if="storyTitle">{{ storyTitle }}</p>
+          <p v-else>Explain each saved phrase in your own words.</p>
+        </div>
       </div>
-      <Button variant="outline" @click="router.push({ name: 'game-play', params: { id: storyId } })">
-        Back to story
-      </Button>
-    </div>
 
-    <div v-if="isLoading" class="flex flex-col items-center justify-center py-20 gap-3">
-      <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-      <p class="text-muted-foreground text-sm">Loading lookups…</p>
-    </div>
+      <div v-if="isLoading" class="quiz-loading">
+        <div class="quiz-spinner" aria-hidden="true" />
+        <p>Loading lookups…</p>
+      </div>
 
-    <template v-else>
-      <p v-if="quizItems.length === 0" class="text-muted-foreground mb-6">
-        There are no completed word lookups for this story yet. Use lookups during the game, wait until each
-        explanation finishes, then open this page again.
-      </p>
-
-      <div v-else class="space-y-6">
-        <p class="text-sm text-muted-foreground">
-          For each expression you looked up, explain in your own words what it means in the story.
+      <template v-else>
+        <p v-if="quizItems.length === 0" class="quiz-empty">
+          There are no completed word lookups for this story yet. Use lookups during the game, wait
+          until each explanation finishes, then open this page again.
         </p>
 
-        <Card v-for="item in quizItems" :key="item.id">
-          <CardHeader class="pb-2">
-            <CardTitle class="text-lg font-semibold text-primary">{{ item.selected_text }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-3">
-            <div class="text-sm text-muted-foreground">
-              <span class="font-medium text-foreground">Context: </span>{{ item.context_text }}
-            </div>
-            <div>
-              <label class="text-sm font-medium block mb-2" :for="`explain-${item.id}`">Your explanation</label>
-              <Textarea
+        <div v-else class="quiz-body">
+          <p class="quiz-intro">
+            For each expression you looked up, explain in your own words what it means in the story.
+          </p>
+
+          <article v-for="item in quizItems" :key="item.id" class="quiz-term">
+            <strong>{{ item.selected_text }}</strong>
+            <small>
+              <span class="quiz-context-label">Context:</span>
+              {{ item.context_text }}
+            </small>
+            <div class="la-field">
+              <label :for="`explain-${item.id}`">Your explanation</label>
+              <textarea
                 :id="`explain-${item.id}`"
                 v-model="explanationsById[item.id]"
                 placeholder="Explain the meaning in your own words…"
-                class="min-h-[100px]"
+                rows="4"
                 :disabled="!!quizResult || isSubmitting"
               />
             </div>
-          </CardContent>
-        </Card>
+          </article>
 
-        <div class="flex flex-wrap gap-2 justify-end">
-          <Button
-            :disabled="!canSubmit || isSubmitting || !!quizResult"
-            @click="submitQuiz"
-          >
-            <span v-if="isSubmitting" class="flex items-center gap-2">
-              <span class="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
-              Checking…
-            </span>
-            <span v-else>Submit</span>
-          </Button>
-        </div>
+          <div class="quiz-actions">
+            <button
+              type="button"
+              class="la-btn"
+              :disabled="!canSubmit || isSubmitting || !!quizResult"
+              @click="submitQuiz"
+            >
+              <span v-if="isSubmitting" class="quiz-submit-busy">
+                <span class="quiz-spinner quiz-spinner--sm" aria-hidden="true" />
+                Checking…
+              </span>
+              <span v-else>Submit review <span aria-hidden="true">→</span></span>
+            </button>
+          </div>
 
-        <div v-if="quizResult" ref="resultsSectionRef">
-          <Separator class="my-8" />
-          <h2 class="text-xl font-bold mb-4">Results</h2>
-          <p class="text-sm text-muted-foreground mb-4">
-            Average score:
-            <span class="font-semibold text-foreground">{{ quizResult.average_score.toFixed(2) }}</span>
-            (0 = incorrect, 0.5 = partial, 1 = correct)
-          </p>
-          <div class="space-y-4">
-            <Card v-for="row in quizResult.results" :key="row.explanation_id">
-              <CardHeader class="pb-2">
-                <div class="flex flex-wrap items-baseline justify-between gap-2">
-                  <CardTitle class="text-base font-semibold">{{ row.selected_text }}</CardTitle>
-                  <span
-                    class="text-sm font-medium"
-                    :class="{
-                      'text-green-600': row.score >= 1,
-                      'text-amber-600': row.score >= 0.5 && row.score < 1,
-                      'text-destructive': row.score < 0.5,
-                    }"
-                  >
-                    {{ scoreLabel(row.score) }} ({{ row.score }})
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent class="text-sm space-y-2">
-                <p><span class="font-medium">Feedback: </span>{{ row.reason }}</p>
-              </CardContent>
-            </Card>
+          <div v-if="quizResult" ref="resultsSectionRef" class="quiz-results">
+            <h2>Results</h2>
+            <p class="quiz-score-line">
+              Average score:
+              <strong>{{ quizResult.average_score.toFixed(2) }}</strong>
+            </p>
+            <p class="quiz-scale">0 = incorrect · 0.5 = partial · 1 = correct</p>
+            <div
+              v-for="row in quizResult.results"
+              :key="row.explanation_id"
+              class="quiz-result-row"
+            >
+              <div class="quiz-result-head">
+                <strong>{{ row.selected_text }}</strong>
+                <span class="quiz-score-badge" :class="scoreClass(row.score)">
+                  {{ scoreLabel(row.score) }} ({{ row.score }})
+                </span>
+              </div>
+              <p><span class="quiz-feedback-label">Feedback:</span> {{ row.reason }}</p>
+            </div>
           </div>
         </div>
-      </div>
-    </template>
+      </template>
+    </section>
   </div>
 </template>

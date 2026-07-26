@@ -1,0 +1,262 @@
+/* Vocabulary review — single panel, matches library shell */
+
+.quiz-panel .library-title-row {
+  align-items: start;
+  /* Room for absolute back link in the top-right */
+  padding-right: min(160px, 28%);
+}
+
+.quiz-panel .library-title-row > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+}
+
+/* library.css uses text-wrap:balance which shrinks headings/paragraphs */
+.quiz-panel .library-title-row h1,
+.quiz-panel .library-title-row p,
+.quiz-panel .quiz-intro,
+.quiz-panel .quiz-empty {
+  text-wrap: wrap;
+  max-width: none;
+}
+
+.quiz-back-link {
+  position: absolute;
+  top: clamp(36px, 5vw, 56px);
+  right: clamp(28px, 5vw, 56px);
+  z-index: 1;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  color: var(--blue-deep);
+  background: transparent;
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.quiz-back-link:hover {
+  color: var(--blue);
+}
+
+.quiz-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 0 40px;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.quiz-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--blue);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: quiz-spin 0.7s linear infinite;
+}
+
+.quiz-spinner--sm {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes quiz-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.quiz-empty {
+  margin: 28px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.quiz-body {
+  margin-top: 28px;
+}
+
+.quiz-intro {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.quiz-term {
+  display: grid;
+  gap: 8px;
+  margin-top: 28px;
+  padding-top: 0;
+}
+
+.quiz-term + .quiz-term {
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1.5px dashed var(--line-soft);
+}
+
+.quiz-term > strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--blue-deep);
+}
+
+.quiz-term > small {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.quiz-context-label {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.quiz-term .la-field {
+  margin-top: 6px;
+}
+
+.quiz-term textarea {
+  min-height: 100px;
+  resize: vertical;
+  padding: 11px;
+}
+
+.quiz-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.quiz-submit-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quiz-results {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1.5px solid var(--line-soft);
+}
+
+.quiz-results h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  line-height: 1.1;
+}
+
+.quiz-score-line {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.quiz-score-line strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.quiz-scale {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.quiz-result-row {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1.5px dashed var(--line-soft);
+}
+
+.quiz-result-row:first-of-type {
+  margin-top: 22px;
+}
+
+.quiz-result-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 8px;
+}
+
+.quiz-result-head strong {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.quiz-score-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.quiz-score-badge.is-correct {
+  color: #49825c;
+}
+
+.quiz-score-badge.is-partial {
+  color: #9a5b1c;
+}
+
+.quiz-score-badge.is-incorrect {
+  color: #a33b3b;
+}
+
+.quiz-result-row > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.quiz-feedback-label {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+@media (max-width: 800px) {
+  .quiz-panel .library-title-row {
+    padding-right: min(140px, 36%);
+  }
+
+  .quiz-back-link {
+    top: 46px;
+    right: clamp(24px, 8vw, 48px);
+  }
+
+  .quiz-actions {
+    justify-content: stretch;
+  }
+
+  .quiz-actions .la-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quiz-spinner {
+    animation: none;
+    border-top-color: var(--blue);
+    opacity: 0.7;
+  }
+}
